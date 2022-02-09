@@ -211,23 +211,25 @@ abstract class Config
     {
         $result = array();
 
-        $minTimeBeforeBooking = 1 * 3600;
-        $dpNow = Slots\DatePoint::now();
-        $dp = $selected_date ? Slots\DatePoint::fromStr( $selected_date . " " . date("H:i:s") ) : $dpNow;
-        $dp->modify( $minTimeBeforeBooking )->toClientTz();
-        if( Slots\DatePoint::fromStr( $dp->format( 'Y-m-d' ) )->eq( Slots\DatePoint::fromStr( $dpNow->format( 'Y-m-d' ) ) )  ) {
-            $result['date_min'] = array(
-                (int) $dp->format( 'H' ),
-                (int) $dp->format( 'i' ),
-            );
-        } else {
-            $result['date_min'] = false;
-        }
-        $result['date_max'] = array(
-            23,
-            59,
-        );
+        // $minTimeBeforeBooking = 1 * 3600;
+        // $dpNow = Slots\DatePoint::now();
+        // $dp = $selected_date ? Slots\DatePoint::fromStr( $selected_date . " " . date("H:i:s") ) : $dpNow;
+        // $dp->modify( $minTimeBeforeBooking )->toClientTz();
+        // if( Slots\DatePoint::fromStr( $dp->format( 'Y-m-d' ) )->eq( Slots\DatePoint::fromStr( $dpNow->format( 'Y-m-d' ) ) )  ) {
+        //     $result['date_min'] = array(
+        //         (int) $dp->format( 'H' ),
+        //         (int) $dp->format( 'i' ),
+        //     );
+        // } else {
+        //     $result['date_min'] = false;
+        // }
+        // $result['date_max'] = array(
+        //     23,
+        //     59,
+        // );
 
+        $result['date_min'] = false;
+        $result['date_max'] = false;
         return $result;
     }
 

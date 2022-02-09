@@ -86,6 +86,13 @@ class Frontend {
             Plugin::version(), 
             false 
         );
+		wp_register_script( 
+            'connectpx_booking_moment', 
+            plugin_dir_url( __FILE__ ) . 'resources/js/moment.min.js', 
+            array(), 
+            Plugin::version(), 
+            false 
+        );
 
         $api_key = Utils\Common::getOption('google_api_key', '');
         if( $api_key ) {

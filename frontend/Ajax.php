@@ -108,7 +108,7 @@ class Ajax extends Lib\Base\Ajax
             // Render slots by groups (day or month).
             $slots = $userData->getSlots();
             $slots_data = [];
-            // $selected_date = isset ( $slots[0][2] ) ? $slots[0][2] : null;
+            // $selected_date = isset ( $slots[0][0] ) ? $slots[0][0] : null;
             $selected_date = $userData->getDateFrom();
             $bounding = Lib\Config::getBoundingTimeForPickatime( $selected_date );
 
@@ -150,7 +150,7 @@ class Ajax extends Lib\Base\Ajax
             // Available days and times.
             $bounding  = Lib\Config::getBoundingDaysForPickadate();
             $slots    = $userData->getSlots();
-            $datetime = date_create( $slots[0][2] );
+            $datetime = date_create( $userData->getDateFrom() );
             $date_min = array(
                 (int) $datetime->format( 'Y' ),
                 (int) $datetime->format( 'n' ) - 1,
@@ -159,39 +159,47 @@ class Ajax extends Lib\Base\Ajax
 
             $schedule = array();
             $repeat_data = $userData->getRepeatData();
+
             if ( $repeat_data ) {
                 $until = Lib\Slots\DatePoint::fromStrInClientTz( $repeat_data['until'] );
                 foreach ( $slots as $slot ) {
-                    $date = Lib\Slots\DatePoint::fromStr( $slot[2] );
+                    $date = Lib\Slots\DatePoint::fromStr( $slot[0] );
                     if ( $until->lt( $date ) ) {
                         $until = $date->toClientTz();
                     }
                 }
 
-                $schedule = Proxy\RecurringAppointments::buildSchedule(
-                    clone $userData,
-                    $slots[0][2],
-                    $until->format( 'Y-m-d' ),
-                    $repeat_data['repeat'],
-                    $repeat_data['params'],
-                    array_map( function ( $slot ) { return $slot[2]; }, $slots )
+                $scheduler = new Lib\Scheduler( 
+                    clone $userData, 
+                    $slots[0][0], 
+                    $slots[0][1], 
+                    $slots[0][2], 
+                    $until->format( 'Y-m-d' ), 
+                    $repeat_data['repeat'], 
+                    $repeat_data['params']
                 );
+
+                $schedule = $scheduler->build( $slots );
             }
 
-            $response = Proxy\Shared::stepOptions( array(
+            $response = array(
                 'success'  => true,
-                'html' => Proxy\RecurringAppointments::getStepHtml( $userData, $show_cart_btn, $info_text, $progress_tracker ),
+                'html' => self::renderTemplate( 'frontend/templates/steps/repeat', array(
+                    'progress_bar' => self::_renderProgressBar($userData),
+                    'buttons' => self::_renderButtons($userData),
+                    'userData' => $userData,
+                ), false ),
                 'date_max' => $bounding['date_max'],
                 'date_min' => $date_min,
-                'repeated' => (int) $userData->getRepeated(),
+                'repeated' => $repeat_data ? (int) $userData->getRepeated() : 0,
                 'repeat_data' => $userData->getRepeatData(),
                 'schedule' => $schedule,
                 'short_date_format' => Lib\Utils\DateTime::convertFormat( 'D, M d', Lib\Utils\DateTime::FORMAT_PICKADATE ),
-                'pages_warning_info' => nl2br( Lib\Utils\Common::getTranslatedOption( 'bookly_l10n_repeat_schedule_help' ) ),
-                'could_be_repeated' => Proxy\RecurringAppointments::canBeRepeated( true, $userData ),
-            ), 'repeat' );
+                'pages_warning_info' => '',
+                'could_be_repeated' => true,
+            );
         } else {
-            $response = array( 'success' => false, 'error' => Errors::SESSION_ERROR );
+            $response = array( 'success' => false, 'error' => __('Session Error', 'connectpx_booking') );
         }
         $userData->sessionSave();
 
@@ -221,6 +229,39 @@ class Ajax extends Lib\Base\Ajax
         $errors['success'] = empty( $errors );
 
         wp_send_json( $errors );
+    }
+
+    /**
+     * Get Schedule for step Repeat on frontend.
+     */
+    public static function getCustomerSchedule()
+    {
+        $userData = new Lib\UserBookingData();
+        if ( $userData->load() ) {
+            $until    = self::parameter( 'until' );
+            $repeat   = self::parameter( 'repeat' );
+            $params   = self::parameter( 'params', array() );
+            $slots    = $userData->getSlots();
+            $datetime = $slots[0][0];
+
+            $userData->setRepeatData( compact( 'repeat','until','params' ) );
+
+            $scheduler = new Lib\Scheduler( 
+                clone $userData, 
+                $slots[0][0], 
+                $slots[0][1], 
+                $slots[0][2], 
+                $until, 
+                $repeat, 
+                $params
+            );
+
+            $schedule = $scheduler->build( $slots );
+
+            wp_send_json_success( $schedule );
+        } else {
+            wp_send_json_error();
+        }
     }
 
     /**

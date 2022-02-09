@@ -23,10 +23,6 @@ class UserBookingData
     protected $sub_service_id;
     /** @var string Y-m-d */
     protected $date_from;
-    /** @var null|string H:i */
-    protected $pickup_time;
-    /** @var null|string H:i */
-    protected $return_pickup_time;
 
     // Step time
     protected $slots = array();
@@ -87,8 +83,6 @@ class UserBookingData
         'sub_service_id',
         'date_from',
         // Step time
-        'pickup_time',
-        'return_pickup_time',
         'slots',
         // Step details
         'full_name',
@@ -217,7 +211,11 @@ class UserBookingData
                         ->setData( $_data );
                 }
             } elseif ( $name === 'repeat' ) {
-                $this->setRepeated( $value );
+                if( !$this->getRepeatData() ) {
+                    $this->setRepeated( 0 );
+                } else {
+                    $this->setRepeated( $value );
+                }
             } elseif ( $name === 'unrepeat' ) {
                 $this
                     ->setRepeated( 0 )

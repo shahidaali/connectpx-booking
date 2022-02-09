@@ -45,7 +45,8 @@ class ShortCode extends Lib\Base\Component
             array(
                 'jquery', 
                 'connectpx_booking_picker', 
-                'connectpx_booking_google_maps'
+                'connectpx_booking_google_maps',
+                'connectpx_booking_moment'
             ), 
             Plugin::version(), 
             false 
