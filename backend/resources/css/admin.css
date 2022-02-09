@@ -1,0 +1,59 @@
+/**
+ * ConnectpxBooking plugin WordPress admin area customization
+ */
+  .os-tabs {
+    margin-top: 15px;
+  }
+ .os-tabs li {
+  display: inline-block;
+  vertical-align: middle;
+  margin: 0px;
+ }
+  .os-tabs ul {
+    margin: 0px;
+    padding: 0px;
+  }
+.os-tabs a {
+    background: #ccc;
+    padding: 5px 14px;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-weight: bold;
+    color: #000;
+    display: block;
+}
+.os-tabs a:focus {
+  outline: none;
+  box-shadow: none;
+  border: none;
+}
+.os-tabs  li.active a {
+  background: #fff;
+  color: #000;
+}
+.os-tab-content {
+    padding: 0px 0px;
+    display: none;
+}
+.os-tab-content.active {
+  display: block;
+}
+/* Taller Admin Bar */
+@media screen and ( min-width: 782px ) {
+  html.wp-toolbar {
+    padding-top: 60px;
+  }
+  #wpadminbar {
+    height: 60px;
+  }
+  #wpadminbar .quicklinks .ab-empty-item, #wpadminbar .quicklinks a, #wpadminbar .shortlink-input {
+    height: 60px;
+    line-height: 60px;
+  }
+  #wpadminbar .ab-icon, #wpadminbar .ab-item:before, #wpadminbar>#wp-toolbar>#wp-admin-bar-root-default .ab-icon {
+    padding: 16px 0;
+  }
+}
+@media screen and ( min-width: 600px ){
+
+}

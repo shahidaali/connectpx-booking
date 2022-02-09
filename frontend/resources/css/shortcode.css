@@ -1,0 +1,345 @@
+.connectpx_booking_form {
+    box-sizing: border-box;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: inherit;
+}
+.connectpx_booking_form input[type="text"], 
+.connectpx_booking_form input[type="number"], 
+.connectpx_booking_form input[type="password"], 
+.connectpx_booking_form select, 
+.connectpx_booking_form textarea {
+    font-size: 14px !important;
+    line-height: normal !important;
+    border: 1px solid silver !important;
+    border-radius: 4px !important;
+    width: 100% !important;
+}
+.connectpx_booking_form input[type="text"], 
+.connectpx_booking_form input[type="number"], 
+.connectpx_booking_form input[type="password"], 
+.connectpx_booking_form select {
+    height: auto !important;
+}
+.connectpx_booking_form input[type="text"], 
+.connectpx_booking_form input[type="checkbox"], 
+.connectpx_booking_form input[type="radio"], 
+.connectpx_booking_form input[type="number"], 
+.connectpx_booking_form input[type="password"], 
+.connectpx_booking_form select, 
+.connectpx_booking_form textarea {
+    display: inline-block;
+    margin: 0 !important;
+    outline: none !important;
+}
+.connectpx_booking_form input[type="text"], 
+.connectpx_booking_form input[type="number"], 
+.connectpx_booking_form input[type="password"], 
+.connectpx_booking_form textarea {
+    padding: 6px 7px 5px !important;
+}
+/* Picker */
+.connectpx_booking_form .picker--date .picker__holder {
+    width: 310px !important;
+    overflow: hidden !important;
+    -webkit-border-radius: 5px 5px !important;
+    -moz-border-radius: 5px 5px !important;
+    border-radius: 5px 5px !important;
+    top: 2px;
+    left: 0px;
+    outline: none;
+    bottom: auto;
+    position: relative;
+}
+
+.connectpx_booking_form .picker.picker--date {
+    width: auto !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    position: relative !important;
+}
+
+.connectpx_booking_form .picker.picker--date:before,
+.connectpx_booking_form .picker.picker--date:after {
+    display: none !important;
+}
+
+.connectpx_booking_form .picker--date .picker__frame * {
+    font-size: 14px !important;
+    font-weight: bold !important;
+    border: 0 !important;
+    color: #fff !important;
+}
+
+.connectpx_booking_form .picker--date .picker__frame {
+    position: static;
+    margin-bottom: 0 !important;
+}
+
+.connectpx_booking_form .picker--date .picker__weekday {
+    font-weight: normal !important;
+    text-align: center !important;
+    padding: 0 !important;
+    padding-bottom: .5em !important;
+    border: 0 !important;
+    background: none !important;
+}
+
+.connectpx_booking_form .picker--date .picker__day--selected,
+.connectpx_booking_form .picker--date .picker__day--selected:hover,
+.connectpx_booking_form .picker--date .picker--focused .picker__day--selected,
+.connectpx_booking_form .picker--date .picker__day--infocus:hover,
+.connectpx_booking_form .picker--date .picker__day--outfocus:hover {
+    background: #fff !important;
+    border-radius: 4px !important;
+}
+
+.connectpx_booking_form .picker--date .picker__day--highlighted {
+    border-color: #fff !important;
+}
+
+.connectpx_booking_form .picker--date .picker__button--today:before {
+    display: none !important;
+}
+
+.connectpx_booking_form .picker--date .picker__nav--prev:before {
+    border-left: 0 !important;
+}
+
+.connectpx_booking_form .picker--date .picker__nav--next:before {
+    border-right: 0 !important;
+}
+
+.connectpx_booking_form .picker--date.picker--focused .picker__day--highlighted {
+    background: none !important;
+    border-radius: 4px !important;
+}
+
+.connectpx_booking_form .picker--date.picker--focused .picker__day--highlighted:hover {
+    background: white !important;
+}
+
+.connectpx_booking_form .picker--date.picker--focused .picker__day--selected {
+    background: white !important;
+}
+
+.connectpx_booking_form .picker--date .picker__button--today:hover,
+.connectpx_booking_form .picker--date .picker__button--clear:hover {
+    background: white !important;
+    border-bottom-color: white !important;
+}
+
+.connectpx_booking_form .picker--date .picker__table {
+    margin-top: .75em !important;
+    margin-bottom: .75em !important;
+    line-height: normal !important;
+    background: none !important;
+}
+
+.connectpx_booking_form .picker--date .picker__table td {
+    text-align: center !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: none !important;
+}
+
+.connectpx_booking_form .picker--date .picker__table tr,
+.connectpx_booking_form .picker--date .picker__table tbody,
+.connectpx_booking_form .picker--date .picker__table thead {
+    background: none !important;
+}
+
+.connectpx_booking_form .picker--date .picker__nav--prev {
+    left: 0;
+}
+
+.connectpx_booking_form .picker--date .picker__nav--next {
+    right: 0;
+}
+
+.connectpx_booking_form .picker--date .picker__nav--prev,
+.connectpx_booking_form .picker--date .picker__nav--next {
+    box-sizing: content-box;
+    background: white !important;
+    border-radius: 50%;
+    padding: 6px;
+    top: -3px;
+}
+
+.connectpx_booking_form .picker--date .picker__day--today {
+    border: 1px solid white !important;
+    -webkit-border-radius: 4px !important;
+    -moz-border-radius: 4px !important;
+    border-radius: 4px !important;
+}
+
+.connectpx_booking_form .picker--date .picker__day--today:before {
+    display: none;
+}
+
+.connectpx_booking_form .picker--date .picker__button--today,
+.connectpx_booking_form .picker--date .picker__button--clear {
+    padding: 5px 0 !important;
+    width: 33% !important;
+    -webkit-border-radius: 4px !important;
+    -moz-border-radius: 4px !important;
+    border-radius: 4px !important;
+    margin-bottom: 10px !important;
+    float: none !important;
+    background: white !important;
+}
+
+.connectpx_booking_form .picker--date .picker__day--outfocus,
+.connectpx_booking_form .picker--date .picker__day--disabled {
+    opacity: .5;
+    background: none !important;
+}
+
+.connectpx_booking_form .picker--date .picker__day--disabled:hover {
+    background: white;
+}
+
+.connectpx_booking_form .picker--date .picker__nav--disabled {
+    display: none;
+}
+.connectpx_booking_form .cbf-step-bar > .active .step, 
+.connectpx_booking_form .picker--date .picker__frame, 
+.connectpx_booking_form .bookly-service-step .bookly-week-days label, 
+.connectpx_booking_form .bookly-repeat-step .bookly-week-days label, 
+.connectpx_booking_form .bookly-columnizer .bookly-hour:hover .bookly-hour-icon span, 
+.connectpx_booking_form .bookly-btn, .connectpx_booking_form .bookly-btn:active, 
+.connectpx_booking_form .bookly-btn:focus, 
+.connectpx_booking_form .bookly-btn:hover, 
+.connectpx_booking_form .bookly-btn-submit, 
+.connectpx_booking_form .bookly-round, 
+.connectpx_booking_form .bookly-square {
+    background-color: #079207 !important;
+}
+.connectpx_booking_form .picker__header {
+    border-bottom: 1px solid #079207 !important;
+}
+.connectpx_booking_form .connectpx_booking_form-group > label, 
+.connectpx_booking_form .bookly-label-error, 
+.connectpx_booking_form .cbf-step-bar > .active, 
+.connectpx_booking_form .picker__nav--next, 
+.connectpx_booking_form .pickadate__nav--prev, 
+.connectpx_booking_form .picker__day:hover, 
+.connectpx_booking_form .picker__day--selected:hover, 
+.connectpx_booking_form .picker--opened .picker__day--selected, 
+.connectpx_booking_form .picker__button--clear, 
+.connectpx_booking_form .picker__button--today, 
+.connectpx_booking_form .bookly-columnizer .bookly-hour span.bookly-waiting-list {
+    color: #079207 !important;
+}
+.connectpx_booking_form .cbf-booking-date.picker__input {
+    display: none;
+}
+
+.connectpx_booking_form .choose-service {
+    display: flex;
+    flex-wrap: wrap;
+}
+.connectpx_booking_form .choose-service .service-item {
+    margin-right: 10px;
+}
+.connectpx_booking_form .choose-service .service-item button {
+    min-width: 300px;
+    padding: 10px;
+    border: 1px solid #079207;
+    color: #079207;
+    background: none;
+}
+.connectpx_booking_form .choose-service .service-item button.selected,
+.connectpx_booking_form .choose-service .service-item button:hover,
+.connectpx_booking_form .choose-service .service-item button:focus,
+.connectpx_booking_form .choose-service .service-item button:active {
+    border: 1px solid #079207;
+    color: #fff;
+    background: #079207;
+}
+.connectpx_booking_form .cbf-box {
+    margin-bottom: 30px;
+}
+
+/* Progress Tracker */
+.cbf-step-bar {
+    margin: 0 0 20px !important;
+    padding: 0 !important;
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+}
+.cbf-step-bar > div {
+    padding-left: 4px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-weight: bold;
+    overflow: hidden;
+    width: 100%;
+}
+.cbf-step-bar .step {
+    height: 15px;
+    background: #bec3c7;
+    margin-top: 5px;
+}
+.cbf-step-bar > div:first-child .step {
+    border-radius: 5px 0 0 5px;
+}
+.cbf-step-bar > div:last-child .step {
+    border-radius: 0 5px 5px 0;
+}
+.cbf-step-bar > div:first-child {
+    padding-left: 0;
+}
+
+/* Buttons */
+.cbf-button {
+    padding: 9px 18px !important;
+    border: 0 !important;
+    min-width: 118px;
+    display: inline-block;
+    text-align: center;
+    line-height: normal;
+    border-radius: 4px !important;
+    background: #f4662f;
+    cursor: pointer !important;
+    height: auto !important;
+    outline: none !important;
+    color: #fff !important;
+    font-size: 18px !important;
+    line-height: 17px !important;
+    font-weight: bold !important;
+    text-transform: uppercase !important;
+    background-color: #079207 !important;
+}
+.cbf-buttons {
+    padding-top: 20px !important;
+    border-top: 1px solid silver !important;
+    overflow: hidden;
+    display: flex;
+    justify-content: space-between;
+}
+.cbf-button-next {
+    margin-left: auto;
+}
+
+.cbf-table {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+}
+.cbf-table > * {
+    align-items: flex-start;
+    width: auto;
+}
+.cbf-form-group > label {
+    display: inline-block;
+    font-weight: bold;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+.cbf-form-group > div {
+    margin: 5px 14px 0 0;
+}
