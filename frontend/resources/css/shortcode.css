@@ -222,7 +222,7 @@
 .connectpx_booking_form .picker__header {
     border-bottom: 1px solid #079207 !important;
 }
-.connectpx_booking_form .connectpx_booking_form-group > label, 
+.connectpx_booking_form .cbf-form-group > label, 
 .connectpx_booking_form .cbf-label-error, 
 .connectpx_booking_form .cbf-step-bar > .active, 
 .connectpx_booking_form .picker__nav--next, 
@@ -247,13 +247,13 @@
 
 .connectpx_booking_form .choose-service {
     display: flex;
-    flex-wrap: wrap;
 }
 .connectpx_booking_form .choose-service .service-item {
     margin-right: 10px;
+    width: 100%;
 }
 .connectpx_booking_form .choose-service .service-item button {
-    min-width: 300px;
+    min-width: 100%;
     padding: 10px;
     border: 1px solid #079207;
     color: #079207;
@@ -270,7 +270,9 @@
 .connectpx_booking_form .cbf-box {
     margin-bottom: 30px;
 }
-
+.connectpx_booking_form .cbf-label-error {
+    color: red !important;
+}
 /* Progress Tracker */
 .cbf-step-bar {
     margin: 0 0 20px !important;
@@ -356,6 +358,18 @@
     position: relative;
 }
 
+.cbf-details-step .cbf-form-group {
+    padding-bottom: 15px;
+}
+.cbf-details-step .cbf-table {
+    margin-bottom: 0px !important;
+}
+.cbf-form-group.cbf-datepicker {
+    width: 350px;
+}
+.cbf-timepicker-row {
+    max-width: 400px;
+}
 /* Global */
 .cbf-list-none {
     list-style: none;
@@ -2134,3 +2148,5 @@ label.cbf-square {
 .pac-container {
     z-index: 1000000 !important;
 }
+
+

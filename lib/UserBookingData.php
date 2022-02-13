@@ -70,6 +70,9 @@ class UserBookingData
     /** @var string */
     protected $order_id;
 
+    /** @var string */
+    protected $is_contract_customer = false;
+
     // Private
 
     // Frontend expect variables
@@ -100,6 +103,8 @@ class UserBookingData
         'address_iso',
         'notes',
         'sub_services',
+        // Cart item keys being edited
+        'edit_cart_keys',
         'repeated',
         'repeat_data',
     );
@@ -123,7 +128,7 @@ class UserBookingData
      */
     public function __construct()
     {
-        // $this->cart    = new Cart( $this );
+        $this->cart    = new Cart( $this );
 
         // If logged in then set name, email and if existing customer then also phone.
         $current_user = wp_get_current_user();
@@ -144,14 +149,18 @@ class UserBookingData
                     ->setStreetNumber( $customer->getStreetNumber() )
                     ->setAdditionalAddress( $customer->getAdditionalAddress() )
                     ->setSubServices( json_decode( $customer->getSubServices(), true ) )
+                    ->setIsContractCustomer( true );
                 ;
             } else {
                 $this
                     ->setFullName( $current_user->display_name )
                     ->setFirstName( $current_user->user_firstname )
                     ->setLastName( $current_user->user_lastname )
-                    ->setEmail( $current_user->user_email );
+                    ->setEmail( $current_user->user_email )
+                    ->setIsContractCustomer( false );
             }
+        } else {
+            $this->setIsContractCustomer( false );
         }
     }
 
@@ -161,6 +170,7 @@ class UserBookingData
     public function sessionSave()
     {
         Utils\Session::set( 'userdata', $this->getData() );
+        Utils\Session::set( 'cart', $this->cart->getItemsData() );
     }
 
     /**
@@ -187,6 +197,7 @@ class UserBookingData
         if ( $userdata !== null ) {
             // Restore data.
             $this->fillData( $userdata );
+            $this->cart->setItemsData( Utils\Session::get( 'cart' ) );
             $this->applyTimeZone();
 
             return true;
@@ -225,6 +236,49 @@ class UserBookingData
     }
 
     /**
+     * Add slot items to cart.
+     *
+     * @return $this
+     */
+    public function addSlotsToCart()
+    {
+        $cart_items     = array();
+        $edit_cart_keys = $this->getEditCartKeys();
+        $slots          = $this->getSlots();
+        foreach ($slots as $key => $slot) {
+            $cart_item = new CartItem();
+
+            $cart_item
+                ->setDateFrom( $this->getDateFrom() );
+
+            $cart_item
+                ->setServiceId( $this->getServiceId() )
+                ->setSlots( [$slot] );
+
+            $cart_items[] = $cart_item;
+        }
+
+        $count = count( $edit_cart_keys );
+        $inserted_keys = array();
+
+        if ( $count ) {
+            $replace_key = array_shift( $edit_cart_keys );
+            foreach ( $edit_cart_keys as $key ) {
+                $this->cart->drop( $key );
+            }
+            $inserted_keys = $this->cart->replace( $replace_key, $cart_items );
+        } else {
+            foreach ( $cart_items as $cart_item ) {
+                $inserted_keys[] = $this->cart->add( $cart_item );
+            }
+        }
+
+        $this->setEditCartKeys( $inserted_keys );
+
+        return $this;
+    }
+
+    /**
      * Validate fields.
      *
      * @param $data
@@ -245,27 +299,23 @@ class UserBookingData
                 case 'return_pickup_time':
                     $validator->validateTime( $field_name, $field_value, false );
                     break;
-                case 'full_name':
-                case 'first_name':
-                case 'last_name':
-                    $validator->validateName( $field_name, $field_value );
+                case 'pickup_patient_name':
+                case 'pickup_room_no':
+                case 'pickup_contact_person':
+                case 'pickup_contact_no':
+                    $validator->validateRequired( $field_name, $field_value, true );
                     break;
-                case 'email':
-                    $validator->validateEmail( $field_name, $data );
+                case 'destination_hospital':
+                case 'destination_contact_no':
+                case 'destination_room_no':
+                    $validator->validateRequired( $field_name, $field_value, true );
                     break;
-                case 'country':
-                case 'state':
-                case 'postcode':
-                case 'city':
-                case 'street':
-                case 'street_number':
-                case 'additional_address':
-                    if ( array_key_exists( $field_name, Proxy\Pro::getDisplayedAddressFields() ) ) {
-                        $validator->validateAddress( $field_name, $field_value, Config::addressRequired() );
-                    }
+                case 'pickup_address':
+                case 'destination_address':
+                    $validator->validateRouteAddress( $field_name, $field_value, true );
                     break;
-                case 'phone':
-                    $validator->validatePhone( $field_name, $field_value, Config::phoneRequired() );
+                case 'route_distance':
+                    $validator->validateDistance( $field_name, $field_value, true );
                     break;
                 case 'sub_services':
                     $validator->validateSubServices( $field_value );
@@ -276,9 +326,38 @@ class UserBookingData
                 default:
             }
         }
+
+        if( ! $this->isContractCustomer() ) {
+            foreach ( $data as $field_name => $field_value ) {
+                switch ( $field_name ) {
+                    case 'full_name':
+                    case 'first_name':
+                    case 'last_name':
+                        $validator->validateName( $field_name, $field_value );
+                        break;
+                    case 'email':
+                        $validator->validateEmail( $field_name, $data );
+                        break;
+                    case 'country':
+                    case 'state':
+                    case 'postcode':
+                    case 'city':
+                    case 'street':
+                    case 'street_number':
+                    case 'additional_address':
+                        $validator->validateAddress( $field_name, $field_value, true );
+                        break;
+                    case 'phone':
+                        $validator->validatePhone( $field_name, $field_value, true );
+                        break;
+                    default:
+                }
+            }
+        }
+
         // Post validators.
         if ( isset ( $data['phone'] ) || isset ( $data['email'] ) ) {
-            $validator->postValidateCustomer( $data, $this );
+            // $validator->postValidateCustomer( $data, $this );
         }
 
         return $validator->getErrors();
@@ -906,6 +985,22 @@ class UserBookingData
     }
 
     /**
+     * @return string
+     */
+    public function getAddress()
+    {
+        return Utils\Common::getFullAddressByCustomerData( array(
+            'country'            => $this->getCountry(),
+            'state'              => $this->getState(),
+            'postcode'           => $this->getPostcode(),
+            'city'               => $this->getCity(),
+            'street'             => $this->getStreet(),
+            'street_number'      => $this->getStreetNumber(),
+            'additional_address' => $this->getAdditionalAddress(),
+        ) );
+    }
+
+    /**
      * Gets sub_services
      *
      * @return array
@@ -985,6 +1080,16 @@ class UserBookingData
     }
 
     /**
+     * Gets sub_service_id
+     *
+     * @return array
+     */
+    public function isRoundTrip()
+    {
+        return $this->isOneWay() ? false : true;
+    }
+
+    /**
      * Gets notes
      *
      * @return string
@@ -1003,6 +1108,29 @@ class UserBookingData
     public function setNotes( $notes )
     {
         $this->notes = $notes;
+
+        return $this;
+    }
+
+    /**
+     * Gets edit_cart_keys
+     *
+     * @return array
+     */
+    public function getEditCartKeys()
+    {
+        return $this->edit_cart_keys;
+    }
+
+    /**
+     * Sets edit_cart_keys
+     *
+     * @param array $edit_cart_keys
+     * @return $this
+     */
+    public function setEditCartKeys( $edit_cart_keys )
+    {
+        $this->edit_cart_keys = $edit_cart_keys;
 
         return $this;
     }
@@ -1118,6 +1246,29 @@ class UserBookingData
     public function setActiveStep( $active_step )
     {
         $this->active_step = $active_step;
+
+        return $this;
+    }
+
+    /**
+     * Gets is_contract_customer
+     *
+     * @return string
+     */
+    public function isContractCustomer()
+    {
+        return $this->is_contract_customer;
+    }
+
+    /**
+     * Sets is_contract_customer
+     *
+     * @param string $is_contract_customer
+     * @return $this
+     */
+    public function setIsContractCustomer( $is_contract_customer )
+    {
+        $this->is_contract_customer = $is_contract_customer;
 
         return $this;
     }

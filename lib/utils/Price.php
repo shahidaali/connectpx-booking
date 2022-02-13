@@ -1,9 +1,9 @@
 <?php
-namespace Bookly\Lib\Utils;
+namespace ConnectpxBooking\Lib\Utils;
 
 /**
  * Class Price
- * @package Bookly\Lib\Utils
+ * @package ConnectpxBooking\Lib\Utils
  */
 abstract class Price
 {
@@ -134,8 +134,10 @@ abstract class Price
     public static function format( $price )
     {
         $price    = (float) $price;
-        $currency = get_option( 'bookly_pmt_currency' );
-        $format   = get_option( 'bookly_pmt_price_format' );
+        // $currency = get_option( 'connectpx_booking_pmt_currency' );
+        // $format   = get_option( 'connectpx_booking_pmt_price_format' );
+        $currency = "USD";
+        $format   = "{symbol}{sign}{price|2}";
         $symbol   = self::$currencies[ $currency ]['symbol'];
 
         if ( preg_match( '/{price\|(\d)}/', $format, $match ) ) {
@@ -158,9 +160,9 @@ abstract class Price
     {
         global $wp_locale;
 
-        $format   = get_option( 'bookly_pmt_price_format' );
+        $format   = get_option( 'connectpx_booking_pmt_price_format' );
         preg_match( '/{price\|(\d)}/', $format, $match );
-        $format   = strtr( $format,  array( $match[0] => '{price}', '{symbol}' => self::$currencies[ get_option( 'bookly_pmt_currency' ) ]['symbol'] )  );
+        $format   = strtr( $format,  array( $match[0] => '{price}', '{symbol}' => self::$currencies[ get_option( 'connectpx_booking_pmt_currency' ) ]['symbol'] )  );
         $decimals = $match[1];
         if ( $wp_locale ) {
             $decimal_separator = $wp_locale->number_format['decimal_point'];

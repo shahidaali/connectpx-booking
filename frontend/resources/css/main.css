@@ -1,0 +1,37 @@
+.woocommerce-billing-fields {
+    display: none !important;
+}
+.woocommerce-booking-details-wrapper {
+    padding: 10px 20px;
+    background: #f7f7f7;
+    border-radius: 5px;
+}
+.woocommerce-booking-details-wrapper p {
+    margin-bottom: 10px;
+    color: #999;
+}
+.woocommerce-page.woocommerce-checkout form #order_review td .variation dt {
+    display: block;
+    float: none;
+}
+.woocommerce-page.woocommerce-checkout form #order_review td .variation dd p {
+    display: block;
+    margin: 10px 0px;
+    padding: 10px;
+    background: #f7f7f7;
+    border-radius: 5px;
+}
+.bookly-custom-field-row[data-id="pickupaddress"],
+.bookly-custom-field-row[data-id="deliveryaddress"],
+.bookly-custom-field-row[data-id="pickuplocation"],
+.bookly-custom-field-row[data-id="deliverylocation"],
+.bookly-custom-field-row[data-id="distance"],
+.bookly-custom-field-row[data-id="estimatedtime"],
+.bookly-custom-field-row[data-id="googlemaplink"] {
+    position: absolute;
+    width: 0px;
+    height: 0px;
+    overflow: hidden;
+    z-index: -1;
+    visibility: hidden;
+}

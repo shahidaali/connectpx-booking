@@ -24,7 +24,7 @@ class Ajax extends Lib\Base\Ajax
     public static function renderService()
     {
         $userData = new Lib\UserBookingData();
-        $userData->load();
+        // $userData->load();
 
         self::_handleTimeZone( $userData );
         $services = Lib\Utils\Common::getSubServices();
@@ -208,6 +208,47 @@ class Ajax extends Lib\Base\Ajax
     }
 
     /**
+     * 6. Step details.
+     *
+     * @throws
+     */
+    public static function renderDetails()
+    {
+        $userData = new Lib\UserBookingData();
+        $loaded = $userData->load();
+
+        if ( $loaded ) {
+            if ( self::hasParameter( 'add_to_cart' ) ) {
+                $userData->addSlotsToCart();
+            }
+
+            // Render main template.
+            $html = self::renderTemplate( 'frontend/templates/steps/details', array(
+                'progress_bar' => self::_renderProgressBar($userData),
+                'buttons' => self::_renderButtons($userData),
+                'userData' => $userData,
+            ), false );
+
+            $response = array(
+                'success' => true,
+                'html' => $html,
+                'is_round_trip' => !$userData->isRoundTrip(),
+                'woocommerce' => array(
+                    'enabled' => 1,
+                    'cart_url' => wc_get_cart_url(),
+                ),
+                'terms_error' => __('Please accept terms and conditions to proceed.', 'connectpx_booking')
+            );
+        } else {
+            $response = array( 'success' => false, 'error' => __('Session Error', 'connectpx_booking') );
+        }
+        $userData->sessionSave();
+
+        // Output JSON response.
+        wp_send_json( $response );
+    }
+
+    /**
      * Save booking data in session.
      */
     public static function sessionSave()
@@ -258,10 +299,56 @@ class Ajax extends Lib\Base\Ajax
 
             $schedule = $scheduler->build( $slots );
 
+            $userData->sessionSave();
             wp_send_json_success( $schedule );
         } else {
             wp_send_json_error();
         }
+    }
+
+    /**
+     * Add product to cart
+     *
+     * return string JSON
+     */
+    public static function addToWoocommerceCart()
+    {
+        $userData = new Lib\UserBookingData();
+
+        if ( $userData->load() ) {
+            $session = WC()->session;
+            /** @var \WC_Session_Handler $session */
+            if ( $session instanceof \WC_Session_Handler && $session->get_session_cookie() === false ) {
+                $session->set_customer_session_cookie( true );
+            }
+            $first_name = $userData->getFirstName();
+            $last_name  = $userData->getLastName();
+            $iso = $userData->getAddressIso();
+            $connectpx_booking = $userData->getData();
+            $connectpx_booking['items']       = $userData->cart->getItemsData();
+            $connectpx_booking['wc_checkout'] = array(
+                'billing_first_name' => $first_name,
+                'billing_last_name'  => $last_name,
+                'billing_email'      => $userData->getEmail(),
+                'billing_phone'      => $userData->getPhone(),
+                // Billing country on WC checkout is select (select2)
+                'billing_country'    => isset( $iso['country'] ) ? $iso['country'] : null,
+                'billing_state'      => isset( $iso['state'] )   ? $iso['state'] : null,
+                'billing_city'       => $userData->getCity() ?: null,
+                'billing_address_1'  => $userData->getStreet() ?: null,
+                'billing_address_2'  => $userData->getAdditionalAddress() ?: null,
+                'billing_postcode'   => $userData->getPostcode() ?: null,
+            );
+            $product_id = 544;
+
+            // Qnt 1 product in $userData exists value with number_of_persons
+            WC()->cart->add_to_cart( $product_id, 1, '', array(), compact( 'connectpx_booking' ) );
+
+            $response = array( 'success' => true );
+        } else {
+            $response = array( 'success' => false, 'error' => __('Session Error', 'connectpx_booking') );
+        }
+        wp_send_json( $response );
     }
 
     /**

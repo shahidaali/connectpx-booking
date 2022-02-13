@@ -1,11 +1,8 @@
 <?php
 namespace ConnectpxBooking\Lib;
 
-use ConnectpxBooking\Lib\DataHolders\Booking as DataHolders;
-use ConnectpxBooking\Lib\Entities\CustomerAppointment;
+use ConnectpxBooking\Lib\Entities\Appointment;
 use ConnectpxBooking\Lib\Entities\Payment;
-use ConnectpxBooking\Lib\Utils\Common;
-use ConnectpxBooking\Lib\Utils\Log;
 
 /**
  * Class Cart
@@ -359,17 +356,9 @@ class Cart
      * @param bool   $apply_coupon
      * @return CartInfo
      */
-    public function getInfo( $gateway = null, $apply_coupon = true )
+    public function getInfo()
     {
-        $cart_info = new CartInfo( $this->userData, $apply_coupon );
-
-        if ( $gateway === Payment::TYPE_CLOUD_STRIPE ) {
-            $cart_info->setGateway( $gateway );
-        } elseif ( $gateway !== null ) {
-            // Set gateway when add-on enabled
-            $cart_info = Proxy\Shared::applyGateway( $cart_info, $gateway );
-        }
-
+        $cart_info = new CartInfo( $this->userData );
         return $cart_info;
     }
 
@@ -383,7 +372,7 @@ class Cart
     public function getItemsTitle( $max_length = 255, $multi_byte = true )
     {
         reset( $this->items );
-        $title = $this->get( key( $this->items ) )->getService()->getTranslatedTitle();
+        $title = $this->get( key( $this->items ) )->getService()->getTitle();
         $tail  = '';
         $more  = count( $this->items ) - 1;
         if ( $more > 0 ) {
@@ -414,77 +403,30 @@ class Cart
      */
     public function getFailedKey()
     {
-        $waiting_list_enabled = Config::waitingListActive() && get_option( 'bookly_waiting_list_enabled' );
+        // $max_date = Slots\DatePoint::now()
+        //     ->modify( ( 1 + Config::getMaximumAvailableDaysForBooking() ) * DAY_IN_SECONDS )
+        //     ->modify( '00:00:00' );
 
-        $max_date = Slots\DatePoint::now()
-            ->modify( ( 1 + Config::getMaximumAvailableDaysForBooking() ) * DAY_IN_SECONDS )
-            ->modify( '00:00:00' );
+        // foreach ( $this->items as $cart_key => $cart_item ) {
+        //     if ( $cart_item->getService() ) {
+        //         $service = $cart_item->getService();
+        //         $with_sub_services = $service->withSubServices();
+        //         foreach ( $cart_item->getSlots() as $slot ) {
+        //             list ( $datetime, $pickup_time, $return_pickup_time ) = $slot;
+        //             if ( $datetime === null ) {
+        //                 // Booking is always available for tasks.
+        //                 continue;
+        //             }
 
-        foreach ( $this->items as $cart_key => $cart_item ) {
-            if ( $cart_item->getService() ) {
-                $service = $cart_item->getService();
-                $with_sub_services = $service->withSubServices();
-                foreach ( $cart_item->getSlots() as $slot ) {
-                    if ( $waiting_list_enabled && isset ( $slot[4] ) && $slot[4] == 'w' ) {
-                        // Booking is always available for slots being placed on waiting list.
-                        continue;
-                    }
-                    list ( $service_id, $staff_id, $datetime ) = $slot;
-                    if ( $datetime === null ) {
-                        // Booking is always available for tasks.
-                        continue;
-                    }
-                    if ( $with_sub_services ) {
-                        $service = Entities\Service::find( $service_id );
-                    }
+        //             $bound_start = Slots\DatePoint::fromStr( $datetime );
+        //             $bound_end = Slots\DatePoint::fromStr( $datetime )->modify( ( (int) $service->getDuration() ) . ' sec' );
 
-                    $bound_start = Slots\DatePoint::fromStr( $datetime );
-                    $bound_end = Slots\DatePoint::fromStr( $datetime )->modify( ( (int) $service->getDuration() ) . ' sec' );
-                    if ( Config::proActive() ) {
-                        $bound_start->modify( '-' . (int) $service->getPaddingLeft() . ' sec' );
-                        $bound_end->modify( ( (int) $service->getPaddingRight() + $cart_item->getExtrasDuration() ) . ' sec' );
-                    }
-
-                    if ( $bound_end->lte( $max_date ) ) {
-                        $query = Entities\CustomerAppointment::query( 'ca' )
-                            ->select( sprintf( 'ss.capacity_max, SUM(ca.number_of_persons) AS total_number_of_persons,
-                                DATE_SUB(a.start_date, INTERVAL %s SECOND) AS bound_left,
-                                DATE_ADD(a.end_date,   INTERVAL (%s + IF(ca.extras_consider_duration, a.extras_duration, 0)) SECOND) AS bound_right',
-                                Proxy\Shared::prepareStatement( 0, 'COALESCE(s.padding_left,0)', 'Service' ),
-                                Proxy\Shared::prepareStatement( 0, 'COALESCE(s.padding_right,0)', 'Service' ) ) )
-                            ->leftJoin( 'Appointment', 'a', 'a.id = ca.appointment_id' )
-                            ->leftJoin( 'StaffService', 'ss', 'ss.staff_id = a.staff_id AND ss.service_id = a.service_id' )
-                            ->leftJoin( 'Service', 's', 's.id = a.service_id' )
-                            ->where( 'a.staff_id', $staff_id )
-                            ->whereIn( 'ca.status', Proxy\CustomStatuses::prepareBusyStatuses( array(
-                                Entities\CustomerAppointment::STATUS_PENDING,
-                                Entities\CustomerAppointment::STATUS_APPROVED
-                            ) ) )
-                            ->groupBy( 'a.service_id, a.start_date' )
-                            ->havingRaw( '%s > bound_left AND bound_right > %s AND ( total_number_of_persons + %d ) > ss.capacity_max',
-                                array( $bound_end->format( 'Y-m-d H:i:s' ), $bound_start->format( 'Y-m-d H:i:s' ), $cart_item->getNumberOfPersons() ) )
-                            ->limit( 1 );
-                        if ( Config::locationsActive() && get_option( 'bookly_locations_allow_services_per_location' ) ) {
-                            $location_id = isset( $slot[3] ) ? $slot[3] : 0;
-                            $query
-                                ->leftJoin( 'StaffLocation', 'sl', 'sl.staff_id = ss.staff_id', '\ConnectpxBookingLocations\Lib\Entities' )
-                                ->where( 'sl.location_id', $location_id )
-                                ->whereRaw( '( ss.location_id IS NULL AND sl.custom_services = 0 ) OR ( ss.location_id IS NOT NULL AND sl.custom_services = 1 AND sl.location_id = ss.location_id )', array() );
-                        } else {
-                            $query->where( 'ss.location_id', null );
-                        }
-                        $rows  = $query->execute( Query::HYDRATE_NONE );
-
-                        if ( $rows != 0 ) {
-                            // Intersection of appointments exists, time is not available.
-                            return $cart_key;
-                        }
-                    } else {
-                        return $cart_key;
-                    }
-                }
-            }
-        }
+        //             if ( !$bound_end->lte( $max_date ) ) {
+        //                 return $cart_key;
+        //             }
+        //         }
+        //     }
+        // }
 
         return null;
     }

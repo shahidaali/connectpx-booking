@@ -12,7 +12,7 @@
  * @subpackage ConnectpxBooking/public/partials
  */
 ?>
-<div class="cbf-box cbf-table">
+<div class="cbf-box cbf-table cbf-timepicker-row">
     <div class="cbf-form-group">
         <label><?php echo __('Pickup Time', 'connectpx_booking'); ?></label>
         <div>

@@ -261,6 +261,15 @@ abstract class Common {
     }
 
     /**
+     * @param array $data
+     * @return string
+     */
+    public static function getFullAddressByCustomerData( array $data )
+    {
+        return implode(", ", $data);
+    }
+
+    /**
      * Get CSRF token.
      *
      * @return string

@@ -19,6 +19,14 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
+if(!function_exists('__pre')) {
+    function __pre( $code ) {
+        echo '<pre>';
+        print_r($code);
+        echo '</pre>';
+    }
+}
+
 include_once __DIR__ . '/autoload.php';
 ConnectpxBooking\Lib\Plugin::run();
 

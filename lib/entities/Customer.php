@@ -537,7 +537,7 @@ class Customer extends Lib\Base\Entity
      */
     public function getAddress()
     {
-        return Lib\Proxy\Pro::getFullAddressByCustomerData( array(
+        return Lib\Utils\Common::getFullAddressByCustomerData( array(
             'country'            => $this->getCountry(),
             'state'              => $this->getState(),
             'postcode'           => $this->getPostcode(),

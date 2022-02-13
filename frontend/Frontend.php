@@ -28,6 +28,7 @@ class Frontend {
 
 		Ajax::init();
 		ShortCode::init();
+		WooCommerce::init();
 
 		add_action( 'wp_enqueue_scripts', array(__CLASS__, 'enqueueScripts') );
 

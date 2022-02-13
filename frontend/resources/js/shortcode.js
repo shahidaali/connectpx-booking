@@ -2,261 +2,12 @@
     'use strict';
     var $container = $('.connectpx_booking_form'),
         bookingData = {
-            active_step: 'service',
             service_id: ConnextpxBookingShortcode.service_id,
-            sub_service_id: null,
-            date_from: null,
-            pickup_time: null,
-            return_pickup_time: null,
         };
 
     function init() {
         serviceStep();
-    }
-
-    function initMap() {
-        var mapCanvas, 
-        map, 
-        directionsService, 
-        directionsRenderer, 
-        pickupInput, 
-        deliveryInput, 
-        pickupAutocomplete, 
-        deliveryAutocomplete, 
-        pickupPlace, 
-        deliveryPlace,
-        addressInfo,
-        selectedRoute;
-
-        mapCanvas = document.getElementById("google-routes-map");
-        pickupInput = document.getElementById("cbf-js-cst-address-autocomplete-pickup");
-        deliveryInput = document.getElementById("cbf-js-cst-address-autocomplete-delivery");
-        addressInfo = document.getElementById("cbf-routes-adrress-info");
-
-        pickupAutocomplete = new google.maps.places.Autocomplete(pickupInput, {
-            types: ['geocode']
-        });
-        deliveryAutocomplete = new google.maps.places.Autocomplete(deliveryInput, {
-            types: ['geocode']
-        });
-
-        directionsService = new google.maps.DirectionsService();
-        directionsRenderer = new google.maps.DirectionsRenderer({
-            draggable: true,
-        });
-
-        map = new google.maps.Map(mapCanvas, {
-            zoom: 7,
-            center: { lat: 42.3144255, lng: -83.518173 },
-        });
-
-        directionsRenderer.setMap(map);
-
-        pickupAutocomplete.addListener('place_changed', function () {
-            pickupPlace = this.getPlace();
-            calculateAndDisplayRoute();
-            fillAdrressFields();
-        });
-        deliveryAutocomplete.addListener('place_changed', function () {
-            deliveryPlace = this.getPlace();
-            calculateAndDisplayRoute();
-        });
-
-        function calculateAndDisplayRoute() {
-            if(!pickupPlace || !deliveryPlace) {
-                return;
-            }
-
-            var pointA = new google.maps.LatLng(pickupPlace.geometry.location.lat(), pickupPlace.geometry.location.lng()),
-                pointB = new google.maps.LatLng(deliveryPlace.geometry.location.lat(), deliveryPlace.geometry.location.lng());
-
-            directionsService
-                .route({
-                  origin: pointA,
-                  destination: pointB,
-                  travelMode: google.maps.TravelMode.DRIVING,
-                })
-                .then((directions) => {
-                    directionsRenderer.setDirections( directions );
-                })
-                .catch((response) => {
-                    console.log(response);
-                    window.alert("Directions request failed due to " + status);
-                });
-
-            directionsRenderer.addListener("directions_changed", () => {
-                const directions = directionsRenderer.getDirections();
-
-                if (directions) {
-                    if( validateDirections( directions ) ) {
-                        updateDirections(directions);
-                    }
-                }
-            });
-
-            function validateDirections( directions ) {
-                var myroute = directions.routes[0];
-                if ( ! myroute ) {
-                    alert('No route found.');
-                    return false;
-                }
-
-                var leg = myroute.legs[0];
-                if ( leg.distance.value < 10 ) {
-                    alert('Delivery address is same as pickup address.');
-                    return false;
-                }
-
-                return true;
-            }
-
-            function updateDirections( directions ) {
-                var myroute = directions.routes[0];
-                if ( ! myroute ) {
-                    alert('No route found.');
-                    return false;
-                }
-
-                var leg = myroute.legs[0];
-
-                selectedRoute = {
-                    is_round_trip: 0,
-                    distance: leg.distance.value,
-                    duration: leg.duration.value,
-                    pickup: {
-                        address: leg.start_address,
-                        lat: leg.start_location.lat(),
-                        lng: leg.start_location.lng(),
-                    },
-                    delivery: {
-                        address: leg.end_address,
-                        lat: leg.end_location.lat(),
-                        lng: leg.end_location.lng(),
-                    }
-                };
-
-                var addressHtml = '<p style="margin-bottom: 5px;"><strong>Pickup: </strong>'+ leg.start_address +'</p>';
-                addressHtml += '<p style="margin-bottom: 5px;"><strong>Delivery: </strong>'+ leg.end_address +'</p>';
-                addressHtml += '<p style="margin-bottom: 5px;"><strong>Distance: </strong>'+ getMiles(leg.distance.value) +' Miles</p>';
-
-                addressInfo.innerHTML = addressHtml;
-
-                saveRoute();
-
-                pickupInput.value = leg.start_address;
-                deliveryInput.value = leg.end_address;
-            }
-        }
-
-        function fillAdrressFields() {
-            var autocompleteFields = [{
-              selector: '.cbf-js-address-country',
-              val: function val() {
-                return getFieldValueByType(pickupPlace, 'country');
-              },
-              short: function short() {
-                return getFieldValueByType(pickupPlace, 'country', true);
-              }
-            }, {
-              selector: '.cbf-js-address-postcode',
-              val: function val() {
-                return getFieldValueByType(pickupPlace, 'postal_code');
-              }
-            }, {
-              selector: '.cbf-js-address-city',
-              val: function val() {
-                return getFieldValueByType(pickupPlace, 'locality') || getFieldValueByType(pickupPlace, 'administrative_area_level_3');
-              }
-            }, {
-              selector: '.cbf-js-address-state',
-              val: function val() {
-                return getFieldValueByType(pickupPlace, 'administrative_area_level_1');
-              },
-              short: function short() {
-                return getFieldValueByType(pickupPlace, 'administrative_area_level_1', true);
-              }
-            }, {
-              selector: '.cbf-js-address-street',
-              val: function val() {
-                return getFieldValueByType(pickupPlace, 'route');
-              }
-            }, {
-              selector: '.cbf-js-address-street_number',
-              val: function val() {
-                return getFieldValueByType(pickupPlace, 'street_number');
-              }
-            }];
-
-            $.each(autocompleteFields, function (index, field) {
-                console.log(field);
-                var element = $(field.selector);
-
-                if (element.length === 0) {
-                  return;
-                }
-
-                element.val(field.val());
-
-                if (typeof field.short == 'function') {
-                  element.data('short', field.short());
-                }
-            });
-        }
-
-        function saveRoute() {
-            selectedRoute.is_round_trip = $('.cbf-custom-field-row[data-id="triptype"] input:checked').length && $('.cbf-custom-field-row[data-id="triptype"] input:checked').val() == "Round Trip" ? 1 : 0; 
-            
-            connectpxBookingAjax({
-                type: 'POST',
-                data: {
-                    action: 'cbf_connectpx_session_save_connectpx',
-                    csrf_token: BooklyL10n.csrf_token,
-                    form_id: $('.cbf-form').attr('data-form_id'),
-                    route: selectedRoute
-                },
-                success: function success(response) {
-                    $('.cbf-next-step').attr('disabled', false);
-                    fillCustomFields();
-                }
-            });
-        }
-
-        function fillCustomFields() {
-            var mapLink = '<a href="https://www.google.com/maps/dir/?api=1&origin='+ selectedRoute.pickup.lat + ',' + selectedRoute.pickup.lng +'&destination='+ selectedRoute.delivery.lat + ',' + selectedRoute.delivery.lng +'" target="_blank">Open Map</a>';
-            $('.cbf-custom-field-row[data-id="pickupaddress"] input').val(selectedRoute.pickup.address);
-            $('.cbf-custom-field-row[data-id="deliveryaddress"] input').val(selectedRoute.delivery.address);
-            $('.cbf-custom-field-row[data-id="pickuplocation"] input').val(selectedRoute.pickup.lat + ',' + selectedRoute.pickup.lng);
-            $('.cbf-custom-field-row[data-id="deliverylocation"] input').val(selectedRoute.delivery.lat + ',' + selectedRoute.delivery.lng);
-            $('.cbf-custom-field-row[data-id="googlemaplink"] input').val(mapLink);
-            $('.cbf-custom-field-row[data-id="distance"] input').val(getMiles( selectedRoute.distance ));
-            $('.cbf-custom-field-row[data-id="estimatedtime"] input').val(getEstimatedTime( selectedRoute.duration ));
-        }
-
-        function getMiles( meters ) {
-             return Math.ceil(meters * 0.000621371192);
-        }
-
-        function getEstimatedTime( seconds ) {
-            if(selectedRoute && selectedRoute.is_round_trip) {
-                seconds = seconds * 2;
-            }
-
-             return Math.floor(seconds/3600) + " h " + Math.floor(seconds/60%60) + " m";
-        }
-
-        function getFieldValueByType(place, type, useShortName) {
-            var addressComponents = place.address_components;
-
-            for (var i = 0; i < addressComponents.length; i++) {
-                var addressType = addressComponents[i].types[0];
-
-                if (addressType === type) {
-                    return useShortName ? addressComponents[i]['short_name'] : addressComponents[i]['long_name'];
-                }
-            }
-
-            return '';
-        }
+        // detailsStep();
     }
 
     function serviceStep() {
@@ -327,9 +78,9 @@
                       //format: opt[params.form_id].date_format,
                       min: response.date_min || true,
                       max: response.date_max || true,
-                      // weekdaysFull: BooklyL10n.days,
-                      // weekdaysShort: BooklyL10n.daysShort,
-                      // monthsFull: BooklyL10n.months,
+                      // weekdaysFull: ConnectpxBookingL10n.days,
+                      // weekdaysShort: ConnectpxBookingL10n.daysShort,
+                      // monthsFull: ConnectpxBookingL10n.months,
                       // firstDay: opt[params.form_id].firstDay,
                       clear: false,
                       close: false,
@@ -402,64 +153,60 @@
                             picker: 'picker picker--time'
                       },
                       onSet: function onSet(e) {
-                        if (e.select) {
-                            pickupTime = this.get('select', 'HH:i');
+                        pickupTime = this.get('select', 'HH:i');
+                        if( $returnPickupTime.length > 0 ) {
+                            $returnPickupTime.attr('disabled', false);
+                            var returnPickupMinTime = pickupTime.split(":");
+                            // returnPickupMinTime[0] = parseInt(returnPickupMinTime[0]) + 1;
 
-                            if( $returnPickupTime.length > 0 ) {
-                                $returnPickupTime.attr('disabled', false);
-                                var returnPickupMinTime = pickupTime.split(":");
+                            if( $returnPickupTime.pickatime !== undefined ) {
+                                $returnPickupTime.pickatime({
+                                      formatSubmit: 'HH:i',
+                                      interval: 5,
+                                      min: returnPickupMinTime,
+                                      max: response.date_max || false,
+                                      clear: false,
+                                      close: true,
+                                      today: false,
+                                      closeOnSelect: true,
+                                      klass: {
+                                        picker: 'picker picker--time'
+                                      },
+                                      onSet: function onSet(e) {
+                                        returnPickupTime = this.get('select', 'HH:i');
+                                        $next_step.show();
 
-                                if( $returnPickupTime.pickatime !== undefined ) {
-                                    $returnPickupTime.pickatime({
-                                          formatSubmit: 'HH:i',
-                                          interval: 5,
-                                          min: returnPickupMinTime,
-                                          max: response.date_max || false,
-                                          clear: false,
-                                          close: true,
-                                          today: false,
-                                          closeOnSelect: true,
-                                          klass: {
-                                            picker: 'picker picker--time'
-                                          },
-                                          onSet: function onSet(e) {
-                                            if (e.select) {
-                                                returnPickupTime = this.get('select', 'HH:i');
-                                                $next_step.show();
-
-                                                connectpxBookingAjax({
-                                                    type: 'POST',
-                                                    data: {
-                                                        action: 'connectpx_booking_session_save',
-                                                        csrf_token: ConnectpxBookingL10n.csrf_token,
-                                                        slots: JSON.stringify([[response.selected_date, pickupTime, returnPickupTime]]),
-                                                    },
-                                                    success: function success(response) {
-                                                      
-                                                    }
-                                                });
+                                        connectpxBookingAjax({
+                                            type: 'POST',
+                                            data: {
+                                                action: 'connectpx_booking_session_save',
+                                                csrf_token: ConnectpxBookingL10n.csrf_token,
+                                                slots: JSON.stringify([[response.selected_date, pickupTime, returnPickupTime]]),
+                                            },
+                                            success: function success(response) {
+                                              
                                             }
-                                          }
-                                    });
-                                }
-
-                                $returnPickupTime.pickatime('picker').set('min', returnPickupMinTime);
-                                $returnPickupTime.pickatime('picker').set('select', returnPickupMinTime);
-                            } else {
-                                connectpxBookingAjax({
-                                    type: 'POST',
-                                    data: {
-                                        action: 'connectpx_booking_session_save',
-                                        csrf_token: ConnectpxBookingL10n.csrf_token,
-                                        slots: JSON.stringify([[response.selected_date, pickupTime, null]])
-                                    },
-                                    success: function success(response) {
-                                        
-                                    }
+                                        });
+                                      }
                                 });
-
-                                $next_step.show();
                             }
+
+                            $returnPickupTime.pickatime('picker').set('min', returnPickupMinTime);
+                            $returnPickupTime.pickatime('picker').set('select', returnPickupMinTime);
+                        } else {
+                            connectpxBookingAjax({
+                                type: 'POST',
+                                data: {
+                                    action: 'connectpx_booking_session_save',
+                                    csrf_token: ConnectpxBookingL10n.csrf_token,
+                                    slots: JSON.stringify([[response.selected_date, pickupTime, null]])
+                                },
+                                success: function success(response) {
+                                    
+                                }
+                            });
+
+                            $next_step.show();
                         }
                       }
                 });
@@ -519,31 +266,7 @@
 
                         var slot = schedule[row_index].slot;
 
-                        $time = $('<input type="text"/>');
-                        $schedule_row.find('.cbf-js-schedule-time').html($time);
-                        // $schedule_row.find('div.cbf-label-error').toggle(!options.length);
-
-                        $time.pickatime({
-                              formatSubmit: 'HH:i',
-                              interval: 5,
-                              //min: bound_date.min,
-                              //max: bound_date.max,
-                              clear: false,
-                              close: true,
-                              today: false,
-                              closeOnSelect: true,
-                              klass: {
-                                    picker: 'picker picker--time'
-                              },
-                              onSet: function onSet(e) {
-                                if (e.select) {
-                                    // pickupTime = this.get('select', 'HH:i');
-                                }
-                              }
-                        });
-                        $time.pickatime('picker').set('select', (slot[1]).split(":"));
-
-                        if(schedule[row_index].slot[2] !== null && schedule[row_index].slot[2]) {
+                        if(schedule[row_index].slot[2]) {
                             $returnTime = $('<input type="text"/>');
                             $schedule_row.find('.cbf-js-schedule-return-time').html($returnTime);
 
@@ -567,6 +290,33 @@
                             });
                             $returnTime.pickatime('picker').set('select', (slot[2]).split(":"));
                         }
+
+                        $time = $('<input type="text"/>');
+                        $schedule_row.find('.cbf-js-schedule-time').html($time);
+                        // $schedule_row.find('div.cbf-label-error').toggle(!options.length);
+
+                        $time.pickatime({
+                              formatSubmit: 'HH:i',
+                              interval: 5,
+                              //min: bound_date.min,
+                              //max: bound_date.max,
+                              clear: false,
+                              close: true,
+                              today: false,
+                              closeOnSelect: true,
+                              klass: {
+                                    picker: 'picker picker--time'
+                              },
+                              onSet: function onSet(e) {
+                                var pickupTime = this.get('select', 'HH:i');
+                                if(schedule[row_index].slot[2]) {
+                                    if( this.get('select', 'HH:i') > $returnTime.pickatime('picker').get('select', 'HH:i') ) {
+                                        $returnTime.pickatime('picker').set('select', pickupTime.split(":"));
+                                    }
+                                }
+                              }
+                        });
+                        $time.pickatime('picker').set('select', (slot[1]).split(":"));
                     },
                     renderSchedulePage: function renderSchedulePage(page) {
                       var $row,
@@ -591,7 +341,7 @@
                           $('.cbf-js-schedule-all-day-time', $row).hide();
                         }
 
-                        if(schedule[i].slot[2] !== null && schedule[i].slot[2]) {
+                        if(schedule[i].slot[2]) {
                             $('.cbf-js-schedule-return-time', $row).html(schedule[i].slot[2]).show();
                         }
 
@@ -733,7 +483,7 @@
                             var slot = [
                                 $date_container.find('input').pickadate('picker').get('select', 'yyyy-mm-dd'),
                                 $time_container.find('input').pickatime('picker').get('select', 'HH:i'),
-                                schedule[row_index].slot[2] !== null && schedule[row_index].slot[2] ? $return_time_container.find('input').pickatime('picker').get('select', 'HH:i') : null,
+                                schedule[row_index].slot[2] ? $return_time_container.find('input').pickatime('picker').get('select', 'HH:i') : null,
                             ];
                             
                             schedule[row_index].slot = slot;
@@ -741,8 +491,8 @@
                             $date_container.html(schedule[row_index].display_date);
                             $time_container.html(slot[1]);
 
-                            if(slot[2] !== null && slot[2]) {
-                                $time_container.html(slot[2]);
+                            if(slot[2]) {
+                                $return_time_container.html(slot[2]);
                             }
                             break;
                         }
@@ -790,8 +540,6 @@
                       return false;
                     },
                     updateRepeatDate: function updateRepeatDate() {
-                      var _context;
-
                       var number_of_times = 0,
                           repeat_times = $repeat_times.val(),
                           date_from = (bound_date.min).slice(),
@@ -826,8 +574,6 @@
                       $date_until.pickadate('picker').set('select', new Date(current_date.format('YYYY'), current_date.format('M') - 1, current_date.format('D')));
                     },
                     updateRepeatTimes: function updateRepeatTimes() {
-                      var _context2;
-
                       var number_of_times = 0,
                           date_from = (bound_date.min).slice(),
                           date_until = $date_until.pickadate('picker').get('select'),
@@ -886,13 +632,13 @@
                     var repeat_data = response.repeat_data;
                     var repeat_params = repeat_data.params;
                     $repeat_enabled.prop('checked', true);
-                    $repeat_variant.val(rrepeat_data.repeat);
+                    $repeat_variant.val(repeat_data.repeat);
                     var until = repeat_data.until.split('-');
                     $date_until.pickadate('set').set('select', new Date(until[0], until[1] - 1, until[2]));
 
-                    switch (repeat(repeat_data)) {
+                    switch (repeat_data.repeat) {
                       case 'daily':
-                        $repeat_every_day.val(every(repeat_params));
+                        $repeat_every_day.val(repeat_params.every);
                         break;
 
                       case 'weekly': //break skipped
@@ -900,7 +646,7 @@
                       case 'biweekly':
                         $('.cbf-js-week-days input.cbf-js-week-day', $repeat_container).prop('checked', false).parent().removeClass('active');
 
-                        forEach(_context3 = repeat_params.on).call(_context3, function (val) {
+                        repeat_params.on.forEach(function (val) {
                           $('.cbf-js-week-days input.cbf-js-week-day[value=' + val + ']', $repeat_container).prop('checked', true).parent().addClass('active');
                         });
 
@@ -970,7 +716,7 @@
                     $schedule_container.hide();
                     var data = {
                       action: 'connectpx_booking_get_customer_schedule',
-                      csrf_token: BooklyL10n.csrf_token,
+                      csrf_token: ConnectpxBookingL10n.csrf_token,
                       repeat: $repeat_variant.val(),
                       until: $date_until.pickadate('picker').get('select', 'yyyy-mm-dd'),
                       params: {}
@@ -1062,7 +808,7 @@
                           repeat: repeat
                         },
                         success: function success(response) {
-                          detailStep();
+                          detailsStep();
                         }
                       });
                     } else {
@@ -1074,7 +820,7 @@
                           unrepeat: 1
                         },
                         success: function success(response) {
-                          detailStep();
+                          detailsStep();
                         }
                       });
                     }
@@ -1083,6 +829,598 @@
               }
             }
         });
+    }
+
+    function detailsStep() {
+        connectpxBookingAjax({
+            type: 'POST',
+            data: {
+                action: 'connectpx_booking_render_details',
+                csrf_token: ConnectpxBookingL10n.csrf_token,
+                add_to_cart: true,
+            },
+            success: function success(response) {
+              if (response.success) {
+                    $container.html(response.html);
+
+                    var googleMapInstance, 
+                        directionsService, 
+                        directionsRenderer, 
+                        pickupAutocomplete, 
+                        destinationAutocomplete, 
+                        pickupPlace, 
+                        destinationPlace,
+                        selectedRoute = {
+                            distance: 0,
+                            duration: 0,
+                            pickup: {},
+                            destination: {}
+                        },
+                        $map = $('.google-routes-map', $container),
+                        $route_info = $('.cbf-js-route-info', $container),
+                        // Customer Information Fields
+                        $first_name_field = $('.cbf-js-first-name', $container),
+                        $last_name_field = $('.cbf-js-last-name', $container),
+                        $phone_field = $('.cbf-js-user-phone-input', $container),
+                        $email_field = $('.cbf-js-user-email', $container),
+                        $address_country_field = $('.cbf-js-address-country', $container),
+                        $address_state_field = $('.cbf-js-address-state', $container),
+                        $address_postcode_field = $('.cbf-js-address-postcode', $container),
+                        $address_city_field = $('.cbf-js-address-city', $container),
+                        $address_street_field = $('.cbf-js-address-street', $container),
+                        $address_street_number_field = $('.cbf-js-address-street_number', $container),
+                        $address_additional_field = $('.cbf-js-address-additional_address', $container),
+                        $address_checkbox = $('.cbf-js-address-checkbox', $container),
+                        $address_box = $('.cbf-js-address', $container),
+                        
+                        // Customer Information Field Errors
+                        $first_name_error = $('.cbf-js-first-name-error', $container),
+                        $last_name_error = $('.cbf-js-last-name-error', $container),
+                        $phone_error = $('.cbf-js-user-phone-error', $container),
+                        $email_error = $('.cbf-js-user-email-error', $container),
+                        $address_country_error = $('.cbf-js-address-country-error', $container),
+                        $address_state_error = $('.cbf-js-address-state-error', $container),
+                        $address_postcode_error = $('.cbf-js-address-postcode-error', $container),
+                        $address_city_error = $('.cbf-js-address-city-error', $container),
+                        $address_street_error = $('.cbf-js-address-street-error', $container),
+                        $address_street_number_error = $('.cbf-js-address-street_number-error', $container),
+                        $address_additional_error = $('.cbf-js-address-additional_address-error', $container),
+                        
+                        // Pickup Information Fields
+                        $pickup_patient_name_field = $('.cbf-js-pickup-patient-name', $container),
+                        $pickup_room_no_field = $('.cbf-js-pickup-room-no', $container),
+                        $pickup_contact_person_field = $('.cbf-js-pickup-contact-person', $container),
+                        $pickup_contact_no_field = $('.cbf-js-pickup-contact-no', $container),
+                        $pickup_address_field = $('.cbf-js-pickup-address', $container),
+                        $pickup_address_info = $('.cbf-js-pickup-address-info', $container),
+                        
+                        // Pickup Information Field Errors
+                        $pickup_patient_name_error = $('.cbf-js-pickup-patient-name-error', $container),
+                        $pickup_room_no_error = $('.cbf-js-pickup-room-no-error', $container),
+                        $pickup_contact_person_error = $('.cbf-js-pickup-contact-person-error', $container),
+                        $pickup_contact_no_error = $('.cbf-js-pickup-contact-no-error', $container),
+                        $pickup_address_error = $('.cbf-js-pickup-address-error', $container),
+                        
+                        // Destination Information Fields
+                        $destination_hospital_field = $('.cbf-js-destination-hospital-name', $container),
+                        $destination_contact_no_field = $('.cbf-js-destination-contact-no', $container),
+                        $destination_dr_name_field = $('.cbf-js-destination-dr-name', $container),
+                        $destination_dr_contact_no_field = $('.cbf-js-destination-dr-contact-no', $container),
+                        $destination_room_no_field = $('.cbf-js-destination-room-no', $container),
+                        $destination_address_field = $('.cbf-js-destination-address', $container),
+                        $destination_address_info = $('.cbf-js-destination-address-info', $container),
+                        
+                        // Destination Information Field Errors
+                        $destination_hospital_error = $('.cbf-js-destination-hospital-name-error', $container),
+                        $destination_contact_no_error = $('.cbf-js-destination-contact-no-error', $container),
+                        $destination_dr_name_error = $('.cbf-js-destination-dr-name-error', $container),
+                        $destination_dr_contact_no_error = $('.cbf-js-destination-dr-contact-no-error', $container),
+                        $destination_room_no_error = $('.cbf-js-destination-room-no-error', $container),
+                        $destination_address_error = $('.cbf-js-destination-address-error', $container),
+
+                        $route_error = $('.cbf-js-route-error', $container),
+                        $notes_field = $('.cbf-js-user-notes', $container),
+                        $next_btn = $('.cbf-button-next', $container),
+
+                        $fields = $($.map([
+                            // Customer Fields
+                            $first_name_field,
+                            $last_name_field,
+                            $phone_field,
+                            $email_field,
+                            $address_country_field,
+                            $address_state_field,
+                            $address_postcode_field,
+                            $address_city_field,
+                            $address_street_field,
+                            $address_street_number_field,
+                            $address_additional_field,
+                            // Pickup Fields
+                            $pickup_patient_name_field,
+                            $pickup_room_no_field,
+                            $pickup_contact_person_field,
+                            $pickup_contact_no_field,
+                            $pickup_address_field,
+                            $destination_hospital_field,
+                            // Destination Fields
+                            $destination_contact_no_field,
+                            $destination_dr_name_field,
+                            $destination_dr_contact_no_field,
+                            $destination_room_no_field,
+                            $destination_address_field,
+                        ], function(item){
+                            return item[0]
+                        })),
+                        $errors =  $($.map([
+                            // Customer Errors
+                            $first_name_error,
+                            $last_name_error,
+                            $phone_error,
+                            $email_error,
+                            $address_country_error,
+                            $address_state_error,
+                            $address_postcode_error,
+                            $address_city_error,
+                            $address_street_error,
+                            $address_street_number_error,
+                            $address_additional_error,
+                            // Pickup Errors
+                            $pickup_patient_name_error,
+                            $pickup_room_no_error,
+                            $pickup_contact_person_error,
+                            $pickup_contact_no_error,
+                            $pickup_address_error,
+                            // Destination Errors
+                            $destination_hospital_error,
+                            $destination_contact_no_error,
+                            $destination_dr_name_error,
+                            $destination_dr_contact_no_error,
+                            $destination_room_no_error,
+                            $destination_address_error,
+                        ], function(item){
+                            return item[0]
+                        })),
+                        is_round_trip = response.is_round_trip,
+                        terms_error = response.terms_error,
+                        woocommerce = response.woocommerce;
+
+                    function initMap() {
+                        pickupAutocomplete = new google.maps.places.Autocomplete($pickup_address_field[0], {
+                            types: ['geocode']
+                        });
+                        destinationAutocomplete = new google.maps.places.Autocomplete($destination_address_field[0], {
+                            types: ['geocode']
+                        });
+
+                        directionsService = new google.maps.DirectionsService();
+                        directionsRenderer = new google.maps.DirectionsRenderer({
+                            draggable: true,
+                        });
+
+                        googleMapInstance = new google.maps.Map($map[0], {
+                            zoom: 7,
+                            center: { lat: 42.3144255, lng: -83.518173 },
+                        });
+
+                        directionsRenderer.setMap(googleMapInstance);
+
+                        pickupAutocomplete.addListener('place_changed', function () {
+                            pickupPlace = this.getPlace();
+                            calculateAndDisplayRoute();
+                            // fillAdrressFields();
+                        });
+                        destinationAutocomplete.addListener('place_changed', function () {
+                            destinationPlace = this.getPlace();
+                            calculateAndDisplayRoute();
+                        });
+
+                        function calculateAndDisplayRoute() {
+                            if(!pickupPlace || !destinationPlace) {
+                                return;
+                            }
+
+                            var pointA = new google.maps.LatLng(pickupPlace.geometry.location.lat(), pickupPlace.geometry.location.lng()),
+                                pointB = new google.maps.LatLng(destinationPlace.geometry.location.lat(), destinationPlace.geometry.location.lng());
+
+                            directionsService
+                                .route({
+                                  origin: pointA,
+                                  destination: pointB,
+                                  provideRouteAlternatives: true,
+                                  travelMode: google.maps.TravelMode.DRIVING,
+                                })
+                                .then((directions) => {
+                                    directionsRenderer.setDirections( directions );
+                                })
+                                .catch((response, status) => {
+                                    console.log(response);
+                                    window.alert("Directions request failed due to " + status);
+                                });
+
+                            directionsRenderer.addListener("directions_changed", () => {
+                                const directions = directionsRenderer.getDirections();
+
+                                if (directions) {
+                                    var myroute = getLongestRoute( directions );
+                                    if( ! myroute ) {
+                                        alert('No route found.');
+                                        return false;
+                                    }
+
+                                    if ( myroute.distance.value < 10 ) {
+                                        alert('Delivery address is same as pickup address.');
+                                        return false;
+                                    }
+
+                                    updateDirections(myroute);
+                                }
+                            });
+
+                            function getLongestRoute( directions ) {
+                                var longestRoute = null;
+                                directions.routes.forEach(function(route){
+                                    route.legs.forEach(function(leg){
+                                        if( !longestRoute || leg.distance.value > longestRoute.distance.value ) {
+                                            longestRoute = leg;
+                                        }
+                                    });
+                                });
+                                return longestRoute;
+                            }
+
+                            function updateDirections( myroute ) {
+                                var pickup = getPlaceFullAddress( pickupPlace );
+                                pickup.address = myroute.start_address;
+                                pickup.lat = myroute.start_location.lat();
+                                pickup.lng = myroute.start_location.lng();
+
+                                var destination = getPlaceFullAddress( destinationPlace );
+                                destination.address = myroute.end_address;
+                                destination.lat = myroute.end_location.lat();
+                                destination.lng = myroute.end_location.lng();
+
+                                selectedRoute = {
+                                    distance: myroute.distance.value,
+                                    duration: myroute.duration.value,
+                                    pickup: pickup,
+                                    destination: destination
+                                };
+
+                                var addressHtml = '<p style="margin-bottom: 5px;"><strong>Pickup: </strong>'+ myroute.start_address +'</p>';
+                                addressHtml += '<p style="margin-bottom: 5px;"><strong>Delivery: </strong>'+ myroute.end_address +'</p>';
+                                addressHtml += '<p style="margin-bottom: 5px;"><strong>Distance: </strong>'+ getEstimatedMiles(myroute.distance.value) +'</p>';
+                                addressHtml += '<p style="margin-bottom: 5px;"><strong>Estimated Time: </strong>'+ getEstimatedTime(myroute.duration.value) +'</p>';
+
+                                $route_info.html(addressHtml);
+
+                                // saveRoute();
+
+                                $pickup_address_field.val(myroute.start_address);
+                                $destination_address_field.val(myroute.end_address);
+                            }
+                        }
+
+                        function getPlaceFullAddress( place ) {
+                             return {
+                                country: getFieldValueByType(place, 'country'),
+                                country_short: getFieldValueByType(place, 'country', true),
+                                postcode: getFieldValueByType(place, 'postal_code'),
+                                city: getFieldValueByType(place, 'locality') || getFieldValueByType(place, 'administrative_area_level_3'),
+                                state: getFieldValueByType(place, 'administrative_area_level_1'),
+                                state_short: getFieldValueByType(place, 'administrative_area_level_1', true),
+                                street: getFieldValueByType(place, 'route'),
+                                street_number: getFieldValueByType(place, 'street_number'),
+                             }   
+                        }
+
+                        function fillAdrressFields() {
+                            var autocompleteFields = [{
+                              selector: '.cbf-js-address-country',
+                              val: function val() {
+                                return getFieldValueByType(pickupPlace, 'country');
+                              },
+                              short: function short() {
+                                return getFieldValueByType(pickupPlace, 'country', true);
+                              }
+                            }, {
+                              selector: '.cbf-js-address-postcode',
+                              val: function val() {
+                                return getFieldValueByType(pickupPlace, 'postal_code');
+                              }
+                            }, {
+                              selector: '.cbf-js-address-city',
+                              val: function val() {
+                                return getFieldValueByType(pickupPlace, 'locality') || getFieldValueByType(pickupPlace, 'administrative_area_level_3');
+                              }
+                            }, {
+                              selector: '.cbf-js-address-state',
+                              val: function val() {
+                                return getFieldValueByType(pickupPlace, 'administrative_area_level_1');
+                              },
+                              short: function short() {
+                                return getFieldValueByType(pickupPlace, 'administrative_area_level_1', true);
+                              }
+                            }, {
+                              selector: '.cbf-js-address-street',
+                              val: function val() {
+                                return getFieldValueByType(pickupPlace, 'route');
+                              }
+                            }, {
+                              selector: '.cbf-js-address-street_number',
+                              val: function val() {
+                                return getFieldValueByType(pickupPlace, 'street_number');
+                              }
+                            }];
+
+                            $.each(autocompleteFields, function (index, field) {
+                                console.log(field);
+                                var element = $(field.selector);
+
+                                if (element.length === 0) {
+                                  return;
+                                }
+
+                                element.val(field.val());
+
+                                if (typeof field.short == 'function') {
+                                  element.data('short', field.short());
+                                }
+                            });
+                        }
+
+                        function getMiles( meters ) {
+                             return Math.ceil(meters * 0.000621371192);
+                        }
+
+                        function getEstimatedMiles( meters ) {
+                            var get_miles = function(meters) {
+                                return Math.ceil(meters * 0.000621371192);
+                            };
+
+                            if( is_round_trip ) {
+                                return get_miles( meters * 2 ) + " miles / " + get_miles( meters ) + " miles one side";
+                            } else {
+                                return get_miles( meters ) + " miles";
+                            }
+                        }
+
+                        function getEstimatedTime( seconds ) {
+                            var formated_time = function(seconds) {
+                                return Math.floor(seconds/3600) + " h " + Math.floor(seconds/60%60) + " m";
+                            };
+
+                            if( is_round_trip ) {
+                                return formated_time( seconds * 2 ) + " / " + formated_time( seconds ) + " one side";
+                            } else {
+                                return formated_time( seconds );
+                            }
+                        }
+
+                        function getFieldValueByType(place, type, useShortName) {
+                            var addressComponents = place.address_components;
+
+                            for (var i = 0; i < addressComponents.length; i++) {
+                                var addressType = addressComponents[i].types[0];
+
+                                if (addressType === type) {
+                                    return useShortName ? addressComponents[i]['short_name'] : addressComponents[i]['long_name'];
+                                }
+                            }
+
+                            return '';
+                        }
+                    }
+
+                    setTimeout(function(){
+                        initMap();
+                    }, 1000);
+
+                    // $address_checkbox.on("change", function(){
+                    //     if($(this).prop('checked')) {
+                    //         $address_box.hide();
+                    //     } else {
+                    //         $address_box.show();
+                    //     }
+                    // });
+
+                    $next_btn.on('click', function (e, force_update_customer) {
+                      e.preventDefault(); // Terms and conditions checkbox
+
+                      var $terms = $('.cbf-js-terms', $container),
+                          $terms_error = $('.cbf-js-terms-error', $container);
+                      $terms_error.html('');
+
+                      if ($terms.length && !$terms.prop('checked')) {
+                        $terms_error.html(terms_error);
+                      } else {
+
+                        var data = {
+                          action: 'connectpx_booking_session_save',
+                          csrf_token: ConnectpxBookingL10n.csrf_token,
+                          first_name: $first_name_field.val(),
+                          last_name: $last_name_field.val(),
+                          phone: $phone_field.val(),
+                          email: $email_field.val(),
+                          country: $address_country_field.val(),
+                          state: $address_state_field.val(),
+                          postcode: $address_postcode_field.val(),
+                          city: $address_city_field.val(),
+                          street: $address_street_field.val(),
+                          street_number: $address_street_number_field.val(),
+                          additional_address: $address_additional_field.val(),
+                          route_distance: selectedRoute.distance,
+                          route_time: selectedRoute.duration,
+                          pickup_patient_name: $pickup_patient_name_field.val(),
+                          pickup_room_no: $pickup_room_no_field.val(),
+                          pickup_contact_person: $pickup_contact_person_field.val(),
+                          pickup_contact_no: $pickup_contact_no_field.val(),
+                          pickup_address: JSON.stringify(selectedRoute.pickup),
+                          destination_hospital: $destination_hospital_field.val(),
+                          destination_contact_no: $destination_contact_no_field.val(),
+                          destination_dr_name: $destination_dr_name_field.val(),
+                          destination_dr_contact_no: $destination_dr_contact_no_field.val(),
+                          destination_room_no: $destination_room_no_field.val(),
+                          destination_address: JSON.stringify(selectedRoute.destination),
+                          notes: $notes_field.val(),
+                        };
+
+                        connectpxBookingAjax({
+                          type: 'POST',
+                          data: data,
+                          success: function success(response) {
+                            // Error messages
+                            $errors.empty();
+                            $fields.removeClass('cbf-error');
+
+                            if (response.success) {
+                              var data = {
+                                  action: 'connectpx_booking_add_to_woocommerce_cart',
+                                  csrf_token: ConnectpxBookingL10n.csrf_token,
+                                };
+                                connectpxBookingAjax({
+                                  type: 'POST',
+                                  data: data,
+                                  success: function success(response) {
+                                    if (response.success) {
+                                      window.location.href = woocommerce.cart_url;
+                                    } else {
+                                      dateStep();
+                                    }
+                                  }
+                                });
+                            } else {
+                              var $scroll_to = null;
+
+                              var invalidClass = 'cbf-error',
+                                validateFields = [{
+                                  name: 'first_name',
+                                  errorElement: $first_name_error,
+                                  formElement: $first_name_field
+                                }, {
+                                  name: 'last_name',
+                                  errorElement: $last_name_error,
+                                  formElement: $last_name_field
+                                }, {
+                                  name: 'phone',
+                                  errorElement: $phone_error,
+                                  formElement: $phone_field
+                                }, {
+                                  name: 'email',
+                                  errorElement: $email_error,
+                                  formElement: $email_field
+                                }, {
+                                  name: 'country',
+                                  errorElement: $address_country_error,
+                                  formElement: $address_country_field
+                                }, {
+                                  name: 'state',
+                                  errorElement: $address_state_error,
+                                  formElement: $address_state_field
+                                }, {
+                                  name: 'postcode',
+                                  errorElement: $address_postcode_error,
+                                  formElement: $address_postcode_field
+                                }, {
+                                  name: 'city',
+                                  errorElement: $address_city_error,
+                                  formElement: $address_city_field
+                                }, {
+                                  name: 'street',
+                                  errorElement: $address_street_error,
+                                  formElement: $address_street_field
+                                }, {
+                                  name: 'street_number',
+                                  errorElement: $address_street_number_error,
+                                  formElement: $address_street_number_field
+                                }, {
+                                  name: 'additional_address',
+                                  errorElement: $address_additional_error,
+                                  formElement: $address_additional_field
+                                }, {
+                                  name: 'pickup_patient_name',
+                                  errorElement: $pickup_patient_name_error,
+                                  formElement: $pickup_patient_name_field
+                                }, {
+                                  name: 'pickup_room_no',
+                                  errorElement: $pickup_room_no_error,
+                                  formElement: $pickup_room_no_field
+                                }, {
+                                  name: 'pickup_contact_person',
+                                  errorElement: $pickup_contact_person_error,
+                                  formElement: $pickup_contact_person_field
+                                }, {
+                                  name: 'pickup_contact_no',
+                                  errorElement: $pickup_contact_no_error,
+                                  formElement: $pickup_contact_no_field
+                                }, {
+                                  name: 'pickup_address',
+                                  errorElement: $pickup_address_error,
+                                  formElement: $pickup_address_field
+                                }, {
+                                  name: 'destination_hospital',
+                                  errorElement: $destination_hospital_error,
+                                  formElement: $destination_hospital_field
+                                }, {
+                                  name: 'destination_dr_name',
+                                  errorElement: $destination_dr_name_error,
+                                  formElement: $destination_dr_name_field
+                                }, {
+                                  name: 'destination_dr_contact_no',
+                                  errorElement: $destination_dr_contact_no_error,
+                                  formElement: $destination_dr_contact_no_field
+                                }, {
+                                  name: 'destination_room_no',
+                                  errorElement: $destination_room_no_error,
+                                  formElement: $destination_room_no_field
+                                }, {
+                                  name: 'destination_address',
+                                  errorElement: $destination_address_error,
+                                  formElement: $destination_address_field
+                                }, {
+                                  name: 'route_distance',
+                                  errorElement: $route_error,
+                                  formElement: $map
+                                }];
+
+                                validateFields.forEach(function (field) {
+                                  if (!response[field.name]) {
+                                    return;
+                                  }
+
+                                  field.errorElement.html(response[field.name]);
+                                  field.formElement.addClass(invalidClass);
+
+                                  if ($scroll_to === null) {
+                                    $scroll_to = field.formElement;
+                                  }
+                                });
+
+                              if ($scroll_to !== null) {
+                                scrollTo($scroll_to);
+                              }
+                            }
+                          }
+                        });
+                      }
+                    });
+                    $('.cbf-button-prev', $container).on('click', function (e) {
+                      e.preventDefault();
+                      repeatStep();
+                    });
+              }
+            }
+        });
+    }
+
+    function scrollTo($elem) {
+        var elemTop = $elem.offset().top;
+        var scrollTop = $(window).scrollTop();
+
+        if (elemTop < $(window).scrollTop() || elemTop > scrollTop + window.innerHeight) {
+          $('html,body').animate({
+            scrollTop: elemTop - 50
+          }, 500);
+        }
     }
 
     function showSpinner() {

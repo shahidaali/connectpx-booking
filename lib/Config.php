@@ -210,26 +210,19 @@ abstract class Config
     public static function getBoundingTimeForPickatime( $selected_date )
     {
         $result = array();
+        $dpNow = Slots\DatePoint::now();
+        $dpSelected = $selected_date ? Slots\DatePoint::fromStr( $selected_date ) : $dpNow;
 
-        // $minTimeBeforeBooking = 1 * 3600;
-        // $dpNow = Slots\DatePoint::now();
-        // $dp = $selected_date ? Slots\DatePoint::fromStr( $selected_date . " " . date("H:i:s") ) : $dpNow;
-        // $dp->modify( $minTimeBeforeBooking )->toClientTz();
-        // if( Slots\DatePoint::fromStr( $dp->format( 'Y-m-d' ) )->eq( Slots\DatePoint::fromStr( $dpNow->format( 'Y-m-d' ) ) )  ) {
-        //     $result['date_min'] = array(
-        //         (int) $dp->format( 'H' ),
-        //         (int) $dp->format( 'i' ),
-        //     );
-        // } else {
-        //     $result['date_min'] = false;
-        // }
-        // $result['date_max'] = array(
-        //     23,
-        //     59,
-        // );
-
-        $result['date_min'] = false;
+        if($dpNow->format( 'Y-m-d' ) == $dpSelected->format( 'Y-m-d' )) {
+            $result['date_min'] = array(
+                (int) $dpNow->format( 'H' ),
+                (int) $dpNow->format( 'i' ),
+            );
+        } else {
+            $result['date_min'] = false;
+        }
         $result['date_max'] = false;
+        
         return $result;
     }
 

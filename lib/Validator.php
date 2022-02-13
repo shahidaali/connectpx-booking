@@ -42,6 +42,54 @@ class Validator
      * @param string $value
      * @param bool $required
      */
+    public function validateRequired( $field_name, $value, $required = false )
+    {
+        $value = trim( $value );
+        if ( empty( $value ) && $required ) {
+            $this->errors[ $field_name ] = __( sprintf('%s is required.', ucwords(str_replace("_", " ", $field_name))), 'connectpx_booking' );;
+        }
+    }
+
+    /**
+     * @param string $field_name
+     * @param string $value
+     * @param bool $required
+     */
+    public function validateDistance( $field_name, $value, $required = false )
+    {
+        $value = trim( $value );
+        if ( empty( $value ) && $required ) {
+            $this->errors[ $field_name ] = __( sprintf('Please select a valid route.', ucwords(str_replace("_", " ", $field_name))), 'connectpx_booking' );;
+        }
+    }
+
+    /**
+     * @param string $field_name
+     * @param string $value
+     * @param bool $required
+     */
+    public function validateRouteAddress( $field_name, $value, $required = false )
+    {
+        $value = json_decode($value, true);
+        $value = array_map('trim', $value);
+        if ( empty( $value ) && $required ) {
+            $this->errors[ $field_name ] = __( sprintf('%s is required.', ucwords(str_replace("_", " ", $field_name))), 'connectpx_booking' );;
+        }
+        else if ( $required ) {
+            foreach (['country', 'city', 'state', 'address', 'lat', 'lng'] as $field) {
+                if(empty($value[$field])) {
+                    $this->errors[ $field_name ] = __( sprintf('%s in address is missing.', ucwords(str_replace("_", " ", $field))), 'connectpx_booking' );;
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * @param string $field_name
+     * @param string $value
+     * @param bool $required
+     */
     public function validateAddress( $field_name, $value, $required = false )
     {
         $value = trim( $value );
@@ -167,22 +215,11 @@ class Validator
             }
             $verify_customer_details = get_option( 'bookly_cst_verify_customer_details', false );
             if ( ! $customer->isLoaded() ) {
-                $entity = Proxy\Pro::getCustomerByFacebookId( $userData->getFacebookId() );
-                if ( $entity ) {
-                    $customer = $entity;
-                }
                 if ( ! $customer->isLoaded() ) {
                     // Try to find customer by 'primary' identifier.
-                    $identifier = Config::phoneRequired() ? 'phone' : 'email';
+                    $identifier = 'email';
                     if ( $data[ $identifier ] !== '' ) {
                         $customer->loadBy( array( $identifier => $data[ $identifier ] ) );
-                    }
-                    if ( ! $customer->isLoaded() ) {
-                        // Try to find customer by 'secondary' identifier.
-                        $identifier = Config::phoneRequired() ? 'email' : 'phone';
-                        if ( $data[ $identifier ] !== '' ) {
-                            $customer->loadBy( array( 'phone' => '', 'email' => '', $identifier => $data[ $identifier ] ) );
-                        }
                     }
                     if ( Config::allowDuplicates() ) {
                         if ( Config::showFirstLastName() ) {
@@ -200,7 +237,7 @@ class Validator
                             $customer_data['phone'] = $data['phone'];
                         }
                         $customer->loadBy( $customer_data );
-                    } elseif ( ! isset ( $data['force_update_customer'] ) && $customer->isLoaded() ) {
+                    } elseif ( $customer->isLoaded() ) {
                         // Find difference between new and existing data.
                         $diff = array();
                         $fields = array(
@@ -308,17 +345,17 @@ class Validator
      * @param array $cart
      * @param int $form_id
      */
-    public function validateCart( $cart, $form_id )
+    public function validateCart( $cart )
     {
-        foreach ( $cart as $cart_key => $cart_parameters ) {
-            foreach ( $cart_parameters as $parameter => $value ) {
-                switch ( $parameter ) {
-                    case 'custom_fields':
-                        $this->errors = Proxy\CustomFields::validate( $this->errors, $value, $form_id, $cart_key );
-                        break;
-                }
-            }
-        }
+        // foreach ( $cart as $cart_key => $cart_parameters ) {
+        //     foreach ( $cart_parameters as $parameter => $value ) {
+        //         switch ( $parameter ) {
+        //             case 'custom_fields':
+        //                 $this->errors = Proxy\CustomFields::validate( $this->errors, $value, $form_id, $cart_key );
+        //                 break;
+        //         }
+        //     }
+        // }
     }
 
     /**

@@ -210,6 +210,16 @@ class Service extends Lib\Base\Entity
         return $this;
     }
 
+    /**
+     * Gets description
+     *
+     * @return string
+     */
+    public function getCustomerPrice( $customer )
+    {
+        return 500;
+    }
+
     /**************************************************************************
      * Overridden Methods                                                     *
      **************************************************************************/
