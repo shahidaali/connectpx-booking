@@ -40,7 +40,7 @@ class Customer extends Lib\Base\Entity
     /** @var string */
     protected $birthday;
     /** @var  string */
-    protected $sub_services = '[]';
+    protected $services = '[]';
     /** @var  string */
     protected $stripe_account;
     /** @var string */
@@ -63,7 +63,7 @@ class Customer extends Lib\Base\Entity
         'street_number'      => array( 'format' => '%s' ),
         'additional_address' => array( 'format' => '%s' ),
         'notes'              => array( 'format' => '%s' ),
-        'sub_services'        => array( 'format' => '%s' ),
+        'services'           => array( 'format' => '%s' ),
         'created_at'         => array( 'format' => '%s' ),
     );
 
@@ -487,26 +487,78 @@ class Customer extends Lib\Base\Entity
     }
 
     /**
-     * Sets sub_services
+     * Sets services
      *
-     * @param string $sub_services
+     * @param string $services
      * @return $this
      */
-    public function setSubServices( $sub_services )
+    public function setServices( $services )
     {
-        $this->sub_services = $sub_services;
+        $this->services = $services;
 
         return $this;
     }
 
     /**
-     * Gets sub_services
+     * Gets services
      *
      * @return string
      */
-    public function getSubServices()
+    public function getServices()
     {
-        return $this->sub_services;
+        return $this->services;
+    }
+
+    /**
+     * Get sub services.
+     *
+     * @return Service[]
+     */
+    public function loadSubService( $service_id, $key )
+    {
+        $list = $this->loadSubServices( $service_id );
+        if( !isset($list[ $key ]) ) {
+            return;
+        }
+
+        return $list[ $key ];
+    }
+
+    /**
+     * Get sub services.
+     *
+     * @return Service[]
+     */
+    public function loadSubServices( $service_id )
+    {
+        $list = [];
+
+        $services = $this->services ? json_decode($this->getServices(), true) : [];
+        $sub_services = $services[$service_id]['sub_services'] ?? [];
+        foreach ($sub_services as $key => $sub_service) {
+            $entity = new SubService( $key, $sub_service, 'customer' );
+            $list[ $key ] = $entity;
+        }
+
+        return $list;
+    }
+
+    /**
+     * Get sub services.
+     *
+     * @return Service[]
+     */
+    public function loadEnabledSubServices( $service_id )
+    {
+        $list = [];
+
+        foreach ($this->loadSubServices( $service_id ) as $subService) {
+            if( $subService->isEnabled() ) {
+                $list[ $subService->getKey() ] = $subService;
+            }
+        }
+
+        return $list;
     }
 
     /**

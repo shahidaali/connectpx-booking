@@ -1,6 +1,6 @@
 (function( $ ) {
     'use strict';
-    var $container = $('.connectpx_booking_form'),
+    var $container = $('.connectpx_booking_form_container'),
         bookingData = {
             service_id: ConnextpxBookingShortcode.service_id,
         };
@@ -10,13 +10,14 @@
         // detailsStep();
     }
 
-    function serviceStep() {
+    function serviceStep(reset_form) {
         connectpxBookingAjax({
             type: 'POST',
             data: {
                 action: 'connectpx_booking_render_service',
                 csrf_token: ConnectpxBookingL10n.csrf_token,
-                service_id: bookingData.service_id
+                service_id: bookingData.service_id,
+                reset_form: reset_form ? true : false,
             },
             success: function success(response) {
               if (response.success) {
@@ -26,21 +27,27 @@
 
                  $service_button.on('click', function(e){
                     e.preventDefault();
+                    var $global_errors = $('.connectpx_booking_form_errors');
 
                     $service_button.removeClass('selected');
                     $(this).addClass('selected');
 
-                    var subServiceId = $(this).attr('data-service');
+                    var subServiceKey = $(this).attr('data-service');
 
                     connectpxBookingAjax({
                         type: 'POST',
                         data: {
                             action: 'connectpx_booking_session_save',
                             csrf_token: ConnectpxBookingL10n.csrf_token,
-                            sub_service_id: subServiceId
+                            sub_service_key: subServiceKey
                         },
                         success: function success(response) {
-                            dateStep();
+                            if(response.success) {
+                                $global_errors.empty();
+                                dateStep();
+                            } else {
+                                $global_errors.html(response.sub_service_error);
+                            }
                         }
                     });
                     
@@ -65,7 +72,7 @@
                         $next_step = $('.cbf-button-next', $container);
 
                     $prev_step.on('click', function(e){
-                        serviceStep();
+                        serviceStep(false);
                     });
                     $next_step.on('click', function(e){
                         repeatStep();
@@ -228,7 +235,6 @@
                  $container.html(response.html);
 
                  var $repeat_enabled = $('.cbf-js-repeat-appointment-enabled', $container),
-                  $next_step = $('.cbf-js-next-step', $container),
                   $repeat_container = $('.cbf-js-repeat-variants-container', $container),
                   $variants = $('[class^="cbf-js-variant"]', $repeat_container),
                   $repeat_variant = $('.cbf-js-repeat-variant', $repeat_container),
@@ -249,6 +255,7 @@
                   $info_wells = $('.cbf-well', $schedule_container),
                   $pagination = $('.cbf-pagination', $schedule_container),
                   $schedule_row_template = $('.cbf-schedule-row-template .cbf-schedule-row', $schedule_container),
+                  $next_step = $('.cbf-button-next', $container),
                   short_date_format = response.short_date_format,
                   bound_date = {
                     min: response.date_min || true,
@@ -259,6 +266,24 @@
                   var repeat$1 = {
                     prepareButtonNextState: function prepareButtonNextState() {
                       // Disable/Enable next button
+                      var is_disabled = $next_step.prop('disabled'),
+                          new_prop_disabled = schedule.length == 0;
+
+                      for (var i = 0; i < schedule.length; i++) {
+                        if (is_disabled) {
+                          if (!schedule[i].deleted) {
+                            new_prop_disabled = false;
+                            break;
+                          }
+                        } else if (schedule[i].deleted) {
+                          new_prop_disabled = true;
+                        } else {
+                          new_prop_disabled = false;
+                          break;
+                        }
+                      }
+
+                      $next_step.prop('disabled', new_prop_disabled);
 
                     },
                     addTimeSlotControl: function addTimeSlotControl($schedule_row, row_index) {
@@ -621,11 +646,11 @@
                   var open_repeat_onchange = $repeat_enabled.on('change', function () {
                     $repeat_container.toggle($(this).prop('checked'));
 
-                    // if ($(this).prop('checked')) {
-                    //   repeat$1.prepareButtonNextState();
-                    // } else {
-                    //   $next_step.prop('disabled', false);
-                    // }
+                    if ($(this).prop('checked')) {
+                      repeat$1.prepareButtonNextState();
+                    } else {
+                      $next_step.prop('disabled', false);
+                    }
                   });
 
                   if (response.repeated) {
@@ -786,7 +811,7 @@
                       }
                     });
                   });
-                  $('.cbf-button-next', $container).on('click', function (e) {
+                  $next_step.on('click', function (e) {
 
                     if ($repeat_enabled.is(':checked')) {
                       var slots_to_send = [];

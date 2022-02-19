@@ -19,7 +19,7 @@
             <input type="text" class="cbf-pickup-time">
         </div>
     </div>
-   <?php if( !$userData->isOneWay() ): ?>
+   <?php if( $userData->getSubService()->isRoundTrip() ): ?>
     <div class="cbf-form-group">
         <label><?php echo __('Return Pickup Time', 'connectpx_booking'); ?></label>
         <div>

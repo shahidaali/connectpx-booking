@@ -20,7 +20,7 @@ class UserBookingData
     /** @var int */
     protected $service_id;
     /** @var string */
-    protected $sub_service_id;
+    protected $sub_service_key;
     /** @var string Y-m-d */
     protected $date_from;
 
@@ -54,8 +54,6 @@ class UserBookingData
     protected $phone;
     /** @var  string */
     protected $notes;
-    /** @var array */
-    protected $sub_services = array();
     /** @var array for WC checkout */
     protected $address_iso = array();
 
@@ -73,6 +71,21 @@ class UserBookingData
     /** @var string */
     protected $is_contract_customer = false;
 
+    /** @var string */
+    protected $route_distance;
+    protected $route_time;
+    protected $pickup_patient_name;
+    protected $pickup_room_no;
+    protected $pickup_contact_person;
+    protected $pickup_contact_no;
+    protected $pickup_address;
+    protected $destination_hospital;
+    protected $destination_contact_no;
+    protected $destination_dr_name;
+    protected $destination_dr_contact_no;
+    protected $destination_room_no;
+    protected $destination_address;
+
     // Private
 
     // Frontend expect variables
@@ -83,7 +96,7 @@ class UserBookingData
         'time_zone_offset',
         // Step service
         'service_id',
-        'sub_service_id',
+        'sub_service_key',
         'date_from',
         // Step time
         'slots',
@@ -102,11 +115,24 @@ class UserBookingData
         'street_number',
         'address_iso',
         'notes',
-        'sub_services',
         // Cart item keys being edited
         'edit_cart_keys',
         'repeated',
         'repeat_data',
+        // Route Details
+        'route_distance',
+        'route_time',
+        'pickup_patient_name',
+        'pickup_room_no',
+        'pickup_contact_person',
+        'pickup_contact_no',
+        'pickup_address',
+        'destination_hospital',
+        'destination_contact_no',
+        'destination_dr_name',
+        'destination_dr_contact_no',
+        'destination_room_no',
+        'destination_address',
     );
 
     /** @var Entities\Customer */
@@ -129,11 +155,11 @@ class UserBookingData
     public function __construct()
     {
         $this->cart    = new Cart( $this );
+        $customer = new Entities\Customer();
 
         // If logged in then set name, email and if existing customer then also phone.
         $current_user = wp_get_current_user();
         if ( $current_user && $current_user->ID ) {
-            $customer = new Entities\Customer();
             if ( $customer->loadBy( array( 'wp_user_id' => $current_user->ID ) ) ) {
                 $this
                     ->setFullName( $customer->getFullName() )
@@ -148,7 +174,6 @@ class UserBookingData
                     ->setStreet( $customer->getStreet() )
                     ->setStreetNumber( $customer->getStreetNumber() )
                     ->setAdditionalAddress( $customer->getAdditionalAddress() )
-                    ->setSubServices( json_decode( $customer->getSubServices(), true ) )
                     ->setIsContractCustomer( true );
                 ;
             } else {
@@ -249,11 +274,13 @@ class UserBookingData
             $cart_item = new CartItem();
 
             $cart_item
-                ->setDateFrom( $this->getDateFrom() );
-
-            $cart_item
+                ->setDateFrom( $this->getDateFrom() )
                 ->setServiceId( $this->getServiceId() )
-                ->setSlots( [$slot] );
+                ->setSubServiceKey( $this->getSubServiceKey() )
+                ->setSubServiceData( $this->getSubServiceData() )
+                ->setRouteDistance( $this->getRouteDistance() )
+                ->setRouteTime( $this->getRouteTime() )
+                ->setSlot( $slot );
 
             $cart_items[] = $cart_item;
         }
@@ -317,8 +344,8 @@ class UserBookingData
                 case 'route_distance':
                     $validator->validateDistance( $field_name, $field_value, true );
                     break;
-                case 'sub_services':
-                    $validator->validateSubServices( $field_value );
+                case 'sub_service_key':
+                    $validator->validateSubServices( $this->getCustomer(), $this->getService(), $field_value );
                     break;
                 case 'cart':
                     $validator->validateCart( $field_value );
@@ -1001,26 +1028,13 @@ class UserBookingData
     }
 
     /**
-     * Gets sub_services
+     * Gets service_id
      *
      * @return array
      */
-    public function getSubServices()
+    public function getService()
     {
-        return $this->sub_services;
-    }
-
-    /**
-     * Sets sub_services
-     *
-     * @param array $sub_services
-     * @return $this
-     */
-    public function setSubServices( $sub_services )
-    {
-        $this->sub_services = $sub_services;
-
-        return $this;
+        return Entities\Service::find( $this->service_id );
     }
 
     /**
@@ -1047,46 +1061,75 @@ class UserBookingData
     }
 
     /**
-     * Gets sub_service_id
+     * Sets sub_services
      *
-     * @return array
+     * @param array $service_id
+     * @return $this
      */
-    public function getSubServiceId()
+    public function getCustomerSubServices()
     {
-        return $this->sub_service_id;
+        $service = $this->getService();
+        $customer = $this->getCustomer();
+
+        if( !$service->isLoaded() || !$customer ) {
+            return;
+        }
+
+        if( $customer->isContractCustomer() ) {
+            $subServices = $customer->loadEnabledSubServices( $service->getId() );
+        } else {
+            $subServices = $service->loadEnabledSubServices();
+        }
+
+        return $subServices;
     }
 
     /**
      * Sets sub_services
      *
-     * @param array $sub_service_id
+     * @param array $service_id
      * @return $this
      */
-    public function setSubServiceId( $sub_service_id )
+    public function getSubService()
     {
-        $this->sub_service_id = $sub_service_id;
+        $subServices = $this->getCustomerSubServices();
+        $subService = $subServices[$this->getSubServiceKey()] ?? null;
+        return $subService;
+    }
+
+    /**
+     * Sets sub_services
+     *
+     * @param array $service_id
+     * @return $this
+     */
+    public function getSubServiceData()
+    {
+        $subService = $this->getSubService();
+        return $subService ? $subService->getData() : [];
+    }
+
+    /**
+     * Gets sub_service_key
+     *
+     * @return array
+     */
+    public function getSubServiceKey()
+    {
+        return $this->sub_service_key;
+    }
+
+    /**
+     * Sets sub_services
+     *
+     * @param array $sub_service_key
+     * @return $this
+     */
+    public function setSubServiceKey( $sub_service_key )
+    {
+        $this->sub_service_key = $sub_service_key;
 
         return $this;
-    }
-
-    /**
-     * Gets sub_service_id
-     *
-     * @return array
-     */
-    public function isOneWay()
-    {
-        return $this->sub_service_id == 'oneway';
-    }
-
-    /**
-     * Gets sub_service_id
-     *
-     * @return array
-     */
-    public function isRoundTrip()
-    {
-        return $this->isOneWay() ? false : true;
     }
 
     /**
@@ -1251,6 +1294,19 @@ class UserBookingData
     }
 
     /**
+     * Sets customer
+     *
+     * @param string $customer
+     * @return $this
+     */
+    public function setCustomer( $customer )
+    {
+        $this->customer = $customer;
+
+        return $this;
+    }
+
+    /**
      * Gets is_contract_customer
      *
      * @return string
@@ -1272,4 +1328,304 @@ class UserBookingData
 
         return $this;
     }
+
+    /**
+     * Gets route_distance
+     *
+     * @return string
+     */
+    public function getRouteDistance()
+    {
+        return $this->route_distance;
+    }
+
+    /**
+     * Sets route_distance
+     *
+     * @param string $route_distance
+     * @return $this
+     */
+    public function setRouteDistance( $route_distance )
+    {
+        $this->route_distance = $route_distance;
+
+        return $this;
+    }
+
+    /**
+     * Gets route_time
+     *
+     * @return string
+     */
+    public function getRouteTime()
+    {
+        return $this->route_time;
+    }
+
+    /**
+     * Sets route_time
+     *
+     * @param string $route_time
+     * @return $this
+     */
+    public function setRouteTime( $route_time )
+    {
+        $this->route_time = $route_time;
+
+        return $this;
+    }
+
+    /**
+     * Gets pickup_patient_name
+     *
+     * @return string
+     */
+    public function getPickupPatientName()
+    {
+        return $this->pickup_patient_name;
+    }
+
+    /**
+     * Sets pickup_patient_name
+     *
+     * @param string $pickup_patient_name
+     * @return $this
+     */
+    public function setPickupPatientName( $pickup_patient_name )
+    {
+        $this->pickup_patient_name = $pickup_patient_name;
+
+        return $this;
+    }
+
+    /**
+     * Gets pickup_room_no
+     *
+     * @return string
+     */
+    public function getPickupRoomNo()
+    {
+        return $this->pickup_room_no;
+    }
+
+    /**
+     * Sets pickup_room_no
+     *
+     * @param string $pickup_room_no
+     * @return $this
+     */
+    public function setPickupRoomNo( $pickup_room_no )
+    {
+        $this->pickup_room_no = $pickup_room_no;
+
+        return $this;
+    }
+
+    /**
+     * Gets pickup_contact_person
+     *
+     * @return string
+     */
+    public function getPickupContactPerson()
+    {
+        return $this->pickup_contact_person;
+    }
+
+    /**
+     * Sets pickup_contact_person
+     *
+     * @param string $pickup_contact_person
+     * @return $this
+     */
+    public function setPickupContactPerson( $pickup_contact_person )
+    {
+        $this->pickup_contact_person = $pickup_contact_person;
+
+        return $this;
+    }
+
+    /**
+     * Gets pickup_contact_no
+     *
+     * @return string
+     */
+    public function getPickupContactNo()
+    {
+        return $this->pickup_contact_no;
+    }
+
+    /**
+     * Sets pickup_contact_no
+     *
+     * @param string $pickup_contact_no
+     * @return $this
+     */
+    public function setPickupContactNo( $pickup_contact_no )
+    {
+        $this->pickup_contact_no = $pickup_contact_no;
+
+        return $this;
+    }
+
+    /**
+     * Gets pickup_address
+     *
+     * @return string
+     */
+    public function getPickupAddress()
+    {
+        return $this->pickup_address;
+    }
+
+    /**
+     * Sets pickup_address
+     *
+     * @param string $pickup_address
+     * @return $this
+     */
+    public function setPickupAddress( $pickup_address )
+    {
+        $this->pickup_address = $pickup_address;
+
+        return $this;
+    }
+
+    /**
+     * Gets destination_hospital
+     *
+     * @return string
+     */
+    public function getDestinationHospital()
+    {
+        return $this->destination_hospital;
+    }
+
+    /**
+     * Sets destination_hospital
+     *
+     * @param string $destination_hospital
+     * @return $this
+     */
+    public function setDestinationHospital( $destination_hospital )
+    {
+        $this->destination_hospital = $destination_hospital;
+
+        return $this;
+    }
+
+    /**
+     * Gets destination_contact_no
+     *
+     * @return string
+     */
+    public function getDestinationContactNo()
+    {
+        return $this->destination_contact_no;
+    }
+
+    /**
+     * Sets destination_contact_no
+     *
+     * @param string $destination_contact_no
+     * @return $this
+     */
+    public function setDestinationContactNo( $destination_contact_no )
+    {
+        $this->destination_contact_no = $destination_contact_no;
+
+        return $this;
+    }
+
+    /**
+     * Gets destination_dr_name
+     *
+     * @return string
+     */
+    public function getDestinationDrName()
+    {
+        return $this->destination_dr_name;
+    }
+
+    /**
+     * Sets destination_dr_name
+     *
+     * @param string $destination_dr_name
+     * @return $this
+     */
+    public function setDestinationDrName( $destination_dr_name )
+    {
+        $this->destination_dr_name = $destination_dr_name;
+
+        return $this;
+    }
+
+    /**
+     * Gets destination_dr_contact_no
+     *
+     * @return string
+     */
+    public function getDestinationDrContactNo()
+    {
+        return $this->destination_dr_contact_no;
+    }
+
+    /**
+     * Sets destination_dr_contact_no
+     *
+     * @param string $destination_dr_contact_no
+     * @return $this
+     */
+    public function setDestinationDrContactNo( $destination_dr_contact_no )
+    {
+        $this->destination_dr_contact_no = $destination_dr_contact_no;
+
+        return $this;
+    }
+
+    /**
+     * Gets destination_room_no
+     *
+     * @return string
+     */
+    public function getDestinationRoomNo()
+    {
+        return $this->destination_room_no;
+    }
+
+    /**
+     * Sets destination_room_no
+     *
+     * @param string $destination_room_no
+     * @return $this
+     */
+    public function setDestinationRoomNo( $destination_room_no )
+    {
+        $this->destination_room_no = $destination_room_no;
+
+        return $this;
+    }
+
+    /**
+     * Gets destination_address
+     *
+     * @return string
+     */
+    public function getDestinationAddress()
+    {
+        return $this->destination_address;
+    }
+
+    /**
+     * Sets destination_address
+     *
+     * @param string $destination_address
+     * @return $this
+     */
+    public function setDestinationAddress( $destination_address )
+    {
+        $this->destination_address = $destination_address;
+
+        return $this;
+    }
+
 }

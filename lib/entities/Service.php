@@ -27,16 +27,6 @@ class Service extends Lib\Base\Entity
     );
 
     /**
-     * Get sub services.
-     *
-     * @return Service[]
-     */
-    public function getSubServices()
-    {
-        return $this->sub_services;
-    }
-
-    /**
      * Check if given customer has reached the appointments limit for this service.
      *
      * @param int   $customer_id
@@ -162,6 +152,79 @@ class Service extends Lib\Base\Entity
         }
 
         return false;
+    }
+
+    /**
+     * Get sub services.
+     *
+     * @return Service[]
+     */
+    public function loadSubService( $key )
+    {
+        $list = $this->loadSubServices();
+        if( !isset($list[ $key ]) ) {
+            return;
+        }
+
+        return $list[ $key ];
+    }
+
+    /**
+     * Get sub services.
+     *
+     * @return Service[]
+     */
+    public function loadSubServices()
+    {
+        $list = [];
+
+        $sub_services = $this->sub_services ? json_decode($this->getSubServices(), true) : [];
+        foreach ($sub_services as $key => $sub_service) {
+            $entity = new SubService( $key, $sub_service, 'service' );
+            $list[ $key ] = $entity;
+        }
+
+        return $list;
+    }
+
+    /**
+     * Get sub services.
+     *
+     * @return Service[]
+     */
+    public function loadEnabledSubServices()
+    {
+        $list = [];
+
+        foreach ($this->loadSubServices() as $subService) {
+            if( $subService->isEnabled() ) {
+                $list[ $subService->getKey() ] = $subService;
+            }
+        }
+
+        return $list;
+    }
+
+    /**
+     * Get sub services.
+     *
+     * @return Service[]
+     */
+    public function getSubServices()
+    {
+        return $this->sub_services;
+    }
+
+    /**
+     * Get sub services.
+     *
+     * @return Service[]
+     */
+    public function setSubServices()
+    {
+        $this->sub_services = $sub_services;
+
+        return $this;
     }
 
     /**

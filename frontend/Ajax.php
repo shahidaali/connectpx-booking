@@ -24,13 +24,16 @@ class Ajax extends Lib\Base\Ajax
     public static function renderService()
     {
         $userData = new Lib\UserBookingData();
-        // $userData->load();
+        // if( !self::parameter('reset_form') ) {
+        //     $userData->load();
+        // }
 
         self::_handleTimeZone( $userData );
-        $services = Lib\Utils\Common::getSubServices();
-
+        
         $userData->setServiceId( self::parameter('service_id') );
         $userData = $userData->setActiveStep( 'service' );
+
+        $sub_services = $userData->getCustomerSubServices();
 
         $response = array(
             'success' => true,
@@ -39,7 +42,7 @@ class Ajax extends Lib\Base\Ajax
                 'progress_bar' => self::_renderProgressBar($userData),
                 // 'buttons' => self::_renderButtons($userData),
                 'userData' => $userData,
-                'services' => $services,
+                'sub_services' => $sub_services,
             ), false ),
         );
 
@@ -66,7 +69,17 @@ class Ajax extends Lib\Base\Ajax
             $days_times = Lib\Config::getDaysAndTimes();
             $bounding = Lib\Config::getBoundingDaysForPickadate();
 
-            $userData = $userData->setActiveStep( 'time' );
+            $userData = $userData->setActiveStep( 'date' );
+
+            $selected_date = null;
+            if( $userData->getDateFrom() ) {
+                $datetime = date_create( $userData->getDateFrom() );
+                $selected_date = array(
+                    (int) $datetime->format( 'Y' ),
+                    (int) $datetime->format( 'n' ) - 1,
+                    (int) $datetime->format( 'j' ),
+                );
+            }
 
             $response = array(
                 'success' => true,
@@ -80,6 +93,7 @@ class Ajax extends Lib\Base\Ajax
                 ), false ),
                 'date_max' => $bounding['date_max'],
                 'date_min' => $bounding['date_min'],
+                'selected_date' => $selected_date,
                 'disabled_days' => [],
             );
         } else {
@@ -147,6 +161,8 @@ class Ajax extends Lib\Base\Ajax
         $userData = new Lib\UserBookingData();
 
         if ( $userData->load() ) {
+            $userData = $userData->setActiveStep( 'repeat' );
+
             // Available days and times.
             $bounding  = Lib\Config::getBoundingDaysForPickadate();
             $slots    = $userData->getSlots();
@@ -218,6 +234,8 @@ class Ajax extends Lib\Base\Ajax
         $loaded = $userData->load();
 
         if ( $loaded ) {
+            $userData = $userData->setActiveStep( 'details' );
+
             if ( self::hasParameter( 'add_to_cart' ) ) {
                 $userData->addSlotsToCart();
             }
@@ -232,7 +250,7 @@ class Ajax extends Lib\Base\Ajax
             $response = array(
                 'success' => true,
                 'html' => $html,
-                'is_round_trip' => !$userData->isRoundTrip(),
+                'is_round_trip' => $userData->getSubService()->isRoundTrip(),
                 'woocommerce' => array(
                     'enabled' => 1,
                     'cart_url' => wc_get_cart_url(),

@@ -185,8 +185,7 @@ abstract class Config
     {
         $result = array();
 
-        $minTimeBeforeBooking = 1 * 3600;
-        $dp = Slots\DatePoint::now()->modify( $minTimeBeforeBooking )->toClientTz();
+        $dp = Slots\DatePoint::now()->modify( self::getMinimumTimePriorBooking() )->toClientTz();
         $result['date_min'] = array(
             (int) $dp->format( 'Y' ),
             (int) $dp->format( 'n' ) - 1,
@@ -210,7 +209,7 @@ abstract class Config
     public static function getBoundingTimeForPickatime( $selected_date )
     {
         $result = array();
-        $dpNow = Slots\DatePoint::now();
+        $dpNow = Slots\DatePoint::now()->modify( self::getMinimumTimePriorBooking() )->toClientTz();
         $dpSelected = $selected_date ? Slots\DatePoint::fromStr( $selected_date ) : $dpNow;
 
         if($dpNow->format( 'Y-m-d' ) == $dpSelected->format( 'Y-m-d' )) {
@@ -247,61 +246,13 @@ abstract class Config
     }
 
     /**
-     * Check whether multiple services booking is enabled.
-     *
-     * @return bool
-     */
-    public static function multipleServicesBookingEnabled()
-    {
-        return ( Config::cartActive() ||
-                 Config::chainAppointmentsActive() ||
-                 Config::multiplyAppointmentsActive() ||
-                 Config::recurringAppointmentsActive()
-        );
-    }
-
-    /**
-     * @return bool
-     */
-    public static function payLocallyEnabled()
-    {
-        return get_option( 'connectpx_booking_pmt_local' ) == 1;
-    }
-
-    /**
-     * @return bool
-     */
-    public static function paypalEnabled()
-    {
-        return self::proActive() && get_option( 'connectpx_booking_paypal_enabled' ) != '0';
-    }
-
-    /**
-     * @return bool
-     */
-    public static function twoCheckoutActive()
-    {
-        return self::__callStatic( '2checkoutActive', array() );
-    }
-
-    /**
      * Get time slot length in seconds.
      *
      * @return integer
      */
     public static function getTimeSlotLength()
     {
-        return (int) get_option( 'connectpx_booking_gen_time_slot_length', 15 ) * MINUTE_IN_SECONDS;
-    }
-
-    /**
-     * Check whether service duration should be used instead of slot length on the frontend.
-     *
-     * @return bool
-     */
-    public static function useServiceDurationAsSlotLength()
-    {
-        return (bool) get_option( 'connectpx_booking_gen_service_duration_as_slot_length', false );
+        return (int) Utils\Common::getOption('slot_length', 15) * MINUTE_IN_SECONDS;
     }
 
     /**
@@ -311,15 +262,31 @@ abstract class Config
      */
     public static function useClientTimeZone()
     {
-        return (bool) get_option( 'connectpx_booking_gen_use_client_time_zone' );
+        return Utils\Common::getOption('use_client_time_zone', 'no') == 'no' ? false : true;
     }
 
     /**
-     * @return int
+     * Get minimum time (in seconds) prior to booking.
+     *
+     * @param int|null $service_id
+     *
+     * @return integer
      */
-    public static function getMinimumTimePriorBooking()
+    public static function getMinimumTimePriorBooking( $service_id = null )
     {
-        return (int) get_option( 'connectpx_booking_gen_min_time_before_booking', 1 ) * 3600;
+        return (int) Utils\Common::getOption('min_time_prior_booking', 'no') * 3600;
+    }
+
+    /**
+     * Get minimum time (in seconds) prior to cancel.
+     *
+     * @param int|null $service_id
+     *
+     * @return integer
+     */
+    public static function getMinimumTimePriorCancel( $service_id = null )
+    {
+        return (int) Utils\Common::getOption('min_time_prior_cancel', 'no') * 3600;
     }
 
     /**
@@ -327,165 +294,7 @@ abstract class Config
      */
     public static function getMaximumAvailableDaysForBooking()
     {
-        return (int) get_option( 'connectpx_booking_gen_max_days_for_booking', 365 );
-    }
-
-    /**
-     * Whether to show calendar in the second step of booking form.
-     *
-     * @return bool
-     */
-    public static function showCalendar()
-    {
-        return (bool) get_option( 'connectpx_booking_app_show_calendar', true );
-    }
-
-    /**
-     * Whether to use first and last customer name instead full name.
-     *
-     * @return bool
-     */
-    public static function showFirstLastName()
-    {
-        return (bool) get_option( 'connectpx_booking_cst_first_last_name', false );
-    }
-
-    /**
-     * Whether to use email confirmation.
-     *
-     * @return bool
-     */
-    public static function showEmailConfirm()
-    {
-        return (bool) get_option( 'connectpx_booking_app_show_email_confirm', false );
-    }
-
-    /**
-     * Whether to show notes field.
-     *
-     * @return bool
-     */
-    public static function showNotes()
-    {
-        return (bool) get_option( 'connectpx_booking_app_show_notes', false );
-    }
-
-    /**
-     * Whether to show fully booked time slots in the second step of booking form.
-     *
-     * @return bool
-     */
-    public static function showBlockedTimeSlots()
-    {
-        return (bool) get_option( 'connectpx_booking_app_show_blocked_timeslots', false );
-    }
-
-    /**
-     * Whether to show wide time slots in the time step of booking form.
-     *
-     * @return bool
-     */
-    public static function showWideTimeSlots()
-    {
-        return self::groupBookingActive() && get_option( 'connectpx_booking_group_booking_app_show_nop' );
-    }
-
-    /**
-     * Whether to show wide time slots in the time step of booking form.
-     *
-     * @return bool
-     */
-    public static function showSingleTimeSlot()
-    {
-        return (bool) get_option( 'connectpx_booking_app_show_single_slot', false );
-    }
-
-    /**
-     * Whether to show days in the second step of booking form in separate columns or not.
-     *
-     * @return bool
-     */
-    public static function showDayPerColumn()
-    {
-        return (bool) get_option( 'connectpx_booking_app_show_day_one_column', false );
-    }
-
-    /**
-     * Whether to show login button at the time step of booking form.
-     *
-     * @return bool
-     */
-    public static function showLoginButton()
-    {
-        return (bool) get_option( 'connectpx_booking_app_show_login_button', false );
-    }
-
-    /**
-     * Whether phone field is required at the Details step or not.
-     *
-     * @return bool
-     */
-    public static function phoneRequired()
-    {
-        return in_array( 'phone', get_option( 'connectpx_booking_cst_required_details', array() ) );
-    }
-
-    /**
-     * Whether email field is required at the Details step or not.
-     *
-     * @return bool
-     */
-    public static function emailRequired()
-    {
-        return in_array( 'email', get_option( 'connectpx_booking_cst_required_details', array() ) );
-    }
-
-    /**
-     * @return bool
-     */
-    public static function addressRequired()
-    {
-        return get_option( 'connectpx_booking_cst_required_address' ) == 1;
-    }
-
-    /**
-     * Whether customer duplicates are allowed or not
-     *
-     * @return bool
-     */
-    public static function allowDuplicates()
-    {
-        return get_option( 'connectpx_booking_cst_allow_duplicates' ) == 1;
-    }
-
-    /**
-     * Whether custom fields attached to services or not.
-     *
-     * @return bool
-     */
-    public static function customFieldsPerService()
-    {
-        return get_option( 'connectpx_booking_custom_fields_per_service' ) == 1;
-    }
-
-    /**
-     * Whether to show single instance of custom fields for repeating services.
-     *
-     * @return bool
-     */
-    public static function customFieldsMergeRepeating()
-    {
-        return get_option( 'connectpx_booking_custom_fields_merge_repeating' ) == 1;
-    }
-
-    /**
-     * Whether step Cart is enabled or not.
-     *
-     * @return bool
-     */
-    public static function showStepCart()
-    {
-        return self::cartActive() && get_option( 'connectpx_booking_cart_enabled' ) && ! Config::wooCommerceEnabled();
+        return (int) Utils\Common::getOption('max_days_for_booking', 365);
     }
 
     /**
@@ -496,36 +305,6 @@ abstract class Config
     public static function sendEmailAsHtml()
     {
         return get_option( 'connectpx_booking_email_send_as' ) == 'html';
-    }
-
-    /**
-     * Whether to show only business days in calendar
-     *
-     * @return bool
-     */
-    public static function showOnlyBusinessDaysInCalendar()
-    {
-        return get_option( 'connectpx_booking_cal_show_only_business_days' ) == 1;
-    }
-
-    /**
-     * Whether to show only business hours in calendar
-     *
-     * @return bool
-     */
-    public static function showOnlyBusinessHoursInCalendar()
-    {
-        return get_option( 'connectpx_booking_cal_show_only_business_hours' ) == 1;
-    }
-
-    /**
-     * Whether to show only staff members with appointments in calendar Day view or not
-     *
-     * @return bool
-     */
-    public static function showOnlyStaffWithAppointmentsInCalendarDayView()
-    {
-        return get_option( 'connectpx_booking_cal_show_only_staff_with_appointments' ) == 1;
     }
 
     /**

@@ -71,6 +71,20 @@ abstract class Common {
 		$options = self::getOptions();
 		return self::getData($options, $name, $default);
 	}
+
+	/**
+	 * Run the loader to execute all of the hooks with WordPress.
+	 *
+	 * @since    1.0.0
+	 */
+	public static function getOptionMediaSource($name, $size = 'full', $use_placeholder = true) {
+		$attachment_id = self::getOption( $name, 0 );
+		$attachment = $attachment_id ? wp_get_attachment_image_src($attachment_id, $size) : null;
+
+		if( $attachment && !empty($attachment[0]) ) {
+			return $attachment[0];
+		}
+	}
 	
 	/**
 	 * Run the loader to execute all of the hooks with WordPress.
@@ -282,5 +296,14 @@ abstract class Common {
 
         return self::$csrf;
     }
+
+    /**
+	 * Run the loader to execute all of the hooks with WordPress.
+	 *
+	 * @since    1.0.0
+	 */
+	public static function getDistanceInMiles( $meters ) {
+		return ceil($meters * 0.000621371192);
+	}
 
 }

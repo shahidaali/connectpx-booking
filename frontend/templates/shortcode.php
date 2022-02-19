@@ -13,7 +13,9 @@
  */
 ?>
 
-<div class="connectpx_booking_form"></div>
+<div class="connectpx_booking_form">
+   <div class="connectpx_booking_form_container"></div>
+</div>
 <script type="text/javascript">
    var ConnextpxBookingShortcode = <?php echo json_encode( $shortcode_options ) ?>;
 </script>

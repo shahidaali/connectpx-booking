@@ -359,6 +359,44 @@ class Validator
     }
 
     /**
+     * Validate cart.
+     *
+     * @param array $cart
+     * @param int $form_id
+     */
+    public function validateService( $service )
+    {
+        if( ! $service ) {
+            $this->errors['service_id'] = __('This service is not available. Please contact service provide.', 'connectpx_booking');
+            return;
+        }
+    }
+
+    /**
+     * Validate cart.
+     *
+     * @param array $cart
+     * @param int $form_id
+     */
+    public function validateSubServices( $customer, $service, $sub_service_key )
+    {
+        if( ! $service || !$service->isLoaded() ) {
+            $this->errors['sub_service_error'] = __('This service is not available. Please contact service provide.', 'connectpx_booking');
+            return;
+        }
+
+        if( $customer->isContractCustomer() ) {
+            $subService = $customer->loadSubService( $service->getId(), $sub_service_key );
+        } else {
+            $subService = $service->loadSubService( $sub_service_key );
+        }
+
+        if( ! $subService || $subService->getFlatRate() <= 0 || ! $subService->isEnabled() ) {
+            $this->errors['sub_service_error'] = __('This service is not configured for customer. Please contact service provide.', 'connectpx_booking');
+        }
+    }
+
+    /**
      * Get errors.
      *
      * @return array

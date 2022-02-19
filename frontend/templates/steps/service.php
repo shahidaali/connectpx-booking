@@ -19,13 +19,18 @@
 <div class="cbf-step step-service">
     <div class="cbf-box">
         <h4><?php echo __('Select Service', 'connectpx_booking'); ?></h4>
-        <div class="choose-service">
-            <?php foreach ($services as $key => $service): ?>
-                <div class="service-item">
-                    <button type="button" data-service="<?php echo $key; ?>"><?php echo $service['title']; ?></button>
-                </div>
-            <?php endforeach; ?>
-        </div>
+        <div class="connectpx_booking_form_errors"></div>
+        <?php if($sub_services): ?>
+            <div class="choose-service">
+                <?php foreach ($sub_services as $key => $sub_service): ?>
+                    <div class="service-item">
+                        <button type="button" data-service="<?php echo $key; ?>"><?php echo $sub_service->getTitle(); ?></button>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php else: ?>
+            <p><?php echo __('This service is not available or your account is not configured. Please contact service provider.', 'connectpx_booking'); ?></p>
+        <?php endif; ?>
     </div>
 </div>
 

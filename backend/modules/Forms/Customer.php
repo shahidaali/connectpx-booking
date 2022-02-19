@@ -29,7 +29,7 @@ class Customer extends Lib\Base\Form
             'street_number',
             'additional_address',
             'notes',
-            'sub_services',
+            'services',
         ) );
     }
 
@@ -41,10 +41,10 @@ class Customer extends Lib\Base\Form
      */
     public function bind( array $params, array $files = array() )
     {
-        if( isset( $params['sub_services'] ) && is_array($params['sub_services']) ) {
-            $params['sub_services'] = json_encode($params['sub_services']);
+        if( isset( $params['services'] ) && is_array($params['services']) ) {
+            $params['services'] = json_encode($params['services']);
         } else {
-            $params['sub_services'] = '[]';
+            $params['services'] = '[]';
         }
 
         parent::bind( $params, $files );

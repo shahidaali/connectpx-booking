@@ -4,7 +4,7 @@ use ConnectpxBooking\Lib\Utils\Form;
 
 $fields = static::isEdit() ? $customer->getFields() : [];
 $is_contract_customer = static::isEdit() ? $customer->isContractCustomer() : 0;
-$sub_services = static::isEdit() ? json_decode($customer->getSubServices(), true) : [];
+$services_data = static::isEdit() ? json_decode($customer->getServices(), true) : [];
 
 if(static::isEdit() && $is_contract_customer) {
 	$wp_users = $wp_users;
@@ -16,12 +16,25 @@ else {
 	$wp_users = array('create_new' => __('Create New', 'connectpx_booking'));
 }
 ?>
+<style type="text/css">
+	.subservices-table {
+	    padding: 0px 40px 10px;
+	    background: #e7e7e7;
+	    margin: 20px 0px;
+	}
+	.form-table-fields th {
+		padding: 5px 0px;
+	}
+	.form-table-fields td {
+		padding: 5px 10px;
+	}
+</style>
 <form action="" method="post" autocomplete="off">
 	<div class="os-tabs">
 		<ul>
 			<li class="active"><a href="#tab-details"><?php _e('Customer Details', 'connectpx_booking'); ?></a></li>
-			<?php foreach (Lib\Utils\Common::getSubServices() as $key => $sub_service): ?>
-				<li><a href="#tab-<?php echo $key; ?>"><?php echo $sub_service['title']; ?></a></li>
+			<?php foreach ($services as $key => $service): ?>
+				<li><a href="#tab-service-<?php echo $key; ?>"><?php echo $service['title']; ?></a></li>
 			<?php endforeach; ?>
 		</ul>
 	</div>
@@ -110,8 +123,60 @@ else {
 		</table>
 	</div>
 
-	<?php self::renderTemplate( 'backend/templates/partials/services/fields', ['fields_data' => $sub_services] ); ?>
-	
+	<?php foreach ($services as $key => $service_item): ?>
+		<?php 
+		$service = new Lib\Entities\Service($service_item);
+		$sub_services = Lib\Utils\Common::getSubServices();
+		$services_sub_services = array_keys($service->loadEnabledSubServices());
+		$fields_data = $services_data[$service->getId()]['sub_services'] ?? [];
+		?>
+		<div class="os-tab-content" id="tab-service-<?php echo $key; ?>">
+			<?php foreach ($sub_services as $key => $sub_service): ?>
+				<?php 
+					if( !in_array($key, $services_sub_services) ) 
+						continue; 
+				?>
+				<div class="subservices-table">
+					<table class="form-table form-table-fields" role="presentation">
+						<tbody>
+							<tr>
+								<th colspan="2">
+									<h2><?php echo $sub_service['title']; ?></h2>
+								</th>
+							</tr>
+							<tr>
+								<th scope="row"><?php _e('Enabled', 'connectpx_booking') ?></th>
+								<td>
+									<select name="services[<?php echo $service->getId(); ?>][sub_services][<?php echo $key; ?>][enabled]">
+										<?php 
+										echo Form::selectOptions([
+											'yes' => __('Enabled', 'connectpx_booking'), 
+											'no' => __('Disabled', 'connectpx_booking')
+										], 
+										Form::old(
+											[$key, 'enabled'], 
+											$fields_data,
+											'yes'
+										)); 
+										?>
+									</select>
+								</td>
+							</tr>
+							<?php foreach (Lib\Utils\Common::getSubServicesFields() as $field): ?>
+							<tr>
+								<th scope="row"><?php echo $field['label']; ?></th>
+								<td>
+									<input name="services[<?php echo $service->getId(); ?>][sub_services][<?php echo $key; ?>][<?php echo $field['name']; ?>]" type="number"  value="<?php echo Form::old([$key, $field['name']], $fields_data, 0); ?>" size="50">
+								</td>
+							</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+				</div>
+			<?php endforeach; ?>
+		</div>
+	<?php endforeach; ?>
+
 	<p class="submit">
 		<?php if(static::isEdit()): ?>
     		<input type="hidden" name="id" value="<?php echo $customer->getId(); ?>" />

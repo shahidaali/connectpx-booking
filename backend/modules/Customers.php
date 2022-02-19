@@ -31,6 +31,7 @@ class Customers extends Lib\Base\Component {
             case 'add':
                 self::save();
                 $params['params']['wp_users'] = self::getWpUsers();
+                $params['params']['services'] = self::getServices();
                 $params['tpl'] = 'backend/templates/partials/customers/add';
                 break;
 
@@ -43,6 +44,7 @@ class Customers extends Lib\Base\Component {
 
                 self::save();
                 $params['params']['wp_users'] = self::getWpUsers();
+                $params['params']['services'] = self::getServices();
                 $params['params']['customer'] = $customer;
                 $params['tpl'] = 'backend/templates/partials/customers/add';
                 break;
@@ -184,5 +186,11 @@ class Customers extends Lib\Base\Component {
             $user_list[$user->ID] = $user->display_name;
         }
         return $user_list;
+    }
+
+    public static function getServices() {
+        return $query = Lib\Entities\Service::query( 's' )
+                    ->select( 's.*' )
+                    ->fetchArray();
     }
 }

@@ -4,6 +4,9 @@
     font-size: 14px;
     line-height: inherit;
 }
+.connectpx_booking_form_errors {
+    color: red;
+}
 .connectpx_booking_form input[type="text"], 
 .connectpx_booking_form input[type="number"], 
 .connectpx_booking_form input[type="password"], 

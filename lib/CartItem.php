@@ -1,6 +1,8 @@
 <?php
 namespace ConnectpxBooking\Lib;
 
+use ConnectpxBooking\Lib;
+
 /**
  * Class CartItem
  * @package ConnectpxBooking\Lib
@@ -10,12 +12,20 @@ class CartItem
     // Step service
     /** @var  int */
     protected $service_id;
+    /** @var  string */
+    protected $sub_service_key;
+    /** @var  array */
+    protected $sub_service_data;
+    /** @var  int */
+    protected $route_distance;
+    /** @var  int */
+    protected $route_time;
     /** @var  string Y-m-d */
     protected $date_from;
 
     // Step time
     /** @var  array */
-    protected $slots;
+    protected $slot;
 
     // Step done
     /** @var  int */
@@ -81,7 +91,9 @@ class CartItem
      */
     public function getServicePrice()
     {
-        return $this->getService()->getCustomerPrice( null );
+        $subService = $this->getSubService();
+        $price = $subService->getFlatRate();
+        return $price;
     }
 
     /**************************************************************************
@@ -135,6 +147,108 @@ class CartItem
     }
 
     /**
+     * Gets sub_service_key
+     *
+     * @return int
+     */
+    public function getSubServiceKey()
+    {
+        return $this->sub_service_key;
+    }
+
+    /**
+     * Sets sub_service_key
+     *
+     * @param int $sub_service_key
+     * @return $this
+     */
+    public function setSubServiceKey( $sub_service_key )
+    {
+        $this->sub_service_key = $sub_service_key;
+
+        return $this;
+    }
+
+    /**
+     * Gets sub_service_data
+     *
+     * @return int
+     */
+    public function getSubService()
+    {
+        return new Lib\Entities\SubService( $this->sub_service_key, $this->sub_service_data, 'cart_item' );
+    }
+
+    /**
+     * Gets sub_service_data
+     *
+     * @return int
+     */
+    public function getSubServiceData()
+    {
+        return $this->sub_service_data;
+    }
+
+    /**
+     * Sets sub_service_data
+     *
+     * @param int $sub_service_data
+     * @return $this
+     */
+    public function setSubServiceData( $sub_service_data )
+    {
+        $this->sub_service_data = $sub_service_data;
+
+        return $this;
+    }
+
+    /**
+     * Gets route_distance
+     *
+     * @return int
+     */
+    public function getRouteDistance()
+    {
+        return $this->route_distance;
+    }
+
+    /**
+     * Sets route_distance
+     *
+     * @param int $route_distance
+     * @return $this
+     */
+    public function setRouteDistance( $route_distance )
+    {
+        $this->route_distance = $route_distance;
+
+        return $this;
+    }
+
+    /**
+     * Gets route_time
+     *
+     * @return int
+     */
+    public function getRouteTime()
+    {
+        return $this->route_time;
+    }
+
+    /**
+     * Sets route_time
+     *
+     * @param int $route_time
+     * @return $this
+     */
+    public function setRouteTime( $route_time )
+    {
+        $this->route_time = $route_time;
+
+        return $this;
+    }
+
+    /**
      * Gets date_from
      *
      * @return string
@@ -158,24 +272,24 @@ class CartItem
     }
 
     /**
-     * Gets slots
+     * Gets slot
      *
      * @return array
      */
-    public function getSlots()
+    public function getSlot()
     {
-        return $this->slots;
+        return $this->slot;
     }
 
     /**
-     * Sets slots
+     * Sets slot
      *
-     * @param array $slots
+     * @param array $slot
      * @return $this
      */
-    public function setSlots( $slots )
+    public function setSlot( $slot )
     {
-        $this->slots = $slots;
+        $this->slot = $slot;
 
         return $this;
     }

@@ -99,11 +99,11 @@ class WooCommerce extends Lib\Base\Ajax
                     $failed_cart_key = $userData->cart->getFailedKey();
                     if ( $failed_cart_key !== null ) {
                         $cart_item = $userData->cart->get( $failed_cart_key );
-                        $slot      = $cart_item->getSlots();
+                        $slot      = $cart_item->getSlot();
                         wc_add_notice( strtr( __( 'Sorry, the time slot %date_time% for %service% has been already occupied.', 'connectpx_booking' ),
                             array(
                                 '%service%'   => '<strong>' . $cart_item->getService()->getTitle() . '</strong>',
-                                '%date_time%' => Lib\Utils\DateTime::formatDateTime( $slot[0][0] ),
+                                '%date_time%' => Lib\Utils\DateTime::formatDateTime( $slot[0] ),
                             ) ), 'error' );
                         WC()->cart->set_quantity( $wc_key, 0, false );
                         $recalculate_totals = true;
@@ -340,31 +340,36 @@ class WooCommerce extends Lib\Base\Ajax
             $userData->cart->setItemsData( $wc_item['connectpx_booking']['items'] );
             $cart_info = $userData->cart->getInfo();
             $cart_items = $userData->cart->getItems();
+            $distanceMiles = Lib\Utils\Common::getDistanceInMiles( $userData->getRouteDistance() );
+            $subService = $userData->getSubService();
             foreach ( $cart_items as $cart_item ) {
                 $service = $cart_item->getService();
-                $slots = $cart_item->getSlots();
+                $slot = $cart_item->getSlot();
                 $appointment_pickup_client_dp = $appointment_return_pickup_client_dp = null;
-                if ( $slots[0][0] !== null && $slots[0][1] !== null ) {
-                    $appointment_pickup_client_dp = Lib\Slots\DatePoint::fromStr( $slots[0][0] . " " . $slots[0][1] )->toClientTz();
+                if ( $slot[0] !== null && $slot[1] !== null ) {
+                    $appointment_pickup_client_dp = Lib\Slots\DatePoint::fromStr( $slot[0] . " " . $slot[1] )->toClientTz();
                 }
-                if ( $slots[0][0] !== null && $slots[0][2] !== null ) {
-                    $appointment_return_pickup_client_dp = Lib\Slots\DatePoint::fromStr( $slots[0][0] . " " . $slots[0][2] )->toClientTz();
+                if ( $slot[0] !== null && $slot[2] !== null ) {
+                    $appointment_return_pickup_client_dp = Lib\Slots\DatePoint::fromStr( $slot[0] . " " . $slot[2] )->toClientTz();
                 }
                 $codes = array(
                     'amount_to_pay' => Lib\Utils\Price::format( $cart_info->getPayNow() ),
                     'appointment_date' => $appointment_pickup_client_dp ? $appointment_pickup_client_dp->formatI18nDate() : __( 'N/A', 'connectpx_booking' ),
                     'appointment_pickup_time' => $appointment_pickup_client_dp ? $appointment_pickup_client_dp->formatI18nTime() : __( 'N/A', 'connectpx_booking' ),
                     'appointment_return_pickup_time' => $appointment_return_pickup_client_dp ? $appointment_return_pickup_client_dp->formatI18nTime() : __( 'N/A', 'connectpx_booking' ),
+                    'sub_service_title' => $subService->getTitle(),
+                    'distance_miles' => $subService->getMilesToCharge( $distanceMiles ),
+                    'per_mile_price' => Lib\Utils\Price::format( $subService->getRatePerMile() ),
+                    'flat_rate' => Lib\Utils\Price::format( $subService->getFlatRate() ),
                     'service_info' => $service ? $service->getDescription() : '',
                     'service_name' => $service ? $service->getTitle() : __( 'Service was not found', 'connectpx_booking' ),
                     'service_price' => $service ? Lib\Utils\Price::format( $cart_item->getServicePrice() ) : '',
                 );
-                $info[] = Lib\Utils\Codes::replace('Date: {appointment_date}
-                    Pickup Time: {appointment_pickup_time}', $codes, false );
+                $info[] = Lib\Utils\Codes::replace(Lib\Utils\Common::getOption('wc_cart_item_data', ''), $codes, false );
             }
 
             $other_data[] = array(
-                'name' => __('Booking', 'connectpx_booking'),
+                'name' => Lib\Utils\Common::getOption('wc_cart_item_title', 'Booking'),
                 'value' => implode( PHP_EOL . PHP_EOL, $info ),
             );
         }

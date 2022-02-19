@@ -43,7 +43,13 @@ class Backend {
 			Plugin::version(), 
 			'all' 
 		);
-
+		wp_enqueue_style( 
+			'connectpx_booking_fa', 
+			plugin_dir_url( __FILE__ ) . 'resources/css/fontawesome-all.min.css', 
+			array(), 
+			Plugin::version(), 
+			'all' 
+		);
 	}
 
 	/**

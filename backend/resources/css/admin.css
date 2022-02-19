@@ -38,21 +38,33 @@
 .os-tab-content.active {
   display: block;
 }
-/* Taller Admin Bar */
-@media screen and ( min-width: 782px ) {
-  html.wp-toolbar {
-    padding-top: 60px;
-  }
-  #wpadminbar {
-    height: 60px;
-  }
-  #wpadminbar .quicklinks .ab-empty-item, #wpadminbar .quicklinks a, #wpadminbar .shortlink-input {
-    height: 60px;
-    line-height: 60px;
-  }
-  #wpadminbar .ab-icon, #wpadminbar .ab-item:before, #wpadminbar>#wp-toolbar>#wp-admin-bar-root-default .ab-icon {
-    padding: 16px 0;
-  }
+.connectpx_booking_upload_media .image-preview-wrapper {
+    position: relative;
+    width: 106px;
+    height: 106px;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    background-color: #e9ecef;
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.connectpx_booking_upload_media .image-preview-wrapper .image-preview-icon {
+    color: #fff;
+}
+.connectpx_booking_upload_media .image-preview-wrapper img {
+    max-width: 100%;
+    max-height: 100%;
+}
+.connectpx-booking-field-info {
+    font-size: 12px;
+    color: #a7aaad;
+    font-style: italic;
+    margin-top: 3px;
 }
 @media screen and ( min-width: 600px ){
 

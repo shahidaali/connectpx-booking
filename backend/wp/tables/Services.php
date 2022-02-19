@@ -40,12 +40,16 @@ class Services extends \WP_List_Table {
 		$columns = [];
 
 		foreach (Lib\Utils\Common::getSubServices() as $key => $sub_service):
-			$fields = [];
-			foreach (Lib\Utils\Common::getSubServicesFields() as $field):
-				$fields[] = "<strong>" . $field['label'] . ":</strong> " . (isset($values[$key][$field['name']]) ? $values[$key][$field['name']] : 0);
-			endforeach;
-
-			$columns["sub_services_" . $key] = implode("<br>", $fields);
+			$enabled = isset($values[$key]['enabled']) && $values[$key]['enabled'] == 'yes' ? 1 : 0;
+			if($enabled) {
+				$fields = [];
+				foreach (Lib\Utils\Common::getSubServicesFields() as $field):
+					$fields[] = "<strong>" . $field['label'] . ":</strong> " . (isset($values[$key][$field['name']]) ? $values[$key][$field['name']] : 0);
+				endforeach;
+				$columns["sub_services_" . $key] = implode("<br>", $fields);
+			} else {
+				$columns["sub_services_" . $key] = __('Disabled', 'connectpx_booking');
+			}
 		endforeach;
 
 		return $columns;

@@ -67,9 +67,9 @@ class Customers extends \WP_List_Table {
 			'account' => __('Account Details'),
 		);
 
-		foreach (Lib\Utils\Common::getSubServices() as $key => $sub_service):
-			$columns["sub_services_" . $key] = $sub_service['title'];
-		endforeach;
+		// foreach (Lib\Utils\Common::getSubServices() as $key => $sub_service):
+		// 	$columns["sub_services_" . $key] = $sub_service['title'];
+		// endforeach;
 		
 		return $columns;
 	}
@@ -130,7 +130,7 @@ class Customers extends \WP_List_Table {
 				'wp_user_id' => $customer->getWpUserId(),
 				'is_contract_customer' => $customer->isContractCustomer(),
 				'name' => $customer->getFullName(),
-				'sub_services' => json_decode($item['sub_services'], true),
+				// 'sub_services' => json_decode($item['sub_services'], true),
 				'account' => self::_accountDetails($customer->getWpUser()),
 			];
 		}
