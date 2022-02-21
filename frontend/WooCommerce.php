@@ -209,31 +209,14 @@ class WooCommerce extends Lib\Base\Ajax
                 $data['street_number'] = '';
                 $userData->fillData( $data );
                 $userData->cart->setItemsData( $data['items'] );
-                if ( $order_item['qty'] > 1 ) {
-                    foreach ( $userData->cart->getItems() as $cart_item ) {
-                        $cart_item->setNumberOfPersons( $cart_item->getNumberOfPersons() * $order_item['qty'] );
-                    }
-                }
-                $cart_info = $userData->cart->getInfo();
-                $payment = new Lib\Entities\Payment();
-                $payment
-                    ->setType( Lib\Entities\Payment::TYPE_WOOCOMMERCE )
-                    ->setStatus( Lib\Entities\Payment::STATUS_COMPLETED )
-                    ->setCartInfo( $cart_info )
-                    ->save();
-                $order = $userData->save( $payment );
-                $payment->setDetailsFromOrder( $order, $cart_info, array( 'reference_id' => $order_id ) )->save();
-                if ( get_option( 'connectpx_booking_cst_create_account' ) && $order->getCustomer()->getWpUserId() ) {
-                    update_post_meta( $order_id, '_customer_user', $order->getCustomer()->getWpUserId() );
-                }
+                $appointment_ids = $userData->save( $wc_order );
+
                 // Mark item as processed.
                 $data['processed'] = true;
-                $data['ca_ids']    = array();
-                foreach ( $order->getFlatItems() as $item ) {
-                    $data['ca_ids'][] = $item->getCA()->getId();
-                }
+                $data['appointment_ids'] = $appointment_ids;
+
                 wc_update_order_item_meta( $item_id, 'connectpx_booking', $data );
-                Lib\Notifications\Cart\Sender::send( $order );
+                // Lib\Notifications\Cart\Sender::send( $order );
             }
         }
     }
@@ -361,6 +344,8 @@ class WooCommerce extends Lib\Base\Ajax
                     'distance_miles' => $subService->getMilesToCharge( $distanceMiles ),
                     'per_mile_price' => Lib\Utils\Price::format( $subService->getRatePerMile() ),
                     'flat_rate' => Lib\Utils\Price::format( $subService->getFlatRate() ),
+                    'after_hours_fee' => Lib\Utils\Price::format( $subService->getAfterHoursFee() ),
+                    'is_after_hours' => Lib\Utils\Common::isOffTimeService( $slot ),
                     'service_info' => $service ? $service->getDescription() : '',
                     'service_name' => $service ? $service->getTitle() : __( 'Service was not found', 'connectpx_booking' ),
                     'service_price' => $service ? Lib\Utils\Price::format( $cart_item->getServicePrice() ) : '',
@@ -452,9 +437,11 @@ class WooCommerce extends Lib\Base\Ajax
     public static function checkoutDetails() {
         foreach ( WC()->cart->get_cart() as $wc_key => $wc_item ) {
             if ( array_key_exists( 'connectpx_booking', $wc_item ) ) {
-                $connectpx_booking = $wc_item['connectpx_booking'];
+                $userData = new Lib\UserBookingData();
+                $userData->fillData( $wc_item['connectpx_booking'] );
+                $userData->cart->setItemsData( $wc_item['connectpx_booking']['items'] );
                 self::renderTemplate( 'frontend/templates/checkout-details', array(
-                    'booking' => $connectpx_booking,
+                    'userData' => $userData,
                 ));
             }
         }

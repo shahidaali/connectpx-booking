@@ -91,6 +91,24 @@ use ConnectpxBooking\Lib\Utils;
 							<div class="connectpx-booking-field-info"><?php echo __('Set how far in the future the clients can book appointments.', 'connectpx_booking') ?></div>
 						</td>
 					</tr>
+					<tr>
+						<th scope="row"><?php _e('Default appointment status', 'connectpx_booking'); ?></th>
+						<td>
+							<select name="connectpx_booking[appointment_default_status]">
+								<?php 
+								echo Utils\Form::selectOptions(
+									$appointment_statuses, 
+									Utils\Common::getOption('appointment_default_status', 'pending')
+								); 
+								?>
+							</select>
+							<div class="connectpx-booking-field-info"><?php echo __('Select status for newly booked appointments.', 'connectpx_booking') ?></div>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php _e('Address Format', 'connectpx_booking'); ?></th>
+						<td><textarea name="connectpx_booking[address_format]" rows="3" cols="52"><?php echo Utils\Common::getOption('address_format', ''); ?></textarea></td>
+					</tr>
 				</tbody>
 			</table>
 		</div>

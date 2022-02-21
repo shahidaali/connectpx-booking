@@ -1,6 +1,8 @@
 <?php
 namespace ConnectpxBooking\Lib;
 
+use ConnectpxBooking\Lib;
+
 /**
  * Class UserBookingData
  * @package ConnectpxBooking\Frontend\Modules\Booking\Lib
@@ -396,68 +398,51 @@ class UserBookingData
      * @param Entities\Payment $payment
      * @return DataHolders\Booking\Order
      */
-    public function save( $payment = null )
+    public function save( $wc_order = null )
     {
         // Customer.
         $customer = $this->getCustomer();
 
         // Overwrite only if value is not empty.
-        if ( $this->getFacebookId() ) {
-            $customer->setFacebookId( $this->getFacebookId() );
-        }
-        if ( $this->getFullName() != '' ) {
-            $customer->setFullName( $this->getFullName() );
-        }
-        if ( $this->getFirstName() != '' ) {
-            $customer->setFirstName( $this->getFirstName() );
-        }
-        if ( $this->getLastName() != '' ) {
-            $customer->setLastName( $this->getLastName() );
-        }
-        if ( $this->getPhone() != '' ) {
-            $customer->setPhone( $this->getPhone() );
-        }
-        if ( $this->getEmail() != '' ) {
-            $customer->setEmail( trim( $this->getEmail() ) );
-        }
-        if ( $this->getBirthdayYmd() != '' ) {
-            $customer->setBirthday( $this->getBirthdayYmd() );
-        }
-        if ( $this->getCountry() != '' ) {
-            $customer->setCountry( $this->getCountry() );
-        }
-        if ( $this->getState() != '' ) {
-            $customer->setState( $this->getState() );
-        }
-        if ( $this->getPostcode() != '' ) {
-            $customer->setPostcode( $this->getPostcode() );
-        }
-        if ( $this->getCity() != '' ) {
-            $customer->setCity( $this->getCity() );
-        }
-        if ( $this->getStreet() != '' ) {
-            $customer->setStreet( $this->getStreet() );
-        }
-        if ( $this->getStreetNumber() != '' ) {
-            $customer->setStreetNumber( $this->getStreetNumber() );
-        }
-        if ( $this->getAdditionalAddress() != '' ) {
-            $customer->setAdditionalAddress( $this->getAdditionalAddress() );
+        if( ! $customer->isContractCustomer() ) {
+            if ( $this->getFirstName() != '' ) {
+                $customer->setFirstName( $this->getFirstName() );
+            }
+            if ( $this->getLastName() != '' ) {
+                $customer->setLastName( $this->getLastName() );
+            }
+            if ( $this->getPhone() != '' ) {
+                $customer->setPhone( $this->getPhone() );
+            }
+            if ( $this->getEmail() != '' ) {
+                $customer->setEmail( trim( $this->getEmail() ) );
+            }
+            if ( $this->getCountry() != '' ) {
+                $customer->setCountry( $this->getCountry() );
+            }
+            if ( $this->getState() != '' ) {
+                $customer->setState( $this->getState() );
+            }
+            if ( $this->getPostcode() != '' ) {
+                $customer->setPostcode( $this->getPostcode() );
+            }
+            if ( $this->getCity() != '' ) {
+                $customer->setCity( $this->getCity() );
+            }
+            if ( $this->getStreet() != '' ) {
+                $customer->setStreet( $this->getStreet() );
+            }
+            if ( $this->getStreetNumber() != '' ) {
+                $customer->setStreetNumber( $this->getStreetNumber() );
+            }
+            if ( $this->getAdditionalAddress() != '' ) {
+                $customer->setAdditionalAddress( $this->getAdditionalAddress() );
+            }
+
+            $customer->save();
         }
 
-        $customer->save();
-
-        // Order.
-        $order = DataHolders\Booking\Order::create( $customer );
-
-        // Payment.
-        if ( $payment ) {
-            $order->setPayment( $payment );
-            $this->payment_id = $payment->getId();
-            $this->setPaymentType( $payment->getType() );
-        }
-
-        return $this->cart->save( $order, $this->getTimeZone(), $this->getTimeZoneOffset() );
+        return $this->cart->save( $wc_order, $this->getTimeZone(), $this->getTimeZoneOffset() );
     }
 
     /**
@@ -1014,9 +999,17 @@ class UserBookingData
     /**
      * @return string
      */
+    public function getFormatedAddress()
+    {
+        return Utils\Common::getFullAddressByCustomerData( $this->getAddress() );
+    }
+
+    /**
+     * @return string
+     */
     public function getAddress()
     {
-        return Utils\Common::getFullAddressByCustomerData( array(
+        return array(
             'country'            => $this->getCountry(),
             'state'              => $this->getState(),
             'postcode'           => $this->getPostcode(),
@@ -1024,7 +1017,7 @@ class UserBookingData
             'street'             => $this->getStreet(),
             'street_number'      => $this->getStreetNumber(),
             'additional_address' => $this->getAdditionalAddress(),
-        ) );
+        );
     }
 
     /**
@@ -1068,20 +1061,10 @@ class UserBookingData
      */
     public function getCustomerSubServices()
     {
-        $service = $this->getService();
-        $customer = $this->getCustomer();
-
-        if( !$service->isLoaded() || !$customer ) {
-            return;
-        }
-
-        if( $customer->isContractCustomer() ) {
-            $subServices = $customer->loadEnabledSubServices( $service->getId() );
-        } else {
-            $subServices = $service->loadEnabledSubServices();
-        }
-
-        return $subServices;
+        return Lib\Entities\SubService::customerSubServices( 
+            $this->getService(), 
+            $this->getCustomer()
+        );
     }
 
     /**
@@ -1092,8 +1075,12 @@ class UserBookingData
      */
     public function getSubService()
     {
-        $subServices = $this->getCustomerSubServices();
-        $subService = $subServices[$this->getSubServiceKey()] ?? null;
+        $subService = Lib\Entities\SubService::findSubService( 
+            $this->getService(), 
+            $this->getCustomer(), 
+            $this->getSubServiceKey() 
+        );
+
         return $subService;
     }
 
@@ -1337,6 +1324,16 @@ class UserBookingData
     public function getRouteDistance()
     {
         return $this->route_distance;
+    }
+
+    /**
+     * Gets route_distance
+     *
+     * @return string
+     */
+    public function getDistanceInMiles()
+    {
+        return Lib\Utils\Common::getDistanceInMiles($this->route_distance);
     }
 
     /**
@@ -1628,4 +1625,36 @@ class UserBookingData
         return $this;
     }
 
+    /**
+     * Gets pickup_address
+     *
+     * @return string
+     */
+    public function getPickupDetail()
+    {
+        return [
+            'patient_name' => $this->getPickupPatientName(),
+            'room_no' => $this->getPickupRoomNo(),
+            'contact_person' => $this->getPickupContactPerson(),
+            'contact_no' => $this->getPickupContactNo(),
+            'address' => Lib\Utils\Common::mergeFromCustomerAddress( json_decode( $this->getPickupAddress(), true ), $this->getAddress() ),
+        ];
+    }
+
+    /**
+     * Gets pickup_address
+     *
+     * @return string
+     */
+    public function getDestinationDetail()
+    {
+        return [
+            'hospital' => $this->getDestinationHospital(),
+            'contact_no' => $this->getDestinationContactNo(),
+            'dr_name' => $this->getDestinationDrName(),
+            'dr_contact_no' => $this->getDestinationDrContactNo(),
+            'room_no' => $this->getDestinationRoomNo(),
+            'address' => json_decode( $this->getDestinationAddress(), true ),
+        ];
+    }
 }

@@ -20,6 +20,6 @@ use BooklyConnectpx\Lib\Proxy\Local;
 <div class="woocommerce-booking-details">
     <h3><?php _e('Booking Details', 'bookly') ?></h3>
     <div class="woocommerce-booking-details-wrapper">
-        <?php __pre($booking); ?>
+        <?php __pre($userData->getPickupDetail()); ?>
     </div>
 </div>

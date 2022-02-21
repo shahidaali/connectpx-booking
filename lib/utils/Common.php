@@ -280,7 +280,22 @@ abstract class Common {
      */
     public static function getFullAddressByCustomerData( array $data )
     {
-        return implode(", ", $data);
+    	return Lib\Utils\Codes::replace( self::getOption( 'address_format' ), $data, false );
+    }
+
+    /**
+     * @param array $data
+     * @return string
+     */
+    public static function mergeFromCustomerAddress( array $address, array $customerAddress )
+    {
+    	foreach ( $address as $key => $value ) {
+    		if( empty($value) && !empty( $customerAddress[ $key ] ) ) {
+    			$address[ $key ] = $customerAddress[ $key ];
+    		}
+    	}
+
+    	return $address;
     }
 
     /**
@@ -304,6 +319,44 @@ abstract class Common {
 	 */
 	public static function getDistanceInMiles( $meters ) {
 		return ceil($meters * 0.000621371192);
+	}
+
+    /**
+	 * Run the loader to execute all of the hooks with WordPress.
+	 *
+	 * @since    1.0.0
+	 */
+	public static function isOffTimeService( $slot ) {
+        $officeHours = self::getOption('business_hours', []);
+        if( empty($officeHours) || !is_array($officeHours) ) {
+        	return true;
+        }
+
+        list($date, $pickupTime, $returnTime) = $slot;
+
+        $datePoint = Lib\Slots\DatePoint::fromStr( $date );
+        $weekDay = $datePoint->format('w') + 1;
+        $officeDay = $officeHours[ $weekDay ];
+
+        if($officeDay['from'] == 'off' || $officeDay['to'] == 'off') {
+        	return true;
+        }
+
+        $fromTp = Lib\Slots\TimePoint::fromStr( $officeDay['from'] );
+        $toTp = Lib\Slots\TimePoint::fromStr( $officeDay['to'] );
+        $pickupTp = Lib\Slots\TimePoint::fromStr( $pickupTime );
+
+        if(  $pickupTp->lt( $fromTp ) || $pickupTp->gt( $toTp ) ) {
+        	return true;
+        }
+
+        if( $returnTime ) {
+        	$returnTp = Lib\Slots\TimePoint::fromStr( $returnTime );
+
+        	if(  $returnTp->lt( $fromTp ) || $returnTp->gt( $toTp ) ) {
+	        	return true;
+	        }
+        }
 	}
 
 }

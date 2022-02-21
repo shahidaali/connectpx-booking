@@ -28,12 +28,17 @@ class Settings extends Lib\Base\Component {
         $slot_length_options = self::getSlotLengthOptions();
         $min_time_requirements = self::getMinimumTimeRequirement();
         $wc_products = self::getWcProducts();
+        $appointment_statuses = [
+            Lib\Entities\Appointment::STATUS_PENDING => __("Pending", 'connectpx_booking'),
+            Lib\Entities\Appointment::STATUS_APPROVED => __("Approved", 'connectpx_booking'),
+        ];
         self::renderTemplate( 'backend/templates/settings', compact(
             'messages', 
             'business_hours', 
             'slot_length_options', 
             'min_time_requirements',
             'wc_products',
+            'appointment_statuses',
         ) );
     }
 

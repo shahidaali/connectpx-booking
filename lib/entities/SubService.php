@@ -299,6 +299,17 @@ class SubService
     }
 
     /**
+     * Gets min_miles
+     *
+     * @return string
+     */
+    public function getWaitingTimePrice( $waitingTime )
+    {
+        $timeToCharge = $waitingTime - $this->getMinWaitingTime();
+        return $timeToCharge * $this->getRatePerWaitingTime();
+    }
+
+    /**
      * Gets after_hours_fee
      *
      * @return string
@@ -363,5 +374,57 @@ class SubService
     public function isRoundTrip()
     {
         return $this->getKey() != "oneway";
+    }
+
+    /**
+     * Run the loader to execute all of the hooks with WordPress.
+     *
+     * @since    1.0.0
+     */
+    public function calculatePrice( $distanceMiles = 0, $waitingTime = 0, $isAfterHours = false, $isNoShow = false ) {
+        $price = $this->getFlatRate();
+        $price += $this->getMilesPrice( $distanceMiles );
+        $price += $this->getWaitingTimePrice( $waitingTime );
+
+        if( $isAfterHours ) {
+            $price += $this->getAfterHoursFee();
+        }
+
+        return $price;
+    }
+
+    /**
+     * Run the loader to execute all of the hooks with WordPress.
+     *
+     * @since    1.0.0
+     */
+    public static function customerSubServices( $service, $customer ) {
+        if( ! $service || ! $customer ) {
+            return 0;
+        }
+
+        if( $customer->isContractCustomer() ) {
+            $subServices = $customer->loadEnabledSubServices( $service->getId() );
+        } else {
+            $subServices = $service->loadEnabledSubServices();
+        }
+
+        return $subServices;
+    }
+
+    /**
+     * Run the loader to execute all of the hooks with WordPress.
+     *
+     * @since    1.0.0
+     */
+    public static function findSubService( $service, $customer, $sub_service_key ) {
+        $subServices = self::customerSubServices( $service, $customer );
+
+        $subService = $subServices[ $sub_service_key ] ?? null;
+        if( ! $subService ) {
+            return 0;
+        }
+
+        return $subService;
     }
 }

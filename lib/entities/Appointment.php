@@ -9,72 +9,84 @@ use ConnectpxBooking\Lib;
  */
 class Appointment extends Lib\Base\Entity
 {
-    /** @var int */
-    protected $location_id;
-    /** @var int */
-    protected $staff_id;
-    /** @var int */
-    protected $staff_any = 0;
+    const STATUS_PENDING    = 'pending';
+    const STATUS_APPROVED   = 'approved';
+    const STATUS_CANCELLED  = 'cancelled';
+    const STATUS_REJECTED   = 'rejected';
+    const STATUS_DONE       = 'done';
+
+    const PAYMENT_COMPLETED  = 'completed';
+    const PAYMENT_PENDING    = 'pending';
+    const PAYMENT_REJECTED   = 'rejected';
+
+    const PAYMENT_TYPE_LOCAL        = 'local';
+    const PAYMENT_TYPE_FREE         = 'free';
+    const PAYMENT_TYPE_WOOCOMMERCE  = 'woocommerce';
+
     /** @var int */
     protected $service_id;
     /** @var string */
-    protected $custom_service_name;
-    /** @var float */
-    protected $custom_service_price;
+    protected $pickup_datetime;
     /** @var string */
-    protected $start_date;
-    /** @var string */
-    protected $end_date;
+    protected $return_pickup_datetime;
     /** @var int */
-    protected $extras_duration = 0;
+    protected $distance = 0;
+    /** @var int */
+    protected $waiting_time = 0;
     /** @var string */
-    protected $internal_note;
+    protected $notes;
     /** @var string */
-    protected $google_event_id;
+    protected $customer_id;
     /** @var string */
-    protected $google_event_etag;
+    protected $wc_order_id;
     /** @var string */
-    protected $outlook_event_id;
+    protected $sub_service_key;
     /** @var string */
-    protected $outlook_event_change_key;
+    protected $sub_service_data;
     /** @var string */
-    protected $outlook_event_series_id;
+    protected $is_after_hours;
     /** @var string */
-    protected $online_meeting_provider;
+    protected $time_zone;
     /** @var string */
-    protected $online_meeting_id;
+    protected $time_zone_offset;
     /** @var string */
-    protected $online_meeting_data;
+    protected $pickup_detail;
     /** @var string */
-    protected $created_from = 'bookly';
+    protected $pickup_address;
+    /** @var string */
+    protected $status;
+    /** @var string */
+    protected $total_amount = 0;
+    /** @var string */
+    protected $payment_status;
+    /** @var string */
+    protected $payment_type;
     /** @var string */
     protected $created_at;
     /** @var string */
     protected $updated_at;
 
-    protected static $table = 'bookly_appointments';
+    protected static $table = 'connectpx_booking_appointments';
 
     protected static $schema = array(
         'id'                       => array( 'format' => '%d' ),
-        'location_id'              => array( 'format' => '%d', 'reference' => array( 'entity' => 'Location', 'namespace' => '\BooklyLocations\Lib\Entities', 'required' => 'bookly-addon-locations' ) ),
-        'staff_id'                 => array( 'format' => '%d', 'reference' => array( 'entity' => 'Staff' ) ),
-        'staff_any'                => array( 'format' => '%d' ),
         'service_id'               => array( 'format' => '%d', 'reference' => array( 'entity' => 'Service' ) ),
-        'custom_service_name'      => array( 'format' => '%s' ),
-        'custom_service_price'     => array( 'format' => '%f' ),
-        'start_date'               => array( 'format' => '%s' ),
-        'end_date'                 => array( 'format' => '%s' ),
-        'extras_duration'          => array( 'format' => '%d' ),
-        'internal_note'            => array( 'format' => '%s' ),
-        'google_event_id'          => array( 'format' => '%s' ),
-        'google_event_etag'        => array( 'format' => '%s' ),
-        'outlook_event_id'         => array( 'format' => '%s' ),
-        'outlook_event_change_key' => array( 'format' => '%s' ),
-        'outlook_event_series_id'  => array( 'format' => '%s' ),
-        'online_meeting_provider'  => array( 'format' => '%s' ),
-        'online_meeting_id'        => array( 'format' => '%s' ),
-        'online_meeting_data'      => array( 'format' => '%s' ),
-        'created_from'             => array( 'format' => '%s' ),
+        'pickup_datetime'               => array( 'format' => '%s' ),
+        'return_pickup_datetime'                 => array( 'format' => '%s' ),
+        'distance'          => array( 'format' => '%d' ),
+        'waiting_time'          => array( 'format' => '%d' ),
+        'notes'            => array( 'format' => '%s' ),
+        'customer_id'          => array( 'format' => '%s' ),
+        'wc_order_id'        => array( 'format' => '%s' ),
+        'sub_service_key'         => array( 'format' => '%s' ),
+        'sub_service_data' => array( 'format' => '%s' ),
+        'is_after_hours'  => array( 'format' => '%s' ),
+        'time_zone'  => array( 'format' => '%s' ),
+        'time_zone_offset'        => array( 'format' => '%s' ),
+        'pickup_detail'        => array( 'format' => '%s' ),
+        'destination_detail'        => array( 'format' => '%s' ),
+        'status'      => array( 'format' => '%s' ),
+        'total_amount'             => array( 'format' => '%s' ),
         'created_at'               => array( 'format' => '%s' ),
         'updated_at'               => array( 'format' => '%s' ),
     );
@@ -175,7 +187,7 @@ class Appointment extends Lib\Base\Entity
         }
         // Calculate units for custom duration services
         $service = Lib\Entities\Service::find( $this->getServiceId() );
-        $units   = ( $service && $service->getUnitsMax() > 1 ) ? ceil( Lib\Slots\DatePoint::fromStr( $this->getEndDate() )->diff( Lib\Slots\DatePoint::fromStr( $this->getStartDate() ) ) / $service->getDuration() ) : 1;
+        $units   = ( $service && $service->getUnitsMax() > 1 ) ? ceil( Lib\Slots\DatePoint::fromStr( $this->getReturnPickupDatetime() )->diff( Lib\Slots\DatePoint::fromStr( $this->getPickupDateTime() ) ) / $service->getDuration() ) : 1;
 
         // Add new customer appointments.
         foreach ( array_diff( array_keys( $ca_data ), $current_ids ) as $id ) {
@@ -191,7 +203,7 @@ class Appointment extends Lib\Base\Entity
                 ->setStatus( $ca_data[ $id ]['status'] )
                 ->setNumberOfPersons( $ca_data[ $id ]['number_of_persons'] )
                 ->setNotes( $ca_data[ $id ]['notes'] )
-                ->setCreatedFrom( $ca_data[ $id ]['created_from'] )
+                ->setTotalAmount( $ca_data[ $id ]['total_amount'] )
                 ->setPaymentId( $ca_data[ $id ]['payment_id'] )
                 ->setUnits( $units )
                 ->setCreatedAt( current_time( 'mysql' ) )
@@ -246,7 +258,7 @@ class Appointment extends Lib\Base\Entity
      */
     public function hasGoogleCalendarEvent()
     {
-        return $this->google_event_id != '';
+        return $this->customer_id != '';
     }
 
     /**
@@ -256,7 +268,7 @@ class Appointment extends Lib\Base\Entity
      */
     public function hasOutlookCalendarEvent()
     {
-        return $this->outlook_event_id != '';
+        return $this->sub_service_key != '';
     }
 
     /**
@@ -264,11 +276,11 @@ class Appointment extends Lib\Base\Entity
      *
      * @return int
      */
-    public function getMaxExtrasDuration()
+    public function getMaxDistance()
     {
         $duration = 0;
         // Calculate extras duration for appointments with duration < 1 day.
-        if ( Lib\Config::serviceExtrasActive() && ( strtotime( $this->getEndDate() ) - strtotime( $this->getStartDate() ) < DAY_IN_SECONDS ) ) {
+        if ( Lib\Config::serviceExtrasActive() && ( strtotime( $this->getReturnPickupDatetime() ) - strtotime( $this->getPickupDateTime() ) < DAY_IN_SECONDS ) ) {
             $customer_appointments = CustomerAppointment::query()
                 ->select( 'extras' )
                 ->where( 'appointment_id', $this->getId() )
@@ -280,9 +292,9 @@ class Appointment extends Lib\Base\Entity
                 ->fetchArray();
             foreach ( $customer_appointments as $customer_appointment ) {
                 if ( $customer_appointment['extras'] != '[]' ) {
-                    $extras_duration = Lib\Proxy\ServiceExtras::getTotalDuration( (array) json_decode( $customer_appointment['extras'], true ) );
-                    if ( $extras_duration > $duration ) {
-                        $duration = $extras_duration;
+                    $distance = Lib\Proxy\ServiceExtras::getTotalDuration( (array) json_decode( $customer_appointment['extras'], true ) );
+                    if ( $distance > $duration ) {
+                        $duration = $distance;
                     }
                 }
             }
@@ -488,300 +500,425 @@ class Appointment extends Lib\Base\Entity
     }
 
     /**
-     * Gets start_date
+     * Gets pickup_datetime
      *
      * @return string
      */
-    public function getStartDate()
+    public function getPickupDateTime()
     {
-        return $this->start_date;
+        return $this->pickup_datetime;
     }
 
     /**
-     * Sets start_date
+     * Sets pickup_datetime
      *
-     * @param string $start_date
+     * @param string $pickup_datetime
      * @return $this
      */
-    public function setStartDate( $start_date )
+    public function setPickupDateTime( $pickup_datetime )
     {
-        $this->start_date = $start_date;
+        $this->pickup_datetime = $pickup_datetime;
 
         return $this;
     }
 
     /**
-     * Gets end_date
+     * Gets return_pickup_datetime
      *
      * @return string
      */
-    public function getEndDate()
+    public function getReturnPickupDatetime()
     {
-        return $this->end_date;
+        return $this->return_pickup_datetime;
     }
 
     /**
-     * Sets end_date
+     * Sets return_pickup_datetime
      *
-     * @param string $end_date
+     * @param string $return_pickup_datetime
      * @return $this
      */
-    public function setEndDate( $end_date )
+    public function setReturnPickupDatetime( $return_pickup_datetime )
     {
-        $this->end_date = $end_date;
+        $this->return_pickup_datetime = $return_pickup_datetime;
 
         return $this;
     }
 
     /**
-     * Gets extras_duration
+     * Gets distance
      *
      * @return int
      */
-    public function getExtrasDuration()
+    public function getDistance()
     {
-        return $this->extras_duration;
+        return $this->distance;
     }
 
     /**
-     * Sets extras_duration
+     * Sets distance
      *
-     * @param int $extras_duration
+     * @param int $distance
      * @return $this
      */
-    public function setExtrasDuration( $extras_duration )
+    public function setDistance( $distance )
     {
-        $this->extras_duration = $extras_duration;
+        $this->distance = $distance;
 
         return $this;
     }
 
     /**
-     * Gets internal_note
+     * Gets waiting_time
      *
-     * @return string
+     * @return int
      */
-    public function getInternalNote()
+    public function getWaitingTime()
     {
-        return $this->internal_note;
+        return $this->waiting_time;
     }
 
     /**
-     * Sets internal_note
+     * Sets waiting_time
      *
-     * @param string $internal_note
+     * @param int $waiting_time
      * @return $this
      */
-    public function setInternalNote( $internal_note )
+    public function setWaitingTime( $waiting_time )
     {
-        $this->internal_note = $internal_note;
+        $this->waiting_time = $waiting_time;
 
         return $this;
     }
 
     /**
-     * Gets google_event_id
+     * Gets notes
      *
      * @return string
      */
-    public function getGoogleEventId()
+    public function getNotes()
     {
-        return $this->google_event_id;
+        return $this->notes;
     }
 
     /**
-     * Sets google_event_id
+     * Sets notes
      *
-     * @param string $google_event_id
+     * @param string $notes
      * @return $this
      */
-    public function setGoogleEventId( $google_event_id )
+    public function setNotes( $notes )
     {
-        $this->google_event_id = $google_event_id;
+        $this->notes = $notes;
 
         return $this;
     }
 
     /**
-     * Gets google_event_etag
-     *
-     * @return string
+     * Sets customer
+     * @param Customer $customer
+     * @return $this
      */
-    public function getGoogleEventETag()
+    public function setCustomer( Customer $customer )
     {
-        return $this->google_event_etag;
+        return $this->setCustomerId( $customer->getId() );
     }
 
     /**
-     * Sets google_event_etag
+     * Gets customer_id
      *
-     * @param string $google_event_etag
+     * @return string
+     */
+    public function getCustomerId()
+    {
+        return $this->customer_id;
+    }
+
+    /**
+     * Sets customer_id
+     *
+     * @param string $customer_id
      * @return $this
      */
-    public function setGoogleEventETag( $google_event_etag )
+    public function setCustomerId( $customer_id )
     {
-        $this->google_event_etag = $google_event_etag;
+        $this->customer_id = $customer_id;
 
         return $this;
     }
 
     /**
-     * Gets outlook_event_id
+     * Gets wc_order_id
      *
      * @return string
      */
-    public function getOutlookEventId()
+    public function getWcOrderId()
     {
-        return $this->outlook_event_id;
+        return $this->wc_order_id;
     }
 
     /**
-     * Sets outlook_event_id
+     * Sets wc_order_id
      *
-     * @param string $outlook_event_id
+     * @param string $wc_order_id
      * @return $this
      */
-    public function setOutlookEventId( $outlook_event_id )
+    public function setWcOrderId( $wc_order_id )
     {
-        $this->outlook_event_id = $outlook_event_id;
+        $this->wc_order_id = $wc_order_id;
 
         return $this;
     }
 
     /**
-     * Gets outlook_event_change_key
+     * Gets sub_service_key
      *
      * @return string
      */
-    public function getOutlookEventChangeKey()
+    public function getSubServiceKey()
     {
-        return $this->outlook_event_change_key;
+        return $this->sub_service_key;
     }
 
     /**
-     * Sets outlook_event_change_key
+     * Sets sub_service_key
      *
-     * @param string $outlook_event_change_key
+     * @param string $sub_service_key
      * @return $this
      */
-    public function setOutlookEventChangeKey( $outlook_event_change_key )
+    public function setSubServiceKey( $sub_service_key )
     {
-        $this->outlook_event_change_key = $outlook_event_change_key;
+        $this->sub_service_key = $sub_service_key;
 
         return $this;
     }
 
     /**
-     * Gets outlook_event_series_id
+     * Gets sub_service_data
      *
      * @return string
      */
-    public function getOutlookEventSeriesId()
+    public function getSubServiceData()
     {
-        return $this->outlook_event_series_id;
+        return $this->sub_service_data;
     }
 
     /**
-     * Sets outlook_event_series_id
+     * Sets sub_service_data
      *
-     * @param string $outlook_event_series_id
+     * @param string $sub_service_data
      * @return $this
      */
-    public function setOutlookEventSeriesId( $outlook_event_series_id )
+    public function setSubServiceData( $sub_service_data )
     {
-        $this->outlook_event_series_id = $outlook_event_series_id;
+        $this->sub_service_data = $sub_service_data;
 
         return $this;
     }
 
     /**
-     * Gets online_meeting_provider
+     * Gets is_after_hours
      *
      * @return string
      */
-    public function getOnlineMeetingProvider()
+    public function getIsAfterHours()
     {
-        return $this->online_meeting_provider;
+        return $this->is_after_hours;
     }
 
     /**
-     * Sets online_meeting_provider
+     * Sets is_after_hours
      *
-     * @param string $online_meeting_provider
+     * @param string $is_after_hours
      * @return $this
      */
-    public function setOnlineMeetingProvider( $online_meeting_provider)
+    public function setIsAfterHours( $is_after_hours )
     {
-        $this->online_meeting_provider = $online_meeting_provider;
+        $this->is_after_hours = $is_after_hours;
 
         return $this;
     }
 
     /**
-     * Gets online_meeting_id
+     * Gets time_zone
      *
      * @return string
      */
-    public function getOnlineMeetingId()
+    public function getTimeZone()
     {
-        return $this->online_meeting_id;
+        return $this->time_zone;
     }
 
     /**
-     * Sets online_meeting_id
+     * Sets time_zone
      *
-     * @param string $online_meeting_id
+     * @param string $time_zone
      * @return $this
      */
-    public function setOnlineMeetingId( $online_meeting_id )
+    public function setTimeZone( $time_zone)
     {
-        $this->online_meeting_id = $online_meeting_id;
+        $this->time_zone = $time_zone;
 
         return $this;
     }
 
     /**
-     * Gets online_meeting_data
+     * Gets time_zone_offset
      *
      * @return string
      */
-    public function getOnlineMeetingData()
+    public function getTimeZoneOffset()
     {
-        return $this->online_meeting_data;
+        return $this->time_zone_offset;
     }
 
     /**
-     * Sets online_meeting_data
+     * Sets time_zone_offset
      *
-     * @param string $online_meeting_data
+     * @param string $time_zone_offset
      * @return $this
      */
-    public function setOnlineMeetingData( $online_meeting_data )
+    public function setTimeZoneOffset( $time_zone_offset )
     {
-        $this->online_meeting_data = $online_meeting_data;
+        $this->time_zone_offset = $time_zone_offset;
 
         return $this;
     }
 
     /**
-     * Gets created_from
+     * Gets pickup_detail
      *
      * @return string
      */
-    public function getCreatedFrom()
+    public function getPickupDetail()
     {
-        return $this->created_from;
+        return $this->pickup_detail;
     }
 
     /**
-     * Sets created_from
+     * Sets pickup_detail
      *
-     * @param string $created_from
+     * @param string $pickup_detail
      * @return $this
      */
-    public function setCreatedFrom( $created_from )
+    public function setPickupDetail( $pickup_detail )
     {
-        $this->created_from = $created_from;
+        $this->pickup_detail = $pickup_detail;
+
+        return $this;
+    }
+
+    /**
+     * Gets destination_detail
+     *
+     * @return string
+     */
+    public function getDestinationDetail()
+    {
+        return $this->destination_detail;
+    }
+
+    /**
+     * Sets destination_detail
+     *
+     * @param string $destination_detail
+     * @return $this
+     */
+    public function setDestinationDetail( $destination_detail )
+    {
+        $this->destination_detail = $destination_detail;
+
+        return $this;
+    }
+
+    /**
+     * Gets status
+     *
+     * @return string
+     */
+    public function getStatus()
+    {
+        return $this->status;
+    }
+
+    /**
+     * Sets status
+     *
+     * @param string $status
+     * @return $this
+     */
+    public function setStatus( $status )
+    {
+        $this->status = $status;
+
+        return $this;
+    }
+
+    /**
+     * Gets total_amount
+     *
+     * @return string
+     */
+    public function getTotalAmount()
+    {
+        return $this->total_amount;
+    }
+
+    /**
+     * Sets total_amount
+     *
+     * @param string $total_amount
+     * @return $this
+     */
+    public function setTotalAmount( $total_amount )
+    {
+        $this->total_amount = $total_amount;
+
+        return $this;
+    }
+
+    /**
+     * Gets payment_status
+     *
+     * @return string
+     */
+    public function getPaymentStatus()
+    {
+        return $this->payment_status;
+    }
+
+    /**
+     * Sets payment_status
+     *
+     * @param string $payment_status
+     * @return $this
+     */
+    public function setPaymentStatus( $payment_status )
+    {
+        $this->payment_status = $payment_status;
+
+        return $this;
+    }
+
+    /**
+     * Gets payment_type
+     *
+     * @return string
+     */
+    public function getPaymentType()
+    {
+        return $this->payment_type;
+    }
+
+    /**
+     * Sets payment_type
+     *
+     * @param string $payment_type
+     * @return $this
+     */
+    public function setPaymentType( $payment_type )
+    {
+        $this->payment_type = $payment_type;
 
         return $this;
     }
@@ -855,10 +992,10 @@ class Appointment extends Lib\Base\Entity
                 Lib\Proxy\OutlookCalendar::deleteEvent( $this );
                 $this
                     ->setStaffId( $staff_id )
-                    ->setGoogleEventId( null )
-                    ->setGoogleEventETag( null )
-                    ->setOutlookEventId( null )
-                    ->setOutlookEventChangeKey( null )
+                    ->setCustomerId( null )
+                    ->setWcOrderId( null )
+                    ->setSubServiceKey( null )
+                    ->setSubServiceData( null )
                 ;
             }
         }
@@ -900,6 +1037,71 @@ class Appointment extends Lib\Base\Entity
         }
 
         return $result;
+    }
+
+    /**
+     * Get appointment statuses.
+     *
+     * @return array
+     */
+    public static function getStatuses()
+    {
+        if ( ! self::hasInCache( __FUNCTION__ ) ) {
+            $statuses = array(
+                self::STATUS_PENDING,
+                self::STATUS_APPROVED,
+                self::STATUS_CANCELLED,
+                self::STATUS_REJECTED,
+            );
+            self::putInCache( __FUNCTION__, $statuses );
+        }
+
+        return self::getFromCache( __FUNCTION__ );
+    }
+
+    public static function statusToString( $status )
+    {
+        switch ( $status ) {
+            case self::STATUS_PENDING:    return __( 'Pending',   'bookly' );
+            case self::STATUS_APPROVED:   return __( 'Approved',  'bookly' );
+            case self::STATUS_CANCELLED:  return __( 'Cancelled', 'bookly' );
+            case self::STATUS_REJECTED:   return __( 'Rejected',  'bookly' );
+            case self::STATUS_DONE:       return __( 'Done', 'bookly' );
+            case 'mixed':                 return __( 'Mixed', 'bookly' );
+            default: return '';
+        }
+    }
+
+    /**
+     * Get display name for given payment type.
+     *
+     * @param string $type
+     * @return string
+     */
+    public static function paymentTypeToString( $type )
+    {
+        switch ( $type ) {
+            case self::PAYMENT_TYPE_LOCAL:        return __( 'Local', 'connectpx_booking' );
+            case self::PAYMENT_TYPE_FREE:         return __( 'Free', 'connectpx_booking' );
+            case self::PAYMENT_TYPE_WOOCOMMERCE:  return 'WooCommerce';
+            default:                      return '';
+        }
+    }
+
+    /**
+     * Get status of payment.
+     *
+     * @param string $status
+     * @return string
+     */
+    public static function paymentStatusToString( $status )
+    {
+        switch ( $status ) {
+            case self::PAYMENT_COMPLETED:  return __( 'Completed', 'connectpx_booking' );
+            case self::PAYMENT_PENDING:    return __( 'Pending',   'connectpx_booking' );
+            case self::PAYMENT_REJECTED:   return __( 'Rejected',  'connectpx_booking' );
+            default:                      return '';
+        }
     }
 
 }

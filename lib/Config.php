@@ -1,6 +1,7 @@
 <?php
 namespace ConnectpxBooking\Lib;
 
+use ConnectpxBooking\Lib;
 use ConnectpxBooking\Lib\Utils\DateTime;
 
 /**
@@ -353,12 +354,7 @@ abstract class Config
      */
     public static function getDefaultAppointmentStatus()
     {
-        $status = get_option( 'connectpx_booking_appointment_default_status' );
-        if ( ! in_array( $status, CustomerAppointment::getStatuses() ) ) {
-            $status = CustomerAppointment::STATUS_APPROVED;
-        }
-
-        return $status;
+        return Utils\Common::getOption('appointment_default_status', Lib\Entities\Appointment::STATUS_PENDING);
     }
 
     /**
