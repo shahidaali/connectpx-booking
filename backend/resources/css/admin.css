@@ -69,3 +69,22 @@
 @media screen and ( min-width: 600px ){
 
 }
+.list-item {
+    position: relative;
+    margin-bottom: 5px;
+    color: #a4afb7;
+    font-size: 0.9rem;
+    display: flex;
+}
+.list-item strong {
+    width: 129px;
+    display: inline-block;
+    font-weight: 500 !important;
+    line-height: 18px;
+    color: #979797;
+    display: flex;
+    flex-shrink: 0;
+}
+tbody.payment-detail-table td {
+    padding: 7px 0.75rem !important;
+}

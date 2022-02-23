@@ -14,12 +14,20 @@
 ?>
 
 <?php if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
-use Bookly\Lib as BooklyLib;
-use BooklyConnectpx\Lib\Proxy\Local;
+use ConnectpxBooking\Lib;
 ?>
 <div class="woocommerce-booking-details">
     <h3><?php _e('Booking Details', 'bookly') ?></h3>
     <div class="woocommerce-booking-details-wrapper">
-        <?php __pre($userData->getPickupDetail()); ?>
+        <h5><?php echo __('Pickup Details', 'connectpx_booking') ?></h5>
+        <div>
+            <?php echo Lib\Utils\Common::formatedPickupInfo( $userData->getPickupDetail() ); ?>
+        </div>
+    </div>
+    <div class="woocommerce-booking-details-wrapper">
+        <h5><?php echo __('Destination Details', 'connectpx_booking') ?></h5>
+        <div>
+            <?php echo Lib\Utils\Common::formatedDestinationInfo( $userData->getDestinationDetail() ); ?>
+        </div>
     </div>
 </div>

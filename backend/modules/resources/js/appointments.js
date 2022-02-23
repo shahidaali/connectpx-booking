@@ -227,10 +227,8 @@ jQuery(function($) {
      * Add appointment.
      */
     $newAppointmentBtn.on('click', function () {
-        BooklyAppointmentDialog.showDialog(
+        ConnectpxBookingAppointmentDialog.showDialog(
             null,
-            null,
-            moment(),
             function(event) {
                 dt.ajax.reload();
             }
@@ -316,7 +314,7 @@ jQuery(function($) {
         })
         // Show payment details
         .on('click', '[data-action=show-payment]', function () {
-            BooklyPaymentDetailsDialog.showDialog({
+            ConnectpxBookingPaymentDetailsDialog.showDialog({
                 payment_id: getDTRowData(this).payment_id,
                 done: function (event) {
                     dt.ajax.reload();
@@ -326,10 +324,8 @@ jQuery(function($) {
         // Edit appointment.
         .on('click', '[data-action=edit]', function (e) {
             e.preventDefault();
-            BooklyAppointmentDialog.showDialog(
+            ConnectpxBookingAppointmentDialog.showDialog(
                 getDTRowData(this).id,
-                null,
-                null,
                 function (event) {
                     dt.ajax.reload();
                 }
@@ -344,7 +340,7 @@ jQuery(function($) {
             data.push({ca_id: this.value, id: $(this).data('appointment')});
         });
 
-        new BooklyConfirmDeletingAppointment({
+        new ConnectpxBookingConfirmDeletingAppointment({
                 action: 'connectpx_booking_delete_customer_appointments',
                 data: data,
                 csrf_token: ConnectpxBookingL10nGlobal.csrf_token,

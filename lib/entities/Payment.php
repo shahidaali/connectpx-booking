@@ -30,18 +30,6 @@ class Payment extends Lib\Base\Entity
     /** @var string */
     protected $updated_at;
 
-    protected static $table = 'connectpx_booking_payments';
-
-    protected static $schema = array(
-        'id'          => array( 'format' => '%d' ),
-        'type'        => array( 'format' => '%s' ),
-        'total'       => array( 'format' => '%f' ),
-        'status'      => array( 'format' => '%s' ),
-        'details'     => array( 'format' => '%s' ),
-        'created_at'  => array( 'format' => '%s' ),
-        'updated_at'  => array( 'format' => '%s' ),
-    );
-
     /**
      * Get display name for given payment type.
      *
@@ -75,33 +63,6 @@ class Payment extends Lib\Base\Entity
     }
 
     /**
-     * @param Entities\Appointment $appointment
-     * @param Lib\CartInfo $cart_info
-     * @param array $extra
-     * @return $this
-     */
-    public function setDetailsFromAppointment( Appointment $appointment, Lib\CartInfo $cart_info, $extra = array() )
-    {
-        $details = array(
-            'items' => array(),
-            'subtotal' => array( 'price' => 0, 'deposit' => 0 ),
-            'customer' => $appointment->getCustomer()->getFullName(),
-        );
-
-        $details['items'][] = array(
-            'appointment_id'    => $appointment->getId(),
-            'appointment_date'  => $appointment->getPickupDateTime(),
-            'service_name'      => $appointment->getService()->getTitle(),
-            'service_price'     => $appointment->getServicePrice(),
-            'extras'            => $extras,
-        );
-
-        $this->details = json_encode( $details );
-
-        return $this;
-    }
-
-    /**
      * Payment data for rendering payment details and invoice.
      *
      * @return array
@@ -111,7 +72,7 @@ class Payment extends Lib\Base\Entity
         $customer = Lib\Entities\Customer::query( 'c' )
             ->select( 'c.full_name' )
             ->leftJoin( 'Appointment', 'a', 'a.customer_id = c.id' )
-            ->where( 'a.payment_id', $this->getId() )
+            ->where( 'a.id', $this->getId() )
             ->fetchRow();
 
         $details = json_decode( $this->getDetails(), true );

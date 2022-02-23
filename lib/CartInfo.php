@@ -33,14 +33,14 @@ class CartInfo
 
             $isOffTimeService = Lib\Utils\Common::isOffTimeService( $item->getSlot() );
 
-            $itemPrice = $subService->calculatePrice( 
+            $itemPrice = $subService->paymentLineItems( 
                 $distanceMiles,
                 0,
                 $isOffTimeService 
             );
 
             // Cart contains a service that was already removed/deleted from ConnectpxBooking (WooCommerce)
-            $this->subtotal += $itemPrice;
+            $this->subtotal += $itemPrice['totals'];
         }
 
         $this->total = $this->subtotal;

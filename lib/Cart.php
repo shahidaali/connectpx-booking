@@ -166,7 +166,7 @@ class Cart
             $returnDateTime = $returnTime ? $date . " " . $returnTime : null;
             $isOffTimeService = Lib\Utils\Common::isOffTimeService( $slot );
 
-            $itemPrice = $subService->calculatePrice( 
+            $itemPrice = $subService->paymentLineItems( 
                 $distanceMiles,
                 0,
                 $isOffTimeService 
@@ -187,6 +187,7 @@ class Cart
                 ->setReturnPickupDatetime( $returnDateTime )
                 ->setCustomer( $customer )
                 ->setDistance( $this->userData->getDistanceInMiles() )
+                ->setEstimatedTime( $this->userData->getRouteTime() )
                 ->setIsAfterHours( $isOffTimeService )
                 ->setPickupDetail( json_encode( $pickupDetail ) )
                 ->setDestinationDetail( json_encode( $destinationDetail ) )
@@ -196,7 +197,8 @@ class Cart
                 ->setNotes( $this->userData->getNotes() )
                 ->setPaymentStatus( Appointment::PAYMENT_COMPLETED )
                 ->setPaymentType( Appointment::PAYMENT_TYPE_WOOCOMMERCE )
-                ->setTotalAmount( $itemPrice )
+                ->setPaymentDate( current_time( 'mysql' ) )
+                ->setTotalAmount( $itemPrice['totals'] )
                 ->setCreatedAt( current_time( 'mysql' ) )
                 ->save();
 

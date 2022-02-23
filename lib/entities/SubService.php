@@ -303,10 +303,20 @@ class SubService
      *
      * @return string
      */
+    public function getWaitingTimeToCharge( $waitingTime )
+    {
+        $waitingTimeToCharge = ( $waitingTime - $this->getMinWaitingTime() );
+        return $waitingTimeToCharge > 0 ? $waitingTimeToCharge : 0;
+    }
+
+    /**
+     * Gets min_miles
+     *
+     * @return string
+     */
     public function getWaitingTimePrice( $waitingTime )
     {
-        $timeToCharge = $waitingTime - $this->getMinWaitingTime();
-        return $timeToCharge * $this->getRatePerWaitingTime();
+        return $this->getWaitingTimeToCharge( $waitingTime ) * $this->getRatePerWaitingTime();
     }
 
     /**
@@ -377,20 +387,96 @@ class SubService
     }
 
     /**
-     * Run the loader to execute all of the hooks with WordPress.
+     * Determine the current user time zone which may be the staff or WP time zone
      *
-     * @since    1.0.0
+     * @return string
      */
-    public function calculatePrice( $distanceMiles = 0, $waitingTime = 0, $isAfterHours = false, $isNoShow = false ) {
-        $price = $this->getFlatRate();
-        $price += $this->getMilesPrice( $distanceMiles );
-        $price += $this->getWaitingTimePrice( $waitingTime );
+    public function paymentLineItems( $miles, $waiting_time, $after_hours = false, $no_show = false, $adjustments = [] )
+    {        
+        $totals = 0;
+        $items = [];
 
-        if( $isAfterHours ) {
-            $price += $this->getAfterHoursFee();
+        if( ! $no_show ) {
+            $totals += $this->getFlatRate();
+
+            $items['flat_rate'] = [
+                'label' => __('Flat Rate', 'connectpx_booking'),
+                'qty' => 1,
+                'unit_price' => $this->getFlatRate(),
+                'total' => $this->getFlatRate(),
+            ];
+
+            $milesToCharge = $this->getMilesToCharge( $miles );
+            $perMilePrice = $this->getRatePerMile();
+            
+            if( $milesToCharge && $perMilePrice ) {
+                $milesTotal = ( $milesToCharge * $perMilePrice );
+                $totals += $milesTotal;
+
+                $items['milage'] = [
+                    'label' => __('Miles', 'connectpx_booking'),
+                    'qty' => $milesToCharge,
+                    'unit_price' => $perMilePrice,
+                    'total' => $milesTotal,
+                ];
+            }
+
+            $waitingTimeToCharge = $this->getWaitingTimeToCharge( $waiting_time );
+            $perMinPrice = $this->getRatePerWaitingTime();
+            
+            if( $waitingTimeToCharge && $perMinPrice ) {
+                $waitingTimeTotal = ( $waitingTimeToCharge * $perMinPrice );
+                $totals += $waitingTimeTotal;
+
+                $items['waiting_time'] = [
+                    'label' => __('Waiting Time (Mins.)', 'connectpx_booking'),
+                    'qty' => $waitingTimeToCharge,
+                    'unit_price' => $perMinPrice,
+                    'total' => $waitingTimeTotal,
+                ];
+            }
+
+            if( $after_hours ) {
+                $totals += $this->getAfterHoursFee();
+
+                $items['after_hours'] = [
+                    'label' => __('After Hours Fee', 'connectpx_booking'),
+                    'qty' => 1,
+                    'unit_price' => $this->getAfterHoursFee(),
+                    'total' => $this->getAfterHoursFee(),
+                ];
+            }
+        } else {
+            if( $no_show ) {
+                $totals += $this->getNoShowFee();
+
+                $items['no_show'] = [
+                    'label' => __('No Show Fee', 'connectpx_booking'),
+                    'qty' => 1,
+                    'unit_price' => $this->getNoShowFee(),
+                    'total' => $this->getNoShowFee(),
+                ];
+            }
+        }
+        
+        foreach ($adjustments as $key => $adjustment) {
+            $amount = (float) $adjustment['amount'];
+            $totals += $amount;
+
+            $items['adjustment_' . $key] = [
+                'label' => __($adjustment['reason'], 'connectpx_booking'),
+                'qty' => 1,
+                'unit_price' => $amount,
+                'total' => $amount,
+            ];
         }
 
-        return $price;
+        $line_items = [
+            'totals' => $totals,
+            'items' => $items,
+        ];
+
+        return $line_items;
     }
 
     /**

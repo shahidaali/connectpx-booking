@@ -326,6 +326,15 @@ abstract class Common {
 	 *
 	 * @since    1.0.0
 	 */
+	public static function getTimeInMinutes( $seconds ) {
+		return floor($seconds/3600) . " h " . floor($seconds/60%60) . " m";
+	}
+
+    /**
+	 * Run the loader to execute all of the hooks with WordPress.
+	 *
+	 * @since    1.0.0
+	 */
 	public static function isOffTimeService( $slot ) {
         $officeHours = self::getOption('business_hours', []);
         if( empty($officeHours) || !is_array($officeHours) ) {
@@ -359,4 +368,239 @@ abstract class Common {
         }
 	}
 
+	/**
+     * @inheritDoc
+     */
+    public static function getLastCustomerTimezone( $customer_id )
+    {
+        $timezone = Lib\Entities\Appointment::query( 'a' )
+            ->select( 'a.time_zone, a.time_zone_offset' )
+            ->where( 'a.customer_id', $customer_id )
+            ->whereNot( 'a.time_zone_offset', null )
+            ->sortBy( 'created_at' )
+            ->order( 'DESC' )
+            ->limit( 1 )
+            ->fetchArray();
+
+        if ( ! empty( $timezone ) ) {
+            $timezone = current( $timezone );
+
+            return self::getCustomerTimezone( $timezone['time_zone'], $timezone['time_zone_offset'] );
+        }
+
+        return false;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public static function getCustomerTimezone( $time_zone, $time_zone_offset )
+    {
+        if ( $time_zone ) {
+            return $time_zone;
+        } elseif ( $time_zone_offset !== null ) {
+            return sprintf( 'UTC%s%s', $time_zone_offset > 0 ? '-' : '+', abs( $time_zone_offset ) / 60 );
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public static function getTimeZoneOffset( $time_zone_value )
+    {
+        $time_zone        = null;
+        $time_zone_offset = null;  // in minutes
+
+        // WordPress value.
+        if ( $time_zone_value ) {
+            if ( preg_match( '/^UTC[+-]/', $time_zone_value ) ) {
+                $offset           = preg_replace( '/UTC\+?/', '', $time_zone_value );
+                $time_zone        = null;
+                $time_zone_offset = - $offset * 60;
+            } else {
+                $time_zone        = $time_zone_value;
+                $time_zone_offset = - timezone_offset_get( timezone_open( $time_zone_value ), new \DateTime() ) / 60;
+            }
+        }
+
+        return compact( 'time_zone', 'time_zone_offset' );
+    }
+
+    /**
+     * Check whether the current user is administrator or not.
+     *
+     * @return bool
+     */
+    public static function isCurrentUserAdmin()
+    {
+        return current_user_can( 'manage_options' );
+    }
+
+    /**
+     * Check whether the current user is customer or not.
+     *
+     * @return bool
+     */
+    public static function isCurrentUserCustomer()
+    {
+        return Lib\Entities\Customer::query()->where( 'wp_user_id', get_current_user_id() )->count() > 0;
+    }
+
+    /**
+     * Determine the current user time zone which may be the staff or WP time zone
+     *
+     * @return string
+     */
+    public static function getCurrentUserTimeZone()
+    {
+        // Use WP time zone by default
+        return Lib\Config::getWPTimeZone();
+    }
+
+    /**
+     * Determine the current user time zone which may be the staff or WP time zone
+     *
+     * @return string
+     */
+    public static function getGoogleMapLink( $info, $width = "100%", $height = "300" )
+    {
+        $origin = implode(",", $info['from']);
+        $destination = implode(",", $info['to']);
+
+        return [
+        	'link' => 'https://www.google.com/maps/dir/?api=1&origin='. $origin .'&destination='. $destination,
+        	'iframe' => sprintf(
+        		'<iframe 
+        			width="%s" 
+        			height="%s" 
+        			frameborder="0" 
+        			style="border:0" 
+        			src="https://www.google.com/maps/embed/v1/directions?key=%s&origin=%s&destination=%s" a
+        			llowfullscreen>
+        		</iframe>', 
+        		$width, 
+        		$height, 
+        		self::getOption('google_api_key', ''), 
+        		$origin, 
+        		$destination
+        	)
+        ];
+    }
+
+    /**
+     * Determine the current user time zone which may be the staff or WP time zone
+     *
+     * @return string
+     */
+    public static function formatedItemsList( $items )
+    {      
+        $html = "";
+
+        foreach ( $items as $item ) {
+        	$html .= sprintf("<div class='list-item'><strong>%s: </strong> <span>%s</span></div>", $item['label'], $item['value']);
+        }
+
+        return $html;
+    }
+
+    /**
+     * Determine the current user time zone which may be the staff or WP time zone
+     *
+     * @return string
+     */
+    public static function formatedPickupInfo( $info )
+    {      
+        $items = [
+            [
+                'label' => __('Patient Name', 'connectpx_booking'),
+                'value' => $info['patient_name'],
+            ],
+            [
+                'label' => __('Room No', 'connectpx_booking'),
+                'value' => $info['room_no'],
+            ],
+            [
+                'label' => __('Contact Person', 'connectpx_booking'),
+                'value' => $info['contact_person'],
+            ],
+            [
+                'label' => __('Contact No', 'connectpx_booking'),
+                'value' => $info['contact_no'],
+            ],
+            [
+                'label' => __('Address', 'connectpx_booking'),
+                'value' => $info['address']['address'],
+            ],
+        ];
+
+        return self::formatedItemsList( $items );
+    }
+
+    /**
+     * Determine the current user time zone which may be the staff or WP time zone
+     *
+     * @return string
+     */
+    public static function formatedDestinationInfo( $info )
+    {        
+        $items = [
+            [
+                'label' => __('Hospital Name', 'connectpx_booking'),
+                'value' => $info['hospital'],
+            ],
+            [
+                'label' => __('Contact No', 'connectpx_booking'),
+                'value' => $info['contact_no'],
+            ],
+            [
+                'label' => __('Dr. Name', 'connectpx_booking'),
+                'value' => $info['dr_name'],
+            ],
+            [
+                'label' => __('Dr. Contact No', 'connectpx_booking'),
+                'value' => $info['dr_contact_no'],
+            ],
+            [
+                'label' => __('Room No', 'connectpx_booking'),
+                'value' => $info['room_no'],
+            ],
+            [
+                'label' => __('Address', 'connectpx_booking'),
+                'value' => $info['address']['address'],
+            ],
+        ];
+
+        return self::formatedItemsList( $items );
+    }
+
+    /**
+     * Determine the current user time zone which may be the staff or WP time zone
+     *
+     * @return string
+     */
+    public static function formatedServiceInfo( $appointment, $service, $subService )
+    {        
+        $items = [
+            [
+                'label' => __('Service', 'connectpx_booking'),
+                'value' => $service->getTitle(),
+            ],
+            [
+                'label' => __('Trip Type', 'connectpx_booking'),
+                'value' => $subService->getTitle(),
+            ],
+            [
+                'label' => __('Distance', 'connectpx_booking'),
+                'value' => sprintf("%s miles - one side", $appointment->getDistance()),
+            ],
+            [
+                'label' => __('Estimated Time', 'connectpx_booking'),
+                'value' => sprintf("%s - one side", $appointment->getEstimatedTimeInMins()),
+            ],
+        ];
+
+        return self::formatedItemsList( $items );
+    }
 }

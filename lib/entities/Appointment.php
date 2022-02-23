@@ -2,6 +2,7 @@
 namespace ConnectpxBooking\Lib\Entities;
 
 use ConnectpxBooking\Lib;
+use ConnectpxBooking\Lib\Utils\DateTime;
 
 /**
  * Class Appointment
@@ -14,6 +15,7 @@ class Appointment extends Lib\Base\Entity
     const STATUS_CANCELLED  = 'cancelled';
     const STATUS_REJECTED   = 'rejected';
     const STATUS_DONE       = 'done';
+    const STATUS_NOSHOW       = 'noshow';
 
     const PAYMENT_COMPLETED  = 'completed';
     const PAYMENT_PENDING    = 'pending';
@@ -26,16 +28,6 @@ class Appointment extends Lib\Base\Entity
     /** @var int */
     protected $service_id;
     /** @var string */
-    protected $pickup_datetime;
-    /** @var string */
-    protected $return_pickup_datetime;
-    /** @var int */
-    protected $distance = 0;
-    /** @var int */
-    protected $waiting_time = 0;
-    /** @var string */
-    protected $notes;
-    /** @var string */
     protected $customer_id;
     /** @var string */
     protected $wc_order_id;
@@ -43,6 +35,20 @@ class Appointment extends Lib\Base\Entity
     protected $sub_service_key;
     /** @var string */
     protected $sub_service_data;
+    /** @var string */
+    protected $pickup_datetime;
+    /** @var string */
+    protected $return_pickup_datetime;
+    /** @var int */
+    protected $distance = 0;
+    /** @var int */
+    protected $estimated_time = 0;
+    /** @var int */
+    protected $waiting_time = 0;
+    /** @var string */
+    protected $notes;
+    /** @var string */
+    protected $admin_notes;
     /** @var string */
     protected $is_after_hours;
     /** @var string */
@@ -62,6 +68,10 @@ class Appointment extends Lib\Base\Entity
     /** @var string */
     protected $payment_type;
     /** @var string */
+    protected $payment_date;
+    /** @var string */
+    protected $payment_details;
+    /** @var string */
     protected $created_at;
     /** @var string */
     protected $updated_at;
@@ -74,8 +84,10 @@ class Appointment extends Lib\Base\Entity
         'pickup_datetime'               => array( 'format' => '%s' ),
         'return_pickup_datetime'                 => array( 'format' => '%s' ),
         'distance'          => array( 'format' => '%d' ),
+        'estimated_time'          => array( 'format' => '%d' ),
         'waiting_time'          => array( 'format' => '%d' ),
         'notes'            => array( 'format' => '%s' ),
+        'admin_notes'            => array( 'format' => '%s' ),
         'customer_id'          => array( 'format' => '%s' ),
         'wc_order_id'        => array( 'format' => '%s' ),
         'sub_service_key'         => array( 'format' => '%s' ),
@@ -87,336 +99,27 @@ class Appointment extends Lib\Base\Entity
         'destination_detail'        => array( 'format' => '%s' ),
         'status'      => array( 'format' => '%s' ),
         'total_amount'             => array( 'format' => '%s' ),
+        'payment_status'             => array( 'format' => '%s' ),
+        'payment_type'             => array( 'format' => '%s' ),
+        'payment_date'             => array( 'format' => '%s' ),
+        'payment_details'             => array( 'format' => '%s' ),
         'created_at'               => array( 'format' => '%s' ),
         'updated_at'               => array( 'format' => '%s' ),
     );
 
-    /**
-     * Get color of service
-     *
-     * @param string $default
-     * @return string
-     */
-    public function getColor( $default = '#DDDDDD' )
-    {
-        if ( ! $this->isLoaded() ) {
-            return $default;
-        }
-
-        $service = new Service();
-
-        if ( $service->load( $this->getServiceId() ) ) {
-            return $service->getColor();
-        }
-
-        return $default;
-    }
-
-    /**
-     * Get CustomerAppointment entities associated with this appointment.
-     *
-     * @param bool $with_cancelled
-     * @return CustomerAppointment[]   Array of entities
-     */
-    public function getCustomerAppointments( $with_cancelled = false )
-    {
-        $result = array();
-
-        if ( $this->getId() ) {
-            $appointments = CustomerAppointment::query( 'ca' )
-                ->select( 'ca.*, c.full_name, c.first_name, c.last_name, c.phone, c.email, c.notes AS customer_notes' )
-                ->leftJoin( 'Customer', 'c', 'c.id = ca.customer_id' )
-                ->where( 'ca.appointment_id', $this->getId() );
-            if ( ! $with_cancelled ) {
-                $appointments->whereIn( 'ca.status', Lib\Proxy\CustomStatuses::prepareBusyStatuses( array(
-                    Lib\Entities\CustomerAppointment::STATUS_PENDING,
-                    Lib\Entities\CustomerAppointment::STATUS_APPROVED
-                ) ) );
-            }
-
-            foreach ( $appointments->fetchArray() as $data ) {
-                $ca = new CustomerAppointment( $data );
-
-                // Inject Customer entity.
-                $ca->customer = new Customer();
-                $data['id']   = $data['customer_id'];
-                $ca->customer
-                    ->setFullName( $data['full_name'] )
-                    ->setLastName( $data['last_name'] )
-                    ->setPhone( $data['phone'] )
-                    ->setEmail( $data['email'] )
-                    ->setNotes( $data['customer_notes'] );
-
-                $result[ $ca->getId() ] = $ca;
-            }
-        }
-
-        return $result;
-    }
-
-    /**
-     * Set array of customers associated with this appointment.
-     *
-     * @param array  $cst_data  Array of customer IDs, custom_fields, number_of_persons, extras and status
-     * @param int    $series_id
-     * @return CustomerAppointment[] Array of customer_appointment with changed status
-     */
-    public function saveCustomerAppointments( array $cst_data, $series_id = null )
-    {
-        $ca_status_changed = array();
-        $ca_data = array();
-        foreach ( $cst_data as $item ) {
-            if ( isset( $item['ca_id'] ) ) {
-                $ca_id = $item['ca_id'];
-            } else do {
-                // New CustomerAppointment.
-                $ca_id = 'new-' . mt_rand( 1, 999 );
-            } while ( array_key_exists( $ca_id, $ca_data ) === true );
-            $ca_data[ $ca_id ] = $item;
-        }
-
-        // Retrieve customer appointments IDs currently associated with this appointment.
-        $current_ids   = array_map( function( CustomerAppointment $ca ) { return $ca->getId(); }, $this->getCustomerAppointments( true ) );
-        $ids_to_delete = array_diff( $current_ids, array_keys( $ca_data ) );
-        if ( ! empty ( $ids_to_delete ) ) {
-            // Remove redundant customer appointments.
-            foreach ($ids_to_delete as $id) {
-                Lib\Utils\Log::common( Lib\Utils\Log::ACTION_DELETE, CustomerAppointment::getTableName(), $id, null, __METHOD__ );
-            }
-            CustomerAppointment::query()->delete()->whereIn( 'id', $ids_to_delete )->execute();
-        }
-        // Calculate units for custom duration services
-        $service = Lib\Entities\Service::find( $this->getServiceId() );
-        $units   = ( $service && $service->getUnitsMax() > 1 ) ? ceil( Lib\Slots\DatePoint::fromStr( $this->getReturnPickupDatetime() )->diff( Lib\Slots\DatePoint::fromStr( $this->getPickupDateTime() ) ) / $service->getDuration() ) : 1;
-
-        // Add new customer appointments.
-        foreach ( array_diff( array_keys( $ca_data ), $current_ids ) as $id ) {
-            $time_zone = isset( $ca_data[ $id ]['timezone'] ) ? Lib\Proxy\Pro::getTimeZoneOffset( $ca_data[ $id ]['timezone'] ) : null;
-
-            $customer_appointment = new CustomerAppointment();
-            $customer_appointment
-                ->setSeriesId( $series_id )
-                ->setAppointmentId( $this->getId() )
-                ->setCustomerId( $ca_data[ $id ]['id'] )
-                ->setCustomFields( json_encode( $ca_data[ $id ]['custom_fields'] ) )
-                ->setExtras( json_encode( $ca_data[ $id ]['extras'] ) )
-                ->setStatus( $ca_data[ $id ]['status'] )
-                ->setNumberOfPersons( $ca_data[ $id ]['number_of_persons'] )
-                ->setNotes( $ca_data[ $id ]['notes'] )
-                ->setTotalAmount( $ca_data[ $id ]['total_amount'] )
-                ->setPaymentId( $ca_data[ $id ]['payment_id'] )
-                ->setUnits( $units )
-                ->setCreatedAt( current_time( 'mysql' ) )
-                ->setTimeZone( is_array( $time_zone ) ? $time_zone['time_zone'] : $time_zone )
-                ->setTimeZoneOffset( is_array( $time_zone ) ? $time_zone['time_zone_offset'] : $time_zone )
-                ->setExtrasConsiderDuration( $ca_data[ $id ]['extras_consider_duration'] )
-                ->save();
-            Lib\Utils\Log::createEntity( $customer_appointment, __METHOD__ );
-            Lib\Proxy\Files::attachFiles( $ca_data[ $id ]['custom_fields'], $customer_appointment );
-            Lib\Proxy\Pro::createBackendPayment( $ca_data[ $id ], $customer_appointment );
-            $customer_appointment->setJustCreated( true );
-            $ca_status_changed[] = $customer_appointment;
-        }
-
-        // Update existing customer appointments.
-        foreach ( array_intersect( $current_ids, array_keys( $ca_data ) ) as $id ) {
-            $time_zone = Lib\Proxy\Pro::getTimeZoneOffset( $ca_data[ $id ]['timezone'] );
-
-            $customer_appointment = new CustomerAppointment();
-            $customer_appointment->load( $id );
-
-            if ( $customer_appointment->getStatus() != $ca_data[ $id ]['status'] ) {
-                $ca_status_changed[] = $customer_appointment;
-                $customer_appointment->setStatus( $ca_data[ $id ]['status'] );
-            }
-            if ( $customer_appointment->getPaymentId() != $ca_data[ $id ]['payment_id'] ) {
-                $customer_appointment->setPaymentId( $ca_data[ $id ]['payment_id'] );
-            }
-            Lib\Proxy\Files::attachFiles( $ca_data[ $id ]['custom_fields'], $customer_appointment );
-            $customer_appointment
-                ->setNumberOfPersons( $ca_data[ $id ]['number_of_persons'] )
-                ->setNotes( $ca_data[ $id ]['notes'] )
-                ->setUnits( $units )
-                ->setCustomFields( json_encode( $ca_data[ $id ]['custom_fields'] ) )
-                ->setExtras( json_encode( $ca_data[ $id ]['extras'] ) )
-                ->setTimeZone( $time_zone['time_zone'] )
-                ->setTimeZoneOffset( $time_zone['time_zone_offset'] );
-            Lib\Utils\Log::updateEntity( $customer_appointment, __METHOD__ );
-            $customer_appointment
-                ->save();
-            Lib\Proxy\Files::attachFiles( $ca_data[ $id ]['custom_fields'], $customer_appointment );
-            Lib\Proxy\Pro::createBackendPayment( $ca_data[ $id ], $customer_appointment );
-        }
-
-        return $ca_status_changed;
-    }
-
-    /**
-     * Check whether this appointment has an associated event in Google Calendar.
-     *
-     * @return bool
-     */
-    public function hasGoogleCalendarEvent()
-    {
-        return $this->customer_id != '';
-    }
-
-    /**
-     * Check whether this appointment has an associated event in Outlook Calendar.
-     *
-     * @return bool
-     */
-    public function hasOutlookCalendarEvent()
-    {
-        return $this->sub_service_key != '';
-    }
-
-    /**
-     * Get max sum of extras duration of associated customer appointments.
-     *
-     * @return int
-     */
-    public function getMaxDistance()
-    {
-        $duration = 0;
-        // Calculate extras duration for appointments with duration < 1 day.
-        if ( Lib\Config::serviceExtrasActive() && ( strtotime( $this->getReturnPickupDatetime() ) - strtotime( $this->getPickupDateTime() ) < DAY_IN_SECONDS ) ) {
-            $customer_appointments = CustomerAppointment::query()
-                ->select( 'extras' )
-                ->where( 'appointment_id', $this->getId() )
-                ->whereIn( 'status', Lib\Proxy\CustomStatuses::prepareBusyStatuses( array(
-                    CustomerAppointment::STATUS_PENDING,
-                    CustomerAppointment::STATUS_APPROVED
-                ) ) )
-                ->where( 'extras_consider_duration', 1 )
-                ->fetchArray();
-            foreach ( $customer_appointments as $customer_appointment ) {
-                if ( $customer_appointment['extras'] != '[]' ) {
-                    $distance = Lib\Proxy\ServiceExtras::getTotalDuration( (array) json_decode( $customer_appointment['extras'], true ) );
-                    if ( $distance > $duration ) {
-                        $duration = $distance;
-                    }
-                }
-            }
-        }
-
-        return $duration;
-    }
-
-    /**
-     * Get information about number of persons grouped by status.
-     *
-     * @return array
-     */
-    public function getNopInfo()
-    {
-        $res = self::query( 'a' )
-           ->select( sprintf(
-               'SUM(IF(ca.status = "%s", ca.number_of_persons, 0)) AS pending,
-                SUM(IF(ca.status IN("%s"), ca.number_of_persons, 0)) AS approved,
-                SUM(IF(ca.status IN("%s"), ca.number_of_persons, 0)) AS cancelled,
-                SUM(IF(ca.status = "%s", ca.number_of_persons, 0)) AS rejected,
-                SUM(IF(ca.status = "%s", ca.number_of_persons, 0)) AS waitlisted,
-                ss.capacity_max',
-                CustomerAppointment::STATUS_PENDING,
-                implode( '","', Lib\Proxy\CustomStatuses::prepareBusyStatuses( array( CustomerAppointment::STATUS_APPROVED ) ) ),
-                implode( '","', Lib\Proxy\CustomStatuses::prepareFreeStatuses( array( CustomerAppointment::STATUS_CANCELLED ) ) ),
-                CustomerAppointment::STATUS_REJECTED,
-                CustomerAppointment::STATUS_WAITLISTED
-           ) )
-           ->leftJoin( 'CustomerAppointment', 'ca', 'ca.appointment_id = a.id' )
-           ->leftJoin( 'StaffService', 'ss', 'ss.staff_id = a.staff_id AND ss.service_id = a.service_id' )
-           ->where( 'a.id', $this->getId() )
-           ->groupBy( 'a.id' )
-           ->fetchRow()
-        ;
-
-        $res['total_nop'] = $res['pending'] + $res['approved'];
-
-        return $res;
-    }
 
     /**************************************************************************
      * Entity Fields Getters & Setters                                        *
      **************************************************************************/
 
     /**
-     * Gets location_id
+     * Gets service_id
      *
      * @return int
      */
-    public function getLocationId()
+    public function getService()
     {
-        return $this->location_id;
-    }
-
-    /**
-     * Sets location_id
-     *
-     * @param int $location_id
-     * @return $this
-     */
-    public function setLocationId( $location_id )
-    {
-        $this->location_id = $location_id;
-
-        return $this;
-    }
-
-    /**
-     * Gets staff_id
-     *
-     * @return int
-     */
-    public function getStaffId()
-    {
-        return $this->staff_id;
-    }
-
-    /**
-     * Sets staff
-     *
-     * @param Staff $staff
-     * @return $this
-     */
-    public function setStaff( Staff $staff )
-    {
-        return $this->setStaffId( $staff->getId() );
-    }
-    /**
-     * Sets staff_id
-     *
-     * @param int $staff_id
-     * @return $this
-     */
-    public function setStaffId( $staff_id )
-    {
-        $this->staff_id = $staff_id;
-
-        return $this;
-    }
-
-    /**
-     * Gets staff_any
-     *
-     * @return int
-     */
-    public function getStaffAny()
-    {
-        return $this->staff_any;
-    }
-
-    /**
-     * Sets staff_any
-     *
-     * @param int $staff_any
-     * @return $this
-     */
-    public function setStaffAny( $staff_any )
-    {
-        $this->staff_any = $staff_any;
-
-        return $this;
+        return Service::find( $this->getServiceId() );
     }
 
     /**
@@ -449,52 +152,6 @@ class Appointment extends Lib\Base\Entity
     public function setServiceId( $service_id )
     {
         $this->service_id = $service_id;
-
-        return $this;
-    }
-
-    /**
-     * Gets custom_service_name
-     *
-     * @return string
-     */
-    public function getCustomServiceName()
-    {
-        return $this->custom_service_name;
-    }
-
-    /**
-     * Sets custom_service_name
-     *
-     * @param int $custom_service_name
-     * @return $this
-     */
-    public function setCustomServiceName( $custom_service_name )
-    {
-        $this->custom_service_name = $custom_service_name;
-
-        return $this;
-    }
-
-    /**
-     * Gets custom_service_price
-     *
-     * @return string
-     */
-    public function getCustomServicePrice()
-    {
-        return $this->custom_service_price;
-    }
-
-    /**
-     * Sets custom_service_price
-     *
-     * @param int $custom_service_price
-     * @return $this
-     */
-    public function setCustomServicePrice( $custom_service_price )
-    {
-        $this->custom_service_price = $custom_service_price;
 
         return $this;
     }
@@ -552,7 +209,7 @@ class Appointment extends Lib\Base\Entity
      */
     public function getDistance()
     {
-        return $this->distance;
+        return (int) $this->distance;
     }
 
     /**
@@ -569,13 +226,46 @@ class Appointment extends Lib\Base\Entity
     }
 
     /**
+     * Gets estimated_time
+     *
+     * @return int
+     */
+    public function getEstimatedTime()
+    {
+        return $this->estimated_time;
+    }
+
+    /**
+     * Sets estimated_time
+     *
+     * @param int $estimated_time
+     * @return $this
+     */
+    public function setEstimatedTime( $estimated_time )
+    {
+        $this->estimated_time = $estimated_time;
+
+        return $this;
+    }
+
+    /**
+     * Gets estimated_time
+     *
+     * @return int
+     */
+    public function getEstimatedTimeInMins()
+    {
+        return Lib\Utils\Common::getTimeInMinutes( $this->estimated_time );
+    }
+
+    /**
      * Gets waiting_time
      *
      * @return int
      */
     public function getWaitingTime()
     {
-        return $this->waiting_time;
+        return (int) $this->waiting_time;
     }
 
     /**
@@ -610,6 +300,29 @@ class Appointment extends Lib\Base\Entity
     public function setNotes( $notes )
     {
         $this->notes = $notes;
+
+        return $this;
+    }
+
+    /**
+     * Gets admin_notes
+     *
+     * @return string
+     */
+    public function getAdminNotes()
+    {
+        return $this->admin_notes;
+    }
+
+    /**
+     * Sets admin_notes
+     *
+     * @param string $admin_notes
+     * @return $this
+     */
+    public function setAdminNotes( $admin_notes )
+    {
+        $this->admin_notes = $admin_notes;
 
         return $this;
     }
@@ -717,6 +430,16 @@ class Appointment extends Lib\Base\Entity
     }
 
     /**
+     * Gets sub_service_data
+     *
+     * @return string
+     */
+    public function getSubService()
+    {
+        return new SubService( $this->sub_service_key, json_decode($this->sub_service_data) );
+    }
+
+    /**
      * Gets is_after_hours
      *
      * @return string
@@ -737,6 +460,16 @@ class Appointment extends Lib\Base\Entity
         $this->is_after_hours = $is_after_hours;
 
         return $this;
+    }
+
+    /**
+     * Gets is_no_show
+     *
+     * @return string
+     */
+    public function getIsNoShow()
+    {
+        return $this->status == self::STATUS_NOSHOW;
     }
 
     /**
@@ -924,6 +657,63 @@ class Appointment extends Lib\Base\Entity
     }
 
     /**
+     * Gets payment_date
+     *
+     * @return string
+     */
+    public function getPaymentDate()
+    {
+        return $this->payment_date;
+    }
+
+    /**
+     * Sets payment_date
+     *
+     * @param string $payment_date
+     * @return $this
+     */
+    public function setPaymentDate( $payment_date )
+    {
+        $this->payment_date = $payment_date;
+
+        return $this;
+    }
+
+    /**
+     * Gets payment_details
+     *
+     * @return string
+     */
+    public function getPaymentDetails()
+    {
+        return $this->payment_details;
+    }
+
+    /**
+     * Sets payment_details
+     *
+     * @param string $payment_details
+     * @return $this
+     */
+    public function setPaymentDetails( $payment_details )
+    {
+        $this->payment_details = $payment_details;
+
+        return $this;
+    }
+
+    /**
+     * Gets payment_details
+     *
+     * @return string
+     */
+    public function getPaymentAdjustments()
+    {
+        $payment_details = !empty($this->payment_details) ? json_decode($this->payment_details, true) : [];
+        return isset($payment_details['adjustments']) ? $payment_details['adjustments'] : [];
+    }
+
+    /**
      * Gets created_at
      *
      * @return string
@@ -969,6 +759,127 @@ class Appointment extends Lib\Base\Entity
         return $this;
     }
 
+    /**
+     * Get HTML for pickup information
+     *
+     * @return string
+     */
+    public function getScheduleInfo()
+    {
+        // Determine display time zone
+        $display_tz = Lib\Utils\Common::getCurrentUserTimeZone();
+        $wp_tz = Lib\Config::getWPTimeZone();
+
+        $pickupDatetime = $this->getPickupDateTime();
+        $returnDatetime = $this->getReturnPickupDatetime();
+
+        if ( $display_tz !== $wp_tz ) {
+            $pickupDatetime = DateTime::convertTimeZone( $pickupDatetime, $wp_tz, $display_tz );
+            $returnDatetime   = $returnDatetime ? DateTime::convertTimeZone( $returnDatetime, $wp_tz, $display_tz ) : null;
+        }
+
+        $items = [
+            [
+                'label' => __('Pickup Time', 'connectpx_booking'),
+                'value' => DateTime::formatDateTime( $pickupDatetime ),
+            ]
+        ];
+
+        if( $returnDatetime ) {
+            $items[] = [
+                'label' => __('Return Pickup Time', 'connectpx_booking'),
+                'value' => DateTime::formatDateTime( $returnDatetime ),
+            ];
+        }
+
+        return Lib\Utils\Common::formatedItemsList( $items );
+    }
+
+    /**
+     * Get HTML for pickup information
+     *
+     * @return string
+     */
+    public function getPickupInfo()
+    {
+        $info = json_decode( $this->getPickupDetail(), true );
+        return $info ? Lib\Utils\Common::formatedPickupInfo( $info ) : null;
+    }
+
+    /**
+     * Get HTML for pickup information
+     *
+     * @return string
+     */
+    public function getDestinationInfo()
+    {
+        $info = json_decode( $this->getDestinationDetail(), true );
+        return $info ? Lib\Utils\Common::formatedDestinationInfo( $info ) : null;
+    }
+
+    /**
+     * Get HTML for pickup information
+     *
+     * @return string
+     */
+    public function getServiceInfo()
+    {
+        $service = $this->getService();
+        $subService = $this->getSubService();
+
+        return Lib\Utils\Common::formatedServiceInfo($this, $service, $subService);
+    }
+
+    /**
+     * Get HTML for pickup information
+     *
+     * @return string
+     */
+    public function getMapLink( $width = "100%", $height = "300" )
+    {
+        $pickup = json_decode( $this->getPickupDetail(), true );
+        $destination = json_decode( $this->getDestinationDetail(), true );
+
+        if( empty($pickup) || empty($destination) ) {
+            return;
+        }
+
+        $info = [
+            'from' => [
+                'lat' => $pickup['address']['lat'],
+                'lng' => $pickup['address']['lng'],
+            ],
+            'to' => [
+                'lat' => $destination['address']['lat'],
+                'lng' => $destination['address']['lng'],
+            ],
+        ];
+
+        return Lib\Utils\Common::getGoogleMapLink( $info, $width = "100%", $height = "300" );
+    }
+
+    /**
+     * Get HTML for payment info displayed in a popover in the edit appointment form
+     *
+     * @param float $paid
+     * @param float $total
+     * @param string $type
+     * @param string $status
+     * @return string
+     */
+    public static function paymentInfo( $total, $type, $status )
+    {
+        $result = Lib\Utils\Price::format( $total );
+        $result .= sprintf(
+            ' %s <span%s>%s</span>',
+            self::paymentTypeToString( $type ),
+            $status == self::PAYMENT_PENDING ? ' class="text-danger"' : '',
+            self::paymentStatusToString( $status )
+        );
+
+        return $result;
+    }
+
     /**************************************************************************
      * Overridden Methods                                                     *
      **************************************************************************/
@@ -981,25 +892,6 @@ class Appointment extends Lib\Base\Entity
      */
     public function save()
     {
-        // Google and Outlook calendars.
-        if ( $this->isLoaded() && ( $this->hasGoogleCalendarEvent() || $this->hasOutlookCalendarEvent() ) ) {
-            $modified = $this->getModified();
-            if ( array_key_exists( 'staff_id', $modified ) ) {
-                // Delete event from Google and Outlook calendars of the old staff if the staff was changed.
-                $staff_id = $this->getStaffId();
-                $this->setStaffId( $modified['staff_id'] );
-                Lib\Proxy\Pro::deleteGoogleCalendarEvent( $this );
-                Lib\Proxy\OutlookCalendar::deleteEvent( $this );
-                $this
-                    ->setStaffId( $staff_id )
-                    ->setCustomerId( null )
-                    ->setWcOrderId( null )
-                    ->setSubServiceKey( null )
-                    ->setSubServiceData( null )
-                ;
-            }
-        }
-
         if ( $this->getId() == null ) {
             $this
                 ->setCreatedAt( current_time( 'mysql' ) )
@@ -1019,23 +911,7 @@ class Appointment extends Lib\Base\Entity
      */
     public function delete()
     {
-        // Delete all CustomerAppointments for current appointments
-        $ca_list = Lib\Entities\CustomerAppointment::query()
-            ->where( 'appointment_id', $this->getId() )
-            ->find();
-        /** @var Lib\Entities\CustomerAppointment $ca */
-        foreach ( $ca_list as $ca ) {
-            Lib\Utils\Log::deleteEntity( $ca, __METHOD__, 'Delete customer appointments on delete appointment' );
-            $ca->delete();
-        }
-
         $result = parent::delete();
-        if ( $result ) {
-            Lib\Proxy\Pro::deleteOnlineMeeting( $this );
-            Lib\Proxy\Pro::deleteGoogleCalendarEvent( $this );
-            Lib\Proxy\OutlookCalendar::deleteEvent( $this );
-        }
-
         return $result;
     }
 
@@ -1052,6 +928,7 @@ class Appointment extends Lib\Base\Entity
                 self::STATUS_APPROVED,
                 self::STATUS_CANCELLED,
                 self::STATUS_REJECTED,
+                self::STATUS_NOSHOW,
             );
             self::putInCache( __FUNCTION__, $statuses );
         }
@@ -1062,12 +939,26 @@ class Appointment extends Lib\Base\Entity
     public static function statusToString( $status )
     {
         switch ( $status ) {
-            case self::STATUS_PENDING:    return __( 'Pending',   'bookly' );
-            case self::STATUS_APPROVED:   return __( 'Approved',  'bookly' );
-            case self::STATUS_CANCELLED:  return __( 'Cancelled', 'bookly' );
-            case self::STATUS_REJECTED:   return __( 'Rejected',  'bookly' );
-            case self::STATUS_DONE:       return __( 'Done', 'bookly' );
-            case 'mixed':                 return __( 'Mixed', 'bookly' );
+            case self::STATUS_PENDING:    return __( 'Pending',   'connectpx_booking' );
+            case self::STATUS_APPROVED:   return __( 'Approved',  'connectpx_booking' );
+            case self::STATUS_CANCELLED:  return __( 'Cancelled', 'connectpx_booking' );
+            case self::STATUS_REJECTED:   return __( 'Rejected',  'connectpx_booking' );
+            case self::STATUS_DONE:       return __( 'Done', 'connectpx_booking' );
+            case self::STATUS_NOSHOW:     return __( 'No Show', 'connectpx_booking' );
+            case 'mixed':                 return __( 'Mixed', 'connectpx_booking' );
+            default: return '';
+        }
+    }
+
+    public static function statusToIcon( $status )
+    {
+        switch ( $status ) {
+            case self::STATUS_PENDING:    return 'far fa-clock';
+            case self::STATUS_APPROVED:   return 'fas fa-check';
+            case self::STATUS_CANCELLED:  return 'fas fa-times';
+            case self::STATUS_REJECTED:   return 'fas fa-ban';
+            case self::STATUS_DONE:       return 'far fa-check-square';
+            case self::STATUS_NOSHOW:       return 'fas fa-user-slash';
             default: return '';
         }
     }
@@ -1089,6 +980,25 @@ class Appointment extends Lib\Base\Entity
     }
 
     /**
+     * Get appointment statuses.
+     *
+     * @return array
+     */
+    public static function getPaymentStatuses()
+    {
+        if ( ! self::hasInCache( __FUNCTION__ ) ) {
+            $statuses = array(
+                self::PAYMENT_COMPLETED,
+                self::PAYMENT_PENDING,
+                self::PAYMENT_REJECTED,
+            );
+            self::putInCache( __FUNCTION__, $statuses );
+        }
+
+        return self::getFromCache( __FUNCTION__ );
+    }
+
+    /**
      * Get status of payment.
      *
      * @param string $status
@@ -1104,4 +1014,13 @@ class Appointment extends Lib\Base\Entity
         }
     }
 
+    public static function paymentStatusToIcon( $status )
+    {
+        switch ( $status ) {
+            case self::PAYMENT_PENDING:    return 'far fa-clock';
+            case self::PAYMENT_COMPLETED:   return 'fas fa-check';
+            case self::PAYMENT_REJECTED:   return 'fas fa-ban';
+            default: return '';
+        }
+    }
 }

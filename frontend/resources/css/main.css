@@ -1,10 +1,12 @@
-.woocommerce-billing-fields {
+.woocommerce-billing-fields,
+.woocommerce-additional-fields {
     display: none !important;
 }
 .woocommerce-booking-details-wrapper {
     padding: 10px 20px;
     background: #f7f7f7;
     border-radius: 5px;
+    margin-bottom: 10px;
 }
 .woocommerce-booking-details-wrapper p {
     margin-bottom: 10px;

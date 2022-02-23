@@ -1096,11 +1096,17 @@
                             function updateDirections( myroute ) {
                                 var pickup = getPlaceFullAddress( pickupPlace );
                                 pickup.address = myroute.start_address;
+                                if( ! pickup.street ) {
+                                    pickup.street = pickup.address;
+                                }
                                 pickup.lat = myroute.start_location.lat();
                                 pickup.lng = myroute.start_location.lng();
 
                                 var destination = getPlaceFullAddress( destinationPlace );
                                 destination.address = myroute.end_address;
+                                if( ! destination.street ) {
+                                    destination.street = destination.address;
+                                }
                                 destination.lat = myroute.end_location.lat();
                                 destination.lng = myroute.end_location.lng();
 

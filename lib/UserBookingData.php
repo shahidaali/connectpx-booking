@@ -1373,6 +1373,16 @@ class UserBookingData
     }
 
     /**
+     * Gets route_distance
+     *
+     * @return string
+     */
+    public function getTimeInMinutes()
+    {
+        return Lib\Utils\Common::getTimeInMinutes($this->route_time);
+    }
+
+    /**
      * Gets pickup_patient_name
      *
      * @return string

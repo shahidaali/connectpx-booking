@@ -335,6 +335,19 @@ class WooCommerce extends Lib\Base\Ajax
                 if ( $slot[0] !== null && $slot[2] !== null ) {
                     $appointment_return_pickup_client_dp = Lib\Slots\DatePoint::fromStr( $slot[0] . " " . $slot[2] )->toClientTz();
                 }
+                $isAfterHours = Lib\Utils\Common::isOffTimeService( $slot );
+
+                $lineItems = $subService->paymentLineItems(
+                    $distanceMiles,
+                    0,
+                    $isAfterHours
+                );
+
+                $lineItemsHtml = "";
+                foreach ($lineItems['items'] as $lineItem) {
+                    $lineItemsHtml .= $lineItem['qty'] > 1 ? sprintf("%s: %d &times; %s <br>", $lineItem['label'], $lineItem['qty'], Lib\Utils\Price::format($lineItem['unit_price'])) : sprintf("%s: %s <br>", $lineItem['label'], Lib\Utils\Price::format( $lineItem['total']));
+                }
+
                 $codes = array(
                     'amount_to_pay' => Lib\Utils\Price::format( $cart_info->getPayNow() ),
                     'appointment_date' => $appointment_pickup_client_dp ? $appointment_pickup_client_dp->formatI18nDate() : __( 'N/A', 'connectpx_booking' ),
@@ -345,10 +358,11 @@ class WooCommerce extends Lib\Base\Ajax
                     'per_mile_price' => Lib\Utils\Price::format( $subService->getRatePerMile() ),
                     'flat_rate' => Lib\Utils\Price::format( $subService->getFlatRate() ),
                     'after_hours_fee' => Lib\Utils\Price::format( $subService->getAfterHoursFee() ),
-                    'is_after_hours' => Lib\Utils\Common::isOffTimeService( $slot ),
+                    'is_after_hours' => $isAfterHours,
                     'service_info' => $service ? $service->getDescription() : '',
                     'service_name' => $service ? $service->getTitle() : __( 'Service was not found', 'connectpx_booking' ),
                     'service_price' => $service ? Lib\Utils\Price::format( $cart_item->getServicePrice() ) : '',
+                    'line_items' => $lineItemsHtml,
                 );
                 $info[] = Lib\Utils\Codes::replace(Lib\Utils\Common::getOption('wc_cart_item_data', ''), $codes, false );
             }

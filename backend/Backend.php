@@ -26,6 +26,7 @@ class Backend {
 	 */
 	public static function run() {
 		Ajax::init();
+		Components\Dialogs\Appointment\Edit\Ajax::init();
 
 		add_action( 'admin_enqueue_scripts', array(__CLASS__, 'enqueueScripts') );
 		add_action( 'admin_menu', array(__CLASS__, 'adminMenu') );
@@ -38,16 +39,9 @@ class Backend {
 	 */
 	public static function enqueueScripts() {
 
-		wp_enqueue_style( 
+		wp_register_style( 
 			'connectpx_booking_bootstrap', 
 			plugin_dir_url( __FILE__ ) . 'resources/bootstrap/css/bootstrap.min.css', 
-			array(), 
-			Plugin::version(), 
-			'all' 
-		);
-		wp_enqueue_style( 
-			'connectpx_booking_admin', 
-			plugin_dir_url( __FILE__ ) . 'resources/css/admin.css', 
 			array(), 
 			Plugin::version(), 
 			'all' 
@@ -58,6 +52,20 @@ class Backend {
 			array(), 
 			Plugin::version(), 
 			'all' 
+		);
+		wp_enqueue_style( 
+			'connectpx_booking_admin', 
+			plugin_dir_url( __FILE__ ) . 'resources/css/admin.css', 
+			array( 'connectpx_booking_bootstrap', 'connectpx_booking_fa' ), 
+			Plugin::version(), 
+			'all' 
+		);
+		wp_register_script( 
+			'connectpx_booking_bootstrap', 
+			plugin_dir_url( __FILE__ ) . 'resources/bootstrap/js/bootstrap.min.js', 
+			array('jquery'), 
+			Plugin::version(), 
+			false
 		);
 		wp_register_script( 
 			'connectpx_booking_datatables', 
@@ -98,7 +106,7 @@ class Backend {
 		wp_enqueue_script( 
 			'connectpx_booking_admin', 
 			plugin_dir_url( __FILE__ ) . 'resources/js/admin.js', 
-			array( 'jquery' ), 
+			array( 'jquery', 'connectpx_booking_bootstrap' ), 
 			Plugin::version(), 
 			false 
 		);
@@ -109,10 +117,24 @@ class Backend {
 
 		wp_register_script( 
 			'connectpx_booking_appointments', 
-			plugin_dir_url( __FILE__ ) . 'resources/js/appointments.js', 
+			plugin_dir_url( __FILE__ ) . 'modules/resources/js/appointments.js', 
 			array( 
 				'jquery', 
+				'connectpx_booking_admin',
 				'connectpx_booking_datatables', 
+				'connectpx_booking_moment', 
+				'connectpx_booking_daterangepicker',
+				'connectpx_booking_select2' 
+			), 
+			Plugin::version(), 
+			false 
+		);
+		wp_register_script( 
+			'connectpx_booking_appointments_edit', 
+			plugin_dir_url( __FILE__ ) . 'components/dialogs/appointment/edit/resources/js/appointments_edit.js', 
+			array( 
+				'jquery', 
+				'connectpx_booking_admin',
 				'connectpx_booking_moment', 
 				'connectpx_booking_daterangepicker',
 				'connectpx_booking_select2' 

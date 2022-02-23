@@ -28,10 +28,10 @@ abstract class Tables
             case self::APPOINTMENTS:
                 $columns = array(
                     'id' => esc_html__( 'No.', 'connectpx_booking' ),
-                    'pickup_datetime' => esc_html__( 'Appointment date', 'connectpx_booking' ),
-                    'customer_full_name' => esc_html__( 'Customer name', 'connectpx_booking' ),
-                    'customer_phone' => esc_html__( 'Customer phone', 'connectpx_booking' ),
-                    'customer_email' => esc_html__( 'Customer email', 'connectpx_booking' ),
+                    'pickup_datetime' => esc_html__( 'Date', 'connectpx_booking' ),
+                    'customer_full_name' => esc_html__( 'Name', 'connectpx_booking' ),
+                    'customer_phone' => esc_html__( 'Phone', 'connectpx_booking' ),
+                    'customer_email' => esc_html__( 'Email', 'connectpx_booking' ),
                     'service_title' => esc_html__( 'Service', 'connectpx_booking' ),
                     'status' => esc_html__( 'Status', 'connectpx_booking' ),
                     'payment' => esc_html__( 'Payment', 'connectpx_booking' ),

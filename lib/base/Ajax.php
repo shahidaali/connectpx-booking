@@ -86,8 +86,6 @@ abstract class Ajax extends Component
         foreach ( (array) $security as $access_type ) {
             switch ( $access_type ) {
                 case 'admin':      $permitted = Lib\Utils\Common::isCurrentUserAdmin(); break;
-                case 'supervisor': $permitted = Lib\Utils\Common::isCurrentUserSupervisor(); break;
-                case 'staff':      $permitted = Lib\Utils\Common::isCurrentUserStaff(); break;
                 case 'customer':   $permitted = Lib\Utils\Common::isCurrentUserCustomer(); break;
                 case 'user':       $permitted = is_user_logged_in(); break;
                 case 'anonymous':  $permitted = true; break;

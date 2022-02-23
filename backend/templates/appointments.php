@@ -5,6 +5,7 @@ use ConnectpxBooking\Lib\Entities\Appointment;
 use ConnectpxBooking\Lib\Utils\Common;
 use ConnectpxBooking\Lib\Utils\DateTime;
 use ConnectpxBooking\Lib\Config;
+use ConnectpxBooking\Backend\Components\Dialogs;
 ?>
 <div id="connectpx_booking_tbs" class="wrap">
     <div class="form-row align-items-center mb-3">
@@ -79,4 +80,5 @@ use ConnectpxBooking\Lib\Config;
         </div>
     </div>
 
+    <?php Dialogs\Appointment\Edit\Dialog::render() ?>
 </div>
