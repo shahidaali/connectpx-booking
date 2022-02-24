@@ -99,6 +99,7 @@ class Appointment extends Lib\Base\Entity
         'destination_detail'        => array( 'format' => '%s' ),
         'status'      => array( 'format' => '%s' ),
         'total_amount'             => array( 'format' => '%s' ),
+        'paid_amount'             => array( 'format' => '%s' ),
         'payment_status'             => array( 'format' => '%s' ),
         'payment_type'             => array( 'format' => '%s' ),
         'payment_date'             => array( 'format' => '%s' ),
@@ -606,6 +607,29 @@ class Appointment extends Lib\Base\Entity
     public function setTotalAmount( $total_amount )
     {
         $this->total_amount = $total_amount;
+
+        return $this;
+    }
+
+    /**
+     * Gets paid_amount
+     *
+     * @return string
+     */
+    public function getPaidAmount()
+    {
+        return $this->paid_amount;
+    }
+
+    /**
+     * Sets paid_amount
+     *
+     * @param string $paid_amount
+     * @return $this
+     */
+    public function setPaidAmount( $paid_amount )
+    {
+        $this->paid_amount = $paid_amount;
 
         return $this;
     }

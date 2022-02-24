@@ -86,6 +86,14 @@ $lineItems = $subService->paymentLineItems(
             <th><?php echo __('Total', 'connectpx_booking') ?></th>
             <th class="text-right"><?php echo Price::format( $lineItems['totals'] ); ?></th>
          </tr>
+         <tr>
+            <th><?php echo __('Paid', 'connectpx_booking') ?></th>
+            <th class="text-right"><?php echo Price::format( $appointment->getPaidAmount() ); ?></th>
+         </tr>
+         <tr>
+            <th><?php echo __('Due', 'connectpx_booking') ?></th>
+            <th class="text-right"><?php echo Price::format( $lineItems['totals'] - $appointment->getPaidAmount() ); ?></th>
+         </tr>
          <tr class="payment-adjustment-buttons-row">
             <th style="border-left-color: rgb(255, 255, 255); border-bottom-color: rgb(255, 255, 255);"></th>
             <th class="text-right"><button class="btn btn-default payment-adjustment-button"><?php echo __('Manual adjustment', 'connectpx_booking') ?></button> </th>

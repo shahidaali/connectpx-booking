@@ -316,11 +316,23 @@ abstract class Config
     public static function getBusinessHours()
     {
         $result = array();
-        foreach ( array( 'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday' ) as $week_day ) {
-            $result[] = array(
-                'start' => get_option( 'connectpx_booking_bh_' . $week_day . '_start' ) ?: null ,
-                'end'   => get_option( 'connectpx_booking_bh_' . $week_day . '_end' ) ?: null
-            );
+
+        $business_hours = (array) self::getOption('business_hours', []);
+
+        foreach ( array( 'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday' ) as $day_index => $week_day ) {
+            $day = $business_hours[ $day_index + 1 ] ?? [];
+
+            if( !$day || $day['from'] == 'off' || $day['to'] == 'off' ) {
+                $result[] = array(
+                    'start' =>  null ,
+                    'end'   => null
+                );
+            } else {
+                $result[] = array(
+                    'start' =>  $day['from'] ,
+                    'end'   => $day['to']
+                );
+            }
         }
 
         return $result;

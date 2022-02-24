@@ -11,6 +11,7 @@ use ConnectpxBooking\Lib;
 abstract class Tables
 {
     const APPOINTMENTS = 'appointments';
+    const INVOICES = 'invoices';
     const CUSTOMERS = 'customers';
     const EMAIL_NOTIFICATIONS = 'email_notifications';
     const SERVICES = 'services';
@@ -26,6 +27,20 @@ abstract class Tables
         $columns = array();
         switch ( $table ) {
             case self::APPOINTMENTS:
+                $columns = array(
+                    'id' => esc_html__( 'No.', 'connectpx_booking' ),
+                    'pickup_datetime' => esc_html__( 'Date', 'connectpx_booking' ),
+                    'customer_full_name' => esc_html__( 'Name', 'connectpx_booking' ),
+                    'customer_phone' => esc_html__( 'Phone', 'connectpx_booking' ),
+                    'customer_email' => esc_html__( 'Email', 'connectpx_booking' ),
+                    'service_title' => esc_html__( 'Service', 'connectpx_booking' ),
+                    'status' => esc_html__( 'Status', 'connectpx_booking' ),
+                    'payment' => esc_html__( 'Payment', 'connectpx_booking' ),
+                    'notes' => esc_html__( 'Notes', 'connectpx_booking' ),
+                    'created_date' => esc_html__( 'Created', 'connectpx_booking' ),
+                );
+                break;
+            case self::INVOICES:
                 $columns = array(
                     'id' => esc_html__( 'No.', 'connectpx_booking' ),
                     'pickup_datetime' => esc_html__( 'Date', 'connectpx_booking' ),
@@ -177,6 +192,9 @@ abstract class Tables
                 $columns = array( 'id' => false, );
                 break;
             case self::APPOINTMENTS:
+                $columns = array( 'internal_note' => false, );
+                break;
+            case self::INVOICES:
                 $columns = array( 'internal_note' => false, );
                 break;
             case self::EMAIL_LOGS:

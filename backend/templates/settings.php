@@ -109,6 +109,10 @@ use ConnectpxBooking\Lib\Utils;
 						<th scope="row"><?php _e('Address Format', 'connectpx_booking'); ?></th>
 						<td><textarea name="connectpx_booking[address_format]" rows="3" cols="52"><?php echo Utils\Common::getOption('address_format', ''); ?></textarea></td>
 					</tr>
+					<tr>
+						<th scope="row"><?php _e('Calendar Format', 'connectpx_booking'); ?></th>
+						<td><textarea name="connectpx_booking[calendar_format]" rows="3" cols="52"><?php echo Utils\Common::getOption('calendar_format', ''); ?></textarea></td>
+					</tr>
 				</tbody>
 			</table>
 		</div>

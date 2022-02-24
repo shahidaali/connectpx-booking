@@ -199,6 +199,7 @@ class Cart
                 ->setPaymentType( Appointment::PAYMENT_TYPE_WOOCOMMERCE )
                 ->setPaymentDate( current_time( 'mysql' ) )
                 ->setTotalAmount( $itemPrice['totals'] )
+                ->setPaidAmount( $itemPrice['totals'] )
                 ->setCreatedAt( current_time( 'mysql' ) )
                 ->save();
 

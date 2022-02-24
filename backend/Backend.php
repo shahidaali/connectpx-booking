@@ -89,6 +89,13 @@ class Backend {
 			false 
 		);
 		wp_register_script( 
+			'connectpx_booking_dropdown', 
+			plugin_dir_url( __FILE__ ) . 'resources/js/dropdown.js', 
+			array( 'jquery' ), 
+			Plugin::version(), 
+			false 
+		);
+		wp_register_script( 
 			'connectpx_booking_daterangepicker', 
 			plugin_dir_url( __FILE__ ) . 'resources/js/daterangepicker.js', 
 			array( 'connectpx_booking_range_tools' ), 
@@ -142,7 +149,58 @@ class Backend {
 			Plugin::version(), 
 			false 
 		);
-
+		wp_register_script( 
+			'connectpx_booking_invoices', 
+			plugin_dir_url( __FILE__ ) . 'modules/resources/js/invoices.js', 
+			array( 
+				'jquery', 
+				'connectpx_booking_admin',
+				'connectpx_booking_datatables', 
+				'connectpx_booking_moment', 
+				'connectpx_booking_daterangepicker',
+				'connectpx_booking_select2' 
+			), 
+			Plugin::version(), 
+			false 
+		);
+		wp_register_script( 
+			'connectpx_booking_event_calendar', 
+			plugin_dir_url( __FILE__ ) . 'modules/resources/js/event-calendar.min.js', 
+			array(), 
+			Plugin::version(), 
+			false 
+		);
+		wp_register_script( 
+			'connectpx_booking_calendar_common', 
+			plugin_dir_url( __FILE__ ) . 'modules/resources/js/calendar-common.js', 
+			array(), 
+			Plugin::version(), 
+			false 
+		);
+		wp_register_script( 
+			'connectpx_booking_calendar', 
+			plugin_dir_url( __FILE__ ) . 'modules/resources/js/calendar.js', 
+			array( 
+				'jquery', 
+				'connectpx_booking_admin',
+				'connectpx_booking_datatables', 
+				'connectpx_booking_moment', 
+				'connectpx_booking_daterangepicker',
+				'connectpx_booking_select2',
+				'connectpx_booking_dropdown',
+				'connectpx_booking_event_calendar',
+				'connectpx_booking_calendar_common',
+			), 
+			Plugin::version(), 
+			false 
+		);
+		wp_enqueue_style( 
+			'connectpx_booking_calendar', 
+			plugin_dir_url( __FILE__ ) . 'modules/resources/css/event-calendar.min.css', 
+			array( 'connectpx_booking_admin' ), 
+			Plugin::version(), 
+			'all' 
+		);
 	}
 
 	/**
@@ -159,6 +217,8 @@ class Backend {
         $services = __( 'Services', 'connectpx_booking' );
         $customers = __( 'Customers', 'connectpx_booking' );
         $appointments = __( 'Appointments', 'connectpx_booking' );
+        $calendar = __( 'Calendar', 'connectpx_booking' );
+        $invoices = __( 'Invoices', 'connectpx_booking' );
         $settings = __( 'Settings', 'connectpx_booking' );
 
 		add_menu_page( $bookings, $bookings, 'manage_options', $slug, '', 'dashicons-admin-settings', 100 ); 
@@ -181,6 +241,16 @@ class Backend {
 		add_submenu_page( $slug, $appointments, $appointments, 'manage_options', Modules\Appointments::pageSlug(),
 			function() {
 				Modules\Appointments::render();
+			}
+		);
+		add_submenu_page( $slug, $calendar, $calendar, 'manage_options', Modules\Calendar::pageSlug(),
+			function() {
+				Modules\Calendar::render();
+			}
+		);
+		add_submenu_page( $slug, $invoices, $invoices, 'manage_options', Modules\Invoices::pageSlug(),
+			function() {
+				Modules\Invoices::render();
 			}
 		);
 		add_submenu_page( $slug, $settings, $settings, 'manage_options', Modules\Settings::pageSlug(),

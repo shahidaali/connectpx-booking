@@ -1,14 +1,14 @@
 /**
- * jQuery booklyDropdown.
+ * jQuery connectpx_bookingDropdown.
  */
 (function ($) {
     let id = 0;
     let methods = {
         init: function (options) {
-            let opts = $.extend({}, $.fn.booklyDropdown.defaults, options);
+            let opts = $.extend({}, $.fn.connectpx_bookingDropdown.defaults, options);
 
             return this.filter('ul').each(function () {
-                if ($(this).data('booklyDropdown')) {
+                if ($(this).data('connectpx_bookingDropdown')) {
                     return;
                 }
                 let obj = {
@@ -16,7 +16,7 @@
                     $button: $('<button type="button" class="btn btn-default dropdown-toggle d-flex align-items-center w-100" data-toggle="dropdown"/>'),
                     $counter: $('<span class="flex-grow-1 text-left mr-1"/>'),
                     $ul: $(this),
-                    $selectAll: $('<input type="checkbox" class="custom-control-input"/>').attr('id', 'bookly-js-dropdown-' + (++id)),
+                    $selectAll: $('<input type="checkbox" class="custom-control-input"/>').attr('id', 'connectpx_booking-js-dropdown-' + (++id)),
                     $groups: $(),
                     $options: [],
                     preselected: [],  // initially selected options
@@ -76,7 +76,7 @@
                     .wrapInner('<div class="custom-control custom-checkbox ml-4"><label class="custom-control-label"></label></div>')
                     .each(function () {
                         let $li = $(this),
-                            $checkbox = $('<input type="checkbox" class="custom-control-input"/>').attr('id', 'bookly-js-dropdown-' + (++id)),
+                            $checkbox = $('<input type="checkbox" class="custom-control-input"/>').attr('id', 'connectpx_booking-js-dropdown-' + (++id)),
                             $ul = $li.find('ul:first')
                         ;
                         if ($li.is('[data-flatten-if-single]') && obj.$ul.children().length === 1) {
@@ -152,7 +152,7 @@
                 });
 
                 obj.refresh();
-                obj.$ul.data('booklyDropdown', obj);
+                obj.$ul.data('connectpx_bookingDropdown', obj);
             });
         },
         deselect: function (values) {
@@ -160,7 +160,7 @@
                 values = [values];
             }
             return this.filter('ul').each(function () {
-                var obj = $(this).data('booklyDropdown');
+                var obj = $(this).data('connectpx_bookingDropdown');
                 if (!obj) {
                     return;
                 }
@@ -174,7 +174,7 @@
         },
         deselectAll: function () {
             return this.filter('ul').each(function () {
-                var obj = $(this).data('booklyDropdown');
+                var obj = $(this).data('connectpx_bookingDropdown');
                 if (!obj) {
                     return;
                 }
@@ -183,7 +183,7 @@
             });
         },
         getSelected: function () {
-            var obj = this.filter('ul').data('booklyDropdown'),
+            var obj = this.filter('ul').data('connectpx_bookingDropdown'),
                 res = []
             ;
             if (obj) {
@@ -195,11 +195,11 @@
             return res;
         },
         getSelectedAllState: function () {
-            var obj = this.filter('ul').data('booklyDropdown');
+            var obj = this.filter('ul').data('connectpx_bookingDropdown');
             return obj.$selectAll.prop('checked');
         },
         getSelectedExt: function () {
-            var obj = this.filter('ul').data('booklyDropdown'),
+            var obj = this.filter('ul').data('connectpx_bookingDropdown'),
                 res = []
             ;
             if (obj) {
@@ -212,7 +212,7 @@
         },
         hide: function () {
             return this.filter('ul').each(function () {
-                var obj = $(this).data('booklyDropdown');
+                var obj = $(this).data('connectpx_bookingDropdown');
                 if (!obj) {
                     return;
                 }
@@ -221,7 +221,7 @@
         },
         refresh: function () {
             return this.filter('ul').each(function () {
-                var obj = $(this).data('booklyDropdown');
+                var obj = $(this).data('connectpx_bookingDropdown');
                 if (!obj) {
                     return;
                 }
@@ -230,7 +230,7 @@
         },
         reset: function () {
             return this.filter('ul').each(function () {
-                var obj = $(this).data('booklyDropdown');
+                var obj = $(this).data('connectpx_bookingDropdown');
                 if (!obj) {
                     return;
                 }
@@ -245,7 +245,7 @@
                 values = [values];
             }
             return this.filter('ul').each(function () {
-                var obj = $(this).data('booklyDropdown');
+                var obj = $(this).data('connectpx_bookingDropdown');
                 if (!obj) {
                     return;
                 }
@@ -259,7 +259,7 @@
         },
         selectAll: function () {
             return this.filter('ul').each(function () {
-                var obj = $(this).data('booklyDropdown');
+                var obj = $(this).data('connectpx_bookingDropdown');
                 if (!obj) {
                     return;
                 }
@@ -272,7 +272,7 @@
                 values = [values];
             }
             return this.filter('ul').each(function () {
-                var obj = $(this).data('booklyDropdown');
+                var obj = $(this).data('connectpx_bookingDropdown');
                 if (!obj) {
                     return;
                 }
@@ -284,7 +284,7 @@
         },
         show: function () {
             return this.filter('ul').each(function () {
-                var obj = $(this).data('booklyDropdown');
+                var obj = $(this).data('connectpx_bookingDropdown');
                 if (!obj) {
                     return;
                 }
@@ -293,7 +293,7 @@
         },
         toggle: function () {
             return this.filter('ul').each(function () {
-                var obj = $(this).data('booklyDropdown');
+                var obj = $(this).data('connectpx_bookingDropdown');
                 if (!obj) {
                     return;
                 }
@@ -302,17 +302,17 @@
         }
     };
 
-    $.fn.booklyDropdown = function (method) {
+    $.fn.connectpx_bookingDropdown = function (method) {
         if (methods[method]) {
             return methods[method].apply(this, Array.prototype.slice.call(arguments, 1));
         } else if (typeof method === 'object' || !method) {
             return methods.init.apply(this, arguments);
         } else {
-            $.error('No method ' + method + ' for jQuery.booklyDropdown');
+            $.error('No method ' + method + ' for jQuery.connectpx_bookingDropdown');
         }
     };
 
-    $.fn.booklyDropdown.defaults = {
+    $.fn.connectpx_bookingDropdown.defaults = {
         align: $('body').hasClass('rtl') ? 'right ' : 'left',
         containerClass: '',
         iconClass: 'far fa-user',

@@ -306,7 +306,7 @@ abstract class Common {
     public static function getCsrfToken()
     {
         if ( self::$csrf === null ) {
-            self::$csrf = wp_create_nonce( 'bookly' );
+            self::$csrf = wp_create_nonce( 'connectpx_booking' );
         }
 
         return self::$csrf;
@@ -434,6 +434,16 @@ abstract class Common {
      * @return bool
      */
     public static function isCurrentUserAdmin()
+    {
+        return current_user_can( 'manage_options' );
+    }
+
+    /**
+     * Check whether the current user is administrator or not.
+     *
+     * @return bool
+     */
+    public static function isCurrentUserSupervisor()
     {
         return current_user_can( 'manage_options' );
     }
@@ -602,5 +612,88 @@ abstract class Common {
         ];
 
         return self::formatedItemsList( $items );
+    }
+
+    /**
+     * Get common settings for Bookly calendar
+     *
+     * @return array
+     */
+    public static function getCalendarSettings()
+    {
+        $slot_length_minutes = self::getOption('slot_length', 15);
+        $slot = new \DateInterval( 'PT' . $slot_length_minutes . 'M' );
+
+        $hidden_days = array();
+        $min_time = '00:00:00';
+        $max_time = '24:00:00';
+        $scroll_time = '08:00:00';
+        // Find min and max business hours
+        $min = $max = null;
+        foreach ( Lib\Config::getBusinessHours() as $day => $bh ) {
+            if ( $bh['start'] === null ) {
+                continue;
+            }
+            if ( $min === null || $bh['start'] < $min ) {
+                $min = $bh['start'];
+            }
+            if ( $max === null || $bh['end'] > $max ) {
+                $max = $bh['end'];
+            }
+        }
+        if ( $min !== null ) {
+            $scroll_time = $min;
+            if ( $max > '24:00:00' ) {
+                $min_time = DateTime::buildTimeString( DateTime::timeToSeconds( $max ) - DAY_IN_SECONDS );
+                $max_time = $max;
+            }
+        }
+
+        return array(
+            'hiddenDays' => $hidden_days,
+            'slotDuration' => $slot->format( '%H:%I:%S' ),
+            'slotMinTime' => $min_time,
+            'slotMaxTime' => $max_time,
+            'scrollTime' => $scroll_time,
+            'locale' => Lib\Config::getShortLocale(),
+            'monthDayMaxEvents' => 0,
+            'mjsTimeFormat' => DateTime::convertFormat( 'time', DateTime::FORMAT_MOMENT_JS ),
+            'datePicker' => DateTime::datePickerOptions(),
+            'dateRange' => DateTime::dateRangeOptions(),
+            'today' => __( 'Today', 'connectpx_booking' ),
+            'week' => __( 'Week', 'connectpx_booking' ),
+            'day' => __( 'Day', 'connectpx_booking' ),
+            'month' => __( 'Month', 'connectpx_booking' ),
+            'list' => __( 'List', 'connectpx_booking' ),
+            'noEvents' => __( 'No appointments for selected period.', 'connectpx_booking' ),
+            'more' => __( '+%d more', 'connectpx_booking' ),
+        );
+    }
+
+    /**
+     * Get services grouped by categories for drop-down list.
+     *
+     * @param string $raw_where
+     * @return array
+     */
+    public static function getServiceDataForDropDown( $raw_where = null )
+    {
+        $result = array();
+
+        $query = Lib\Entities\Service::query( 's' )
+            ->select( 's.id, s.title' ); 
+
+        if ( $raw_where !== null ) {
+            $query->whereRaw( $raw_where, array() );
+        }
+
+        foreach ( $query->fetchArray() as $row ) {
+            $result[] = array(
+                'id'    => $row['id'],
+                'title' => $row['title'],
+            );
+        }
+
+        return $result;
     }
 }

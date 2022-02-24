@@ -57,7 +57,7 @@ abstract class Component extends Cache
      */
     protected static function csrfTokenValid( $action = null )
     {
-        return wp_verify_nonce( static::parameter( 'csrf_token' ), 'bookly' ) == 1;
+        return wp_verify_nonce( static::parameter( 'csrf_token' ), 'connectpx_booking' ) == 1;
     }
 
     /**
