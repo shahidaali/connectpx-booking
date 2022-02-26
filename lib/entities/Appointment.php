@@ -50,7 +50,7 @@ class Appointment extends Lib\Base\Entity
     /** @var string */
     protected $admin_notes;
     /** @var string */
-    protected $is_after_hours;
+    protected $is_after_hours = 0;
     /** @var string */
     protected $time_zone;
     /** @var string */
@@ -61,8 +61,12 @@ class Appointment extends Lib\Base\Entity
     protected $pickup_address;
     /** @var string */
     protected $status;
+    /** @var  string Y-m-d H:i:s */
+    protected $status_changed_at;
     /** @var string */
     protected $total_amount = 0;
+    /** @var string */
+    protected $paid_amount = 0;
     /** @var string */
     protected $payment_status;
     /** @var string */
@@ -98,6 +102,7 @@ class Appointment extends Lib\Base\Entity
         'pickup_detail'        => array( 'format' => '%s' ),
         'destination_detail'        => array( 'format' => '%s' ),
         'status'      => array( 'format' => '%s' ),
+        'status_changed_at'        => array( 'format' => '%s' ),
         'total_amount'             => array( 'format' => '%s' ),
         'paid_amount'             => array( 'format' => '%s' ),
         'payment_status'             => array( 'format' => '%s' ),
@@ -107,6 +112,96 @@ class Appointment extends Lib\Base\Entity
         'created_at'               => array( 'format' => '%s' ),
         'updated_at'               => array( 'format' => '%s' ),
     );
+
+    /** @var Customer */
+    public $customer;
+
+    /** @var  string */
+    private $last_status;
+    /** @var bool  */
+    private $just_created = false;
+
+    /**
+     * Delete entity and appointment if there are no more customers.
+     *
+     * @param bool $compound_collaborative
+     */
+    public function deleteCascade( $compound_collaborative = false )
+    {
+        $this->delete();
+    }
+
+    /**
+     * @return string
+     */
+    public function getStatusTitle()
+    {
+        return self::statusToString( $this->getStatus() );
+    }
+
+    /**
+     * Check if cancel allowed
+     *
+     * @return bool
+     */
+    public function cancelAllowed()
+    {
+        $allow_cancel = true;
+        $appointment = new Lib\Entities\Appointment();
+        $minimum_time_prior_cancel = (int) Lib\Config::getMinimumTimePriorCancel( $appointment->getServiceId() );
+        if ( $minimum_time_prior_cancel > 0
+             && $appointment->load( $this->getId() )
+             && $appointment->getPickupDateTime() !== null
+        ) {
+            $allow_cancel_time = strtotime( $appointment->getPickupDateTime() ) - $minimum_time_prior_cancel;
+            if ( current_time( 'timestamp' ) > $allow_cancel_time ) {
+                $allow_cancel = false;
+            }
+        }
+        if ( $this->getStatus() == Lib\Entities\Appointment::STATUS_DONE ) {
+            $allow_cancel = false;
+        }
+
+        return $allow_cancel;
+    }
+
+    /**
+     * @param string $reason
+     */
+    public function cancel( $reason = '' )
+    {
+        $this->setStatus( self::STATUS_CANCELLED );
+        $this->save();
+
+        // Lib\Notifications\Booking\Sender::send( $item, array( 'cancellation_reason' => $reason ) );
+    }
+
+    /**
+     * @return bool
+     */
+    public function isJustCreated()
+    {
+        return $this->just_created;
+    }
+
+    /**
+     * @param bool $value
+     * @return $this
+     */
+    public function setJustCreated( $value )
+    {
+        $this->just_created = $value;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isStatusChanged()
+    {
+        return $this->status != $this->last_status;
+    }
 
 
     /**************************************************************************
@@ -587,6 +682,30 @@ class Appointment extends Lib\Base\Entity
 
         return $this;
     }
+
+    /**
+     * Gets status_changed_at
+     *
+     * @return string
+     */
+    public function getStatusChangedAt()
+    {
+        return $this->status_changed_at;
+    }
+
+    /**
+     * Sets status_changed_at
+     *
+     * @param string $status_changed_at
+     * @return $this
+     */
+    public function setStatusChangedAt( $status_changed_at )
+    {
+        $this->status_changed_at = $status_changed_at;
+
+        return $this;
+    }
+
 
     /**
      * Gets total_amount

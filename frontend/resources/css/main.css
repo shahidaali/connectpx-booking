@@ -37,3 +37,17 @@
     z-index: -1;
     visibility: hidden;
 }
+#connectpx_booking_tbs ul, #connectpx_booking_tbs ol {
+    margin-left: 0px;
+}
+#connectpx_booking_tbs .nav-tabs .nav-link.active {
+    color: #23a455 !important;
+}
+#connectpx_booking_tbs .form-group h6 {
+    color: #23a455 !important;
+    font-size: 1.2rem;
+    font-family: inherit;
+}
+#connectpx_booking_tbs .select2-container--bootstrap4 .select2-selection {
+    padding: 0px;
+}

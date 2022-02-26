@@ -122,7 +122,7 @@ class Ajax extends Lib\Base\Ajax
         }
 
         if ( $filter['customer'] != '' ) {
-            $query->where( 'ca.customer_id', $filter['customer'] );
+            $query->where( 'a.customer_id', $filter['customer'] );
         }
 
         if ( $filter['service'] != '' ) {

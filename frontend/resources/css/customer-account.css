@@ -1,0 +1,36 @@
+#connectpx_booking_tbs a {
+    border-bottom: none;
+}
+#connectpx_booking_tbs .pagination {
+    border: none;
+}
+#connectpx_booking_tbs .pagination:before, #connectpx_booking_tbs .pagination:after {
+    display: none;
+}
+#connectpx_booking_tbs .pagination .next, #connectpx_booking_tbs .pagination .next:hover {
+    background-color: inherit;
+}
+#connectpx_booking_tbs table.table.table-striped {
+    table-layout: inherit;
+}
+#connectpx_booking_tbs ul.connectpx_booking-nav-justified {
+    margin: 0;
+}
+#connectpx_booking_tbs.connectpx_booking-customer-account .modal-content a,
+#connectpx_booking_tbs.connectpx_booking-customer-account .dropdown-menu a {
+    text-decoration: unset;
+    border: 0;
+}
+#connectpx_booking_tbs.connectpx_booking-customer-account .dropdown-toggle::after {
+    display: none;
+}
+#connectpx_booking_tbs .modal {
+    z-index: 99999;
+}
+.select2-container {
+    z-index: 100000;
+}
+#connectpx_booking_tbs.connectpx_booking-customer-account .checkbox,
+#connectpx_booking_tbs.connectpx_booking-customer-account .radio {
+    position: initial;
+}

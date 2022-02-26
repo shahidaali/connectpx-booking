@@ -1,6 +1,7 @@
 <?php
 namespace ConnectpxBooking\Frontend;
 
+use ConnectpxBooking\Frontend\Modules;
 use ConnectpxBooking\Lib\Plugin;
 use ConnectpxBooking\Lib\Utils;
 
@@ -30,7 +31,10 @@ class Frontend {
 		ShortCode::init();
 		WooCommerce::init();
 
-		add_action( 'wp_enqueue_scripts', array(__CLASS__, 'enqueueScripts') );
+		Modules\Dashboard::run();
+		Components\Dialogs\Appointment\Cancel\Ajax::init();
+
+		add_action( 'wp_enqueue_scripts', array(__CLASS__, 'enqueueScripts'), 10 );
 
 		add_filter( 'body_class', array(__CLASS__, 'bodyClass') );
 		// add_shortcode( 'connectpx_booking', array(__CLASS__, 'Shortcode') );
@@ -45,55 +49,9 @@ class Frontend {
 	 * @since    1.0.0
 	 */
 	public static function enqueueScripts() {
-		wp_register_style( 
-			'connectpx_booking_picker_base', 
-            plugin_dir_url( __FILE__ ) . 'resources/js/pickadate/themes/classic.css', 
-			array(), 
-			Plugin::version(), 
-			'all' 
-		);
-		wp_register_style( 
-			'connectpx_booking_picker_time', 
-            plugin_dir_url( __FILE__ ) . 'resources/js/pickadate/themes/classic.time.css', 
-			array(), 
-			Plugin::version(), 
-			'all' 
-		);
-		wp_register_style( 
-			'connectpx_booking_picker', 
-            plugin_dir_url( __FILE__ ) . 'resources/js/pickadate/themes/classic.date.css', 
-			array('connectpx_booking_picker_base', 'connectpx_booking_picker_time'), 
-			Plugin::version(), 
-			'all' 
-		);
-		wp_register_script( 
-            'connectpx_booking_picker_base', 
-            plugin_dir_url( __FILE__ ) . 'resources/js/pickadate/picker.js', 
-            array('jquery'), 
-            Plugin::version(), 
-            false 
-        );
-		wp_register_script( 
-            'connectpx_booking_picker_time', 
-            plugin_dir_url( __FILE__ ) . 'resources/js/pickadate/picker.time.js', 
-            array(), 
-            Plugin::version(), 
-            false 
-        );
-		wp_register_script( 
-            'connectpx_booking_picker', 
-            plugin_dir_url( __FILE__ ) . 'resources/js/pickadate/picker.date.js', 
-            array('connectpx_booking_picker_base', 'connectpx_booking_picker_time'), 
-            Plugin::version(), 
-            false 
-        );
-		wp_register_script( 
-            'connectpx_booking_moment', 
-            plugin_dir_url( __FILE__ ) . 'resources/js/moment.min.js', 
-            array(), 
-            Plugin::version(), 
-            false 
-        );
+		Plugin::globalScripts();
+
+		$front_resources = plugin_dir_url( __FILE__ );
 
         $api_key = Utils\Common::getOption('google_api_key', '');
         if( $api_key ) {
@@ -105,28 +63,72 @@ class Frontend {
 	            false 
 	        );
         }
-
         wp_enqueue_style( 
 			'connectpx_booking_main', 
-			plugin_dir_url( __FILE__ ) . 'resources/css/main.css', 
+			$front_resources . 'resources/css/main.css', 
 			array(), 
 			Plugin::version(), 
 			'all' 
 		);
-
 		wp_enqueue_script( 
 			'connectpx_booking_main', 
-			plugin_dir_url( __FILE__ ) . 'resources/js/main.js', 
-			array('jquery'), 
+			$front_resources . 'resources/js/main.js', 
+			array('jquery', 'connectpx_booking_global'), 
 			Plugin::version(), 
 			false 
 		);
-		wp_localize_script( 
-			'connectpx_booking_main', 
-			'ConnectpxBookingOptions',
-            array( 'ajax_url' => admin_url( 'admin-ajax.php' )) 
+		wp_localize_script( 'connectpx_booking_main', 'ConnectpxBookingOptions',
+            array( 
+            	'ajax_url' => admin_url( 'admin-ajax.php' )
+            ) 
         );
-
+		wp_register_style( 
+			'connectpx_booking_customer_bookings', 
+			$front_resources . 'resources/css/customer-bookings.css', 
+			array(
+				'connectpx_booking_bootstrap',
+				'connectpx_booking_main',
+			), 
+			Plugin::version(), 
+			'all' 
+		);
+		wp_register_script( 
+			'connectpx_booking_customer_bookings', 
+			$front_resources . 'resources/js/customer-bookings.js', 
+			array( 
+				'jquery', 
+				'connectpx_booking_global',
+				'connectpx_booking_bootstrap',
+				'connectpx_booking_datatables', 
+				'connectpx_booking_moment', 
+				'connectpx_booking_daterangepicker',
+				'connectpx_booking_select2' 
+			), 
+			Plugin::version(), 
+			false 
+		);
+		wp_register_style( 
+			'connectpx_booking_customer_account', 
+			$front_resources . 'resources/css/customer-account.css', 
+			array(
+				'connectpx_booking_bootstrap',
+				'connectpx_booking_main',
+			), 
+			Plugin::version(), 
+			'all' 
+		);
+		wp_register_script( 
+			'connectpx_booking_customer_account', 
+			$front_resources . 'resources/js/customer-account.js', 
+			array( 
+				'jquery', 
+				'connectpx_booking_global',
+				'connectpx_booking_bootstrap',
+				'connectpx_booking_select2' 
+			), 
+			Plugin::version(), 
+			false 
+		);
 	}
 
 	/**

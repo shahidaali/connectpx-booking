@@ -280,7 +280,7 @@ jQuery(function($) {
             },
             customize: function (win) {
                 win.document.firstChild.style.backgroundColor = '#fff';
-                win.document.body.id = 'connectpx_booking-tbs';
+                win.document.body.id = 'connectpx_booking_tbs';
                 $(win.document.body).find('table').removeClass('collapsed');
             }
         };
@@ -431,7 +431,7 @@ jQuery(function($) {
         .select2({
             width: '100%',
             theme: 'bootstrap4',
-            dropdownParent: '#connectpx_booking-tbs',
+            dropdownParent: '#connectpx_booking_tbs',
             allowClear: true,
             placeholder: '',
             language: {
@@ -460,7 +460,7 @@ jQuery(function($) {
         .select2({
             width: '100%',
             theme: 'bootstrap4',
-            dropdownParent: '#connectpx_booking-tbs',
+            dropdownParent: '#connectpx_booking_tbs',
             allowClear: true,
             placeholder: '',
             language  : {

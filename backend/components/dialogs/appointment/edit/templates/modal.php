@@ -1,12 +1,13 @@
 <?php if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 use ConnectpxBooking\Backend\Components\Dialogs;
 use ConnectpxBooking\Lib\Entities\Appointment;
+use ConnectpxBooking\Lib\Utils\Common;
 ?>
 <div class="connectpx_booking-modal connectpx_booking-fade" tabindex="-1" role="dialog"  aria-modal="true">
    <div class="modal-dialog modal-lg">
       <div class="modal-content">
          <div class="modal-header">
-            <h5 class="modal-title"><?php echo __('Edit appointment', 'connectpx_booking'); ?></h5>
+            <h5 class="modal-title"><?php echo __('Appointment Detail', 'connectpx_booking'); ?></h5>
             <button type="button" class="close" data-dismiss="connectpx_booking-modal" aria-label="Close"><span aria-hidden="true">×</span></button>
          </div>
          <div class="modal-body">
@@ -34,16 +35,20 @@ use ConnectpxBooking\Lib\Entities\Appointment;
 			               <ul class="list-unstyled pl-0 connectpx_booking-hide-empty mr-3">
 			                  <li class="row mb-1">
 			                     <div class="col mt-1"><a title="<?php echo esc_attr('Edit booking details', 'connectpx_booking'); ?>" href=""><span id="connectpx_booking_customer-name"></span></a></div>
-			                     <div class="ml-auto">
-			                        <div class="dropdown d-inline-block">
-			                           <button type="button" class="btn btn-default px-2 py-1 dropdown-toggle appointment-update-status-toggle" data-toggle="dropdown" data-original-title="" title=""><span class="<?php echo Appointment::statusToIcon( $appointment->getStatus() ) ?>"></span></button> 
-			                           <div class="dropdown-menu">
-			                           	<?php foreach ( $statuses as $key => $status ) { ?>
-			                           		<a href="#" class="dropdown-item pl-3 appointment-update-status" data-status="<?php echo $status['id']; ?>"><span class="fa-fw mr-2 <?php echo $status['icon']; ?>"></span><?php echo $status['title']; ?> </a>
-			                           	<?php } ?>
-			                           	</div>
-			                        </div>
-			                     </div>
+
+			                     <?php if(Common::isCurrentUserAdmin()): ?>
+				                     <div class="ml-auto">
+				                        <div class="dropdown d-inline-block">
+				                           <button type="button" class="btn btn-default px-2 py-1 dropdown-toggle appointment-update-status-toggle" data-toggle="dropdown" data-original-title="" title=""><span class="<?php echo Appointment::statusToIcon( $appointment->getStatus() ) ?>"></span></button> 
+				                           <div class="dropdown-menu">
+				                           	<?php foreach ( $statuses as $key => $status ) { ?>
+				                           		<a href="#" class="dropdown-item pl-3 appointment-update-status" data-status="<?php echo $status['id']; ?>"><span class="fa-fw mr-2 <?php echo $status['icon']; ?>"></span><?php echo $status['title']; ?> </a>
+				                           	<?php } ?>
+				                           	</div>
+				                        </div>
+				                     </div>
+				                  <?php endif; ?>
+
 			                  </li>
 			               </ul>
 			            </div>
@@ -75,7 +80,10 @@ use ConnectpxBooking\Lib\Entities\Appointment;
 			         		<h6 class="mb-3 mt-3"><?php echo __('Route', 'connectpx_booking'); ?></h6>
 			         		<div id="connectpx_booking-appointment-map"></div>
 			         	</div>
-			            <div class="form-group"><label for="connectpx_booking-admin-notes"><?php echo __('Admin notes', 'connectpx_booking') ?></label> <textarea class="form-control" id="connectpx_booking-admin-notes"></textarea></div>
+
+			         	<?php if(Common::isCurrentUserAdmin()): ?>
+			            	<div class="form-group"><label for="connectpx_booking-admin-notes"><?php echo __('Admin notes', 'connectpx_booking') ?></label> <textarea class="form-control" id="connectpx_booking-admin-notes"></textarea></div>
+			            <?php endif; ?>
 					</div>
 				</div>
 				<div class="tab-pane <?php if($active_tab == 'payment') { echo 'active'; } ?>" id="connectpx_booking-appointment-payment">
@@ -87,7 +95,9 @@ use ConnectpxBooking\Lib\Entities\Appointment;
          </div>
          <div class="modal-footer">
             <div slot="footer">  
-            	<button type="button" class="btn ladda-button btn-success btn-save-appointment" data-spinner-size="40" data-style="zoom-in" classname="btn-success"><span class="ladda-label"><?php echo __('Save', 'connectpx_booking') ?></span><span class="ladda-spinner"></span></button> 
+            	<?php if(Common::isCurrentUserAdmin()): ?>
+            		<button type="button" class="btn ladda-button btn-success btn-save-appointment" data-spinner-size="40" data-style="zoom-in" classname="btn-success"><span class="ladda-label"><?php echo __('Save', 'connectpx_booking') ?></span><span class="ladda-spinner"></span></button> 
+            	<?php endif; ?>
             	<button type="button" class="btn ladda-button btn-default" data-spinner-size="40" data-style="zoom-in" data-dismiss="connectpx_booking-modal"><span class="ladda-label"><?php echo __('Cancel', 'connectpx_booking') ?></span><span class="ladda-spinner"></span></button>
             </div>
          </div>

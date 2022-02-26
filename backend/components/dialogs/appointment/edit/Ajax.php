@@ -21,7 +21,7 @@ class Ajax extends Lib\Base\Ajax
      */
     protected static function permissions()
     {
-        return array( '_default' => array( 'admin' ) );
+        return array( '_default' => array( 'anonymous' ) );
     }
 
     /**

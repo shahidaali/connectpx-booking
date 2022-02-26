@@ -4,10 +4,10 @@ var ConnectpxBookingAppointmentDialog = function(Dialog, $, moment, ConnectpxBoo
 	var $dialog = $('#connectpx_booking-appointment-dialog'),
 		appointmentData;
 
-	Dialog.showDialog = function( appointment_id, callback ) {
+	Dialog.showDialog = function( appointment_id, callback, tab ) {
 		Dialog.loadAppointment({
 			id: appointment_id,
-			tab: 'appointment',
+			tab: tab !== undefined ? tab : 'appointment',
 			callback: callback
 		});
 	};
@@ -19,7 +19,7 @@ var ConnectpxBookingAppointmentDialog = function(Dialog, $, moment, ConnectpxBoo
         });
 
         return $.ajax({
-            url: ajaxurl,
+            url: ConnectpxBookingL10nGlobal.ajax_url,
             type: 'GET',
             data: data,
             dataType: 'json',
@@ -61,7 +61,7 @@ var ConnectpxBookingAppointmentDialog = function(Dialog, $, moment, ConnectpxBoo
                     	$btn_update_status_toggle.append( $(this).find('span').clone() );
 
 	                    $.ajax({
-				            url: ajaxurl,
+				            url: ConnectpxBookingL10nGlobal.ajax_url,
 				            type: 'POST',
 				            data: {
 					        	action: "connectpx_booking_update_appointment_status",
@@ -83,7 +83,7 @@ var ConnectpxBookingAppointmentDialog = function(Dialog, $, moment, ConnectpxBoo
 
                     $btn_save.click(function(){
 	                    $.ajax({
-				            url: ajaxurl,
+				            url: ConnectpxBookingL10nGlobal.ajax_url,
 				            type: 'POST',
 				            data: {
 					        	action: "connectpx_booking_save_appointment_form",
@@ -121,7 +121,7 @@ var ConnectpxBookingAppointmentDialog = function(Dialog, $, moment, ConnectpxBoo
                     	$btn_update_payment_status_toggle.append( $(this).find('span').clone() );
 
 	                    $.ajax({
-				            url: ajaxurl,
+				            url: ConnectpxBookingL10nGlobal.ajax_url,
 				            type: 'POST',
 				            data: {
 					        	action: "connectpx_booking_update_appointment_payment_status",
@@ -154,7 +154,7 @@ var ConnectpxBookingAppointmentDialog = function(Dialog, $, moment, ConnectpxBoo
 
                     $btn_apply_adjustments.click(function(){
 	                    $.ajax({
-				            url: ajaxurl,
+				            url: ConnectpxBookingL10nGlobal.ajax_url,
 				            type: 'POST',
 				            data: {
 					        	action: "connectpx_booking_adjust_appointment_payment",

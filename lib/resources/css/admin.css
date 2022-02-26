@@ -1,0 +1,90 @@
+/**
+ * ConnectpxBooking plugin WordPress admin area customization
+ */
+  .os-tabs {
+    margin-top: 15px;
+  }
+ .os-tabs li {
+  display: inline-block;
+  vertical-align: middle;
+  margin: 0px;
+ }
+  .os-tabs ul {
+    margin: 0px;
+    padding: 0px;
+  }
+.os-tabs a {
+    background: #ccc;
+    padding: 5px 14px;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-weight: bold;
+    color: #000;
+    display: block;
+}
+.os-tabs a:focus {
+  outline: none;
+  box-shadow: none;
+  border: none;
+}
+.os-tabs  li.active a {
+  background: #fff;
+  color: #000;
+}
+.os-tab-content {
+    padding: 0px 0px;
+    display: none;
+}
+.os-tab-content.active {
+  display: block;
+}
+.connectpx_booking_upload_media .image-preview-wrapper {
+    position: relative;
+    width: 106px;
+    height: 106px;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    background-color: #e9ecef;
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.connectpx_booking_upload_media .image-preview-wrapper .image-preview-icon {
+    color: #fff;
+}
+.connectpx_booking_upload_media .image-preview-wrapper img {
+    max-width: 100%;
+    max-height: 100%;
+}
+.connectpx-booking-field-info {
+    font-size: 12px;
+    color: #a7aaad;
+    font-style: italic;
+    margin-top: 3px;
+}
+@media screen and ( min-width: 600px ){
+
+}
+.list-item {
+    position: relative;
+    margin-bottom: 5px;
+    color: #a4afb7;
+    font-size: 0.9rem;
+    display: flex;
+}
+.list-item strong {
+    width: 129px;
+    display: inline-block;
+    font-weight: 500 !important;
+    line-height: 18px;
+    color: #979797;
+    display: flex;
+    flex-shrink: 0;
+}
+tbody.payment-detail-table td {
+    padding: 7px 0.75rem !important;
+}

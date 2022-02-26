@@ -696,4 +696,24 @@ abstract class Common {
 
         return $result;
     }
+
+    /**
+     * Set nocache constants.
+     *
+     * @param bool $forcibly
+     */
+    public static function noCache( $forcibly = false )
+    {
+        if ( $forcibly ) {
+            if ( ! defined( 'DONOTCACHEPAGE' ) ) {
+                define( 'DONOTCACHEPAGE', true );
+            }
+            if ( ! defined( 'DONOTCACHEOBJECT' ) ) {
+                define( 'DONOTCACHEOBJECT', true );
+            }
+            if ( ! defined( 'DONOTCACHEDB' ) ) {
+                define( 'DONOTCACHEDB', true );
+            }
+        }
+    }
 }

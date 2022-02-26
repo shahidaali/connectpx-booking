@@ -38,110 +38,30 @@ class Backend {
 	 * @since    1.0.0
 	 */
 	public static function enqueueScripts() {
+		Plugin::globalScripts();
+		$admin_resources = plugin_dir_url( __FILE__ );
 
-		wp_register_style( 
-			'connectpx_booking_bootstrap', 
-			plugin_dir_url( __FILE__ ) . 'resources/bootstrap/css/bootstrap.min.css', 
-			array(), 
-			Plugin::version(), 
-			'all' 
-		);
-		wp_enqueue_style( 
-			'connectpx_booking_fa', 
-			plugin_dir_url( __FILE__ ) . 'resources/css/fontawesome-all.min.css', 
-			array(), 
-			Plugin::version(), 
-			'all' 
-		);
 		wp_enqueue_style( 
 			'connectpx_booking_admin', 
-			plugin_dir_url( __FILE__ ) . 'resources/css/admin.css', 
+			$admin_resources . 'resources/css/admin.css', 
 			array( 'connectpx_booking_bootstrap', 'connectpx_booking_fa' ), 
 			Plugin::version(), 
 			'all' 
 		);
-		wp_register_script( 
-			'connectpx_booking_bootstrap', 
-			plugin_dir_url( __FILE__ ) . 'resources/bootstrap/js/bootstrap.min.js', 
-			array('jquery'), 
-			Plugin::version(), 
-			false
-		);
-		wp_register_script( 
-			'connectpx_booking_datatables', 
-			plugin_dir_url( __FILE__ ) . 'resources/js/datatables.min.js', 
-			array( 'jquery' ), 
-			Plugin::version(), 
-			false 
-		);
-		wp_register_script( 
-			'connectpx_booking_moment', 
-			plugin_dir_url( __FILE__ ) . 'resources/js/moment.min.js', 
-			array( 'jquery' ), 
-			Plugin::version(), 
-			false 
-		);
-		wp_register_script( 
-			'connectpx_booking_range_tools', 
-			plugin_dir_url( __FILE__ ) . 'resources/js/range-tools.js', 
-			array( 'jquery' ), 
-			Plugin::version(), 
-			false 
-		);
-		wp_register_script( 
-			'connectpx_booking_dropdown', 
-			plugin_dir_url( __FILE__ ) . 'resources/js/dropdown.js', 
-			array( 'jquery' ), 
-			Plugin::version(), 
-			false 
-		);
-		wp_register_script( 
-			'connectpx_booking_daterangepicker', 
-			plugin_dir_url( __FILE__ ) . 'resources/js/daterangepicker.js', 
-			array( 'connectpx_booking_range_tools' ), 
-			Plugin::version(), 
-			false 
-		);
-		wp_register_script( 
-			'connectpx_booking_select2', 
-			plugin_dir_url( __FILE__ ) . 'resources/js/select2.min.js', 
-			array( 'connectpx_booking_range_tools' ), 
-			Plugin::version(), 
-			false 
-		);
-
 		wp_enqueue_script( 
 			'connectpx_booking_admin', 
-			plugin_dir_url( __FILE__ ) . 'resources/js/admin.js', 
-			array( 'jquery', 'connectpx_booking_bootstrap' ), 
+			$admin_resources . 'resources/js/admin.js', 
+			array( 'jquery', 'connectpx_booking_bootstrap', 'connectpx_booking_global' ), 
 			Plugin::version(), 
 			false 
 		);
-
-		wp_localize_script( 'connectpx_booking_admin', 'ConnectpxBookingL10nGlobal', array( 
-			'csrf_token' => Lib\Utils\Common::getCsrfToken() 
-		) );
-
 		wp_register_script( 
 			'connectpx_booking_appointments', 
-			plugin_dir_url( __FILE__ ) . 'modules/resources/js/appointments.js', 
+			$admin_resources . 'modules/resources/js/appointments.js', 
 			array( 
 				'jquery', 
-				'connectpx_booking_admin',
+				'connectpx_booking_global',
 				'connectpx_booking_datatables', 
-				'connectpx_booking_moment', 
-				'connectpx_booking_daterangepicker',
-				'connectpx_booking_select2' 
-			), 
-			Plugin::version(), 
-			false 
-		);
-		wp_register_script( 
-			'connectpx_booking_appointments_edit', 
-			plugin_dir_url( __FILE__ ) . 'components/dialogs/appointment/edit/resources/js/appointments_edit.js', 
-			array( 
-				'jquery', 
-				'connectpx_booking_admin',
 				'connectpx_booking_moment', 
 				'connectpx_booking_daterangepicker',
 				'connectpx_booking_select2' 
@@ -151,10 +71,10 @@ class Backend {
 		);
 		wp_register_script( 
 			'connectpx_booking_invoices', 
-			plugin_dir_url( __FILE__ ) . 'modules/resources/js/invoices.js', 
+			$admin_resources . 'modules/resources/js/invoices.js', 
 			array( 
 				'jquery', 
-				'connectpx_booking_admin',
+				'connectpx_booking_global',
 				'connectpx_booking_datatables', 
 				'connectpx_booking_moment', 
 				'connectpx_booking_daterangepicker',
@@ -163,26 +83,28 @@ class Backend {
 			Plugin::version(), 
 			false 
 		);
+
+		// Event Calendar
 		wp_register_script( 
 			'connectpx_booking_event_calendar', 
-			plugin_dir_url( __FILE__ ) . 'modules/resources/js/event-calendar.min.js', 
+			$admin_resources . 'modules/resources/js/event-calendar.min.js', 
 			array(), 
 			Plugin::version(), 
 			false 
 		);
 		wp_register_script( 
 			'connectpx_booking_calendar_common', 
-			plugin_dir_url( __FILE__ ) . 'modules/resources/js/calendar-common.js', 
+			$admin_resources . 'modules/resources/js/calendar-common.js', 
 			array(), 
 			Plugin::version(), 
 			false 
 		);
 		wp_register_script( 
 			'connectpx_booking_calendar', 
-			plugin_dir_url( __FILE__ ) . 'modules/resources/js/calendar.js', 
+			$admin_resources . 'modules/resources/js/calendar.js', 
 			array( 
 				'jquery', 
-				'connectpx_booking_admin',
+				'connectpx_booking_global',
 				'connectpx_booking_datatables', 
 				'connectpx_booking_moment', 
 				'connectpx_booking_daterangepicker',
@@ -196,8 +118,8 @@ class Backend {
 		);
 		wp_enqueue_style( 
 			'connectpx_booking_calendar', 
-			plugin_dir_url( __FILE__ ) . 'modules/resources/css/event-calendar.min.css', 
-			array( 'connectpx_booking_admin' ), 
+			$admin_resources . 'modules/resources/css/event-calendar.min.css', 
+			array( 'connectpx_booking_global' ), 
 			Plugin::version(), 
 			'all' 
 		);

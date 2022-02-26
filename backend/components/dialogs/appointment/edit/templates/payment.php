@@ -2,6 +2,7 @@
 use ConnectpxBooking\Lib\Utils\DateTime;
 use ConnectpxBooking\Lib\Utils\Price;
 use ConnectpxBooking\Lib\Entities\Appointment;
+use ConnectpxBooking\Lib\Utils\Common;
 
 $subService = $appointment->getSubService();
 $payment_details = !empty($appointment->getPaymentDetails()) ? json_decode($appointment->getPaymentDetails(), true) : null;
@@ -29,6 +30,8 @@ $lineItems = $subService->paymentLineItems(
 				<div class="list-item"><strong><?php echo __('Payment Status:', 'connectpx_booking'); ?></strong> <span><?php echo Appointment::paymentStatusToString($appointment->getPaymentStatus()); ?></span></div>
 			</div>
          </div>
+
+         <?php if(Common::isCurrentUserAdmin()): ?>
          <div class="ml-auto">
             <div class="dropdown d-inline-block">
                <button type="button" class="btn btn-default px-2 py-1 dropdown-toggle appointment-update-payment-status-toggle" data-toggle="dropdown" data-original-title="" title=""><span class="<?php echo Appointment::paymentStatusToIcon( $appointment->getPaymentStatus() ) ?>"></span></button> 
@@ -39,6 +42,8 @@ $lineItems = $subService->paymentLineItems(
                	</div>
             </div>
          </div>
+         <?php endif; ?>
+
       </li>
    </ul>
 </div>
@@ -57,6 +62,8 @@ $lineItems = $subService->paymentLineItems(
             <th><?php echo __('Subtotal', 'connectpx_booking') ?></th>
             <th class="text-right"><?php echo Price::format( $lineItems['totals'] ); ?></th>
          </tr>
+
+         <?php if(Common::isCurrentUserAdmin()): ?>
          <tr class="payment-adjustment-fields-row" style="display: none;">
             <th></th>
             <th style="font-weight: normal;">
@@ -82,6 +89,8 @@ $lineItems = $subService->paymentLineItems(
                	</div>
             </th>
          </tr>
+         <?php endif; ?>
+
          <tr>
             <th><?php echo __('Total', 'connectpx_booking') ?></th>
             <th class="text-right"><?php echo Price::format( $lineItems['totals'] ); ?></th>
@@ -94,10 +103,14 @@ $lineItems = $subService->paymentLineItems(
             <th><?php echo __('Due', 'connectpx_booking') ?></th>
             <th class="text-right"><?php echo Price::format( $lineItems['totals'] - $appointment->getPaidAmount() ); ?></th>
          </tr>
+
+         <?php if(Common::isCurrentUserAdmin()): ?>
          <tr class="payment-adjustment-buttons-row">
             <th style="border-left-color: rgb(255, 255, 255); border-bottom-color: rgb(255, 255, 255);"></th>
             <th class="text-right"><button class="btn btn-default payment-adjustment-button"><?php echo __('Manual adjustment', 'connectpx_booking') ?></button> </th>
          </tr>
+         <?php endif; ?>
+
       </tfoot>
    </table>
 </div>
