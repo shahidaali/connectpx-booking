@@ -7,7 +7,7 @@ var ConnectpxBookingAppointmentDialog = function(Dialog, $, moment, ConnectpxBoo
 	Dialog.showDialog = function( appointment_id, callback, tab ) {
 		Dialog.loadAppointment({
 			id: appointment_id,
-			tab: tab !== undefined ? tab : 'appointment',
+			tab: tab !== undefined && tab ? tab : 'appointment',
 			callback: callback
 		});
 	};

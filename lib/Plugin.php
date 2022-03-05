@@ -221,6 +221,22 @@ class Plugin {
 			Plugin::version(), 
 			false 
 		);
+
+		// Invoice Dialog
+		wp_register_script( 
+			'connectpx_booking_invoice_edit', 
+			$admin_resources . 'components/dialogs/invoice/edit/resources/js/invoice_edit.js', 
+			array( 
+				'jquery', 
+				'connectpx_booking_global',
+				'connectpx_booking_bootstrap',
+				'connectpx_booking_moment', 
+				'connectpx_booking_daterangepicker',
+				'connectpx_booking_select2' 
+			), 
+			Plugin::version(), 
+			false 
+		);
 	}
 
 	/**

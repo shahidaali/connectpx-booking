@@ -142,7 +142,7 @@ class UserBookingData
     /** @var integer|null */
     private $payment_id;
     /** @var string */
-    private $payment_type = Entities\Payment::TYPE_LOCAL;
+    private $payment_type = Entities\Appointment::PAYMENT_TYPE_LOCAL;
 
     // Public
 

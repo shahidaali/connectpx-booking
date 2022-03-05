@@ -27,6 +27,7 @@ class Backend {
 	public static function run() {
 		Ajax::init();
 		Components\Dialogs\Appointment\Edit\Ajax::init();
+		Components\Dialogs\Invoice\Edit\Ajax::init();
 
 		add_action( 'admin_enqueue_scripts', array(__CLASS__, 'enqueueScripts') );
 		add_action( 'admin_menu', array(__CLASS__, 'adminMenu') );
@@ -119,7 +120,7 @@ class Backend {
 		wp_enqueue_style( 
 			'connectpx_booking_calendar', 
 			$admin_resources . 'modules/resources/css/event-calendar.min.css', 
-			array( 'connectpx_booking_global' ), 
+			array( 'connectpx_booking_admin' ), 
 			Plugin::version(), 
 			'all' 
 		);

@@ -6,6 +6,7 @@ use ConnectpxBooking\Lib\Utils\Common;
 use ConnectpxBooking\Lib\Utils\DateTime;
 use ConnectpxBooking\Lib\Config;
 use ConnectpxBooking\Backend\Components\Dialogs;
+use ConnectpxBooking\Backend\Components\Controls;
 ?>
 <div id="connectpx_booking_tbs" class="wrap">
     <div class="form-row align-items-center mb-3">
@@ -16,6 +17,11 @@ use ConnectpxBooking\Backend\Components\Dialogs;
 
     <div class="card">
         <div class="card-body">
+            <div class="form-row justify-content-end">
+                <div class="col-auto">
+                    <?php Controls\Buttons::render( 'connectpx_booking-new-invoice', 'btn-success w-100 mb-3', __( 'Update Invoices', 'connectpx_booking' ), array(), '{caption}…', '<i class="fas fa-fw fa-plus"></i>', true ) ?>
+                </div>
+            </div>
             <div class="form-row">
                 <div class="col-md-1">
                     <div class="form-group">
@@ -80,5 +86,5 @@ use ConnectpxBooking\Backend\Components\Dialogs;
         </div>
     </div>
 
-    <?php // Dialogs\Appointment\Edit\Dialog::render() ?>
+    <?php Dialogs\Invoice\Edit\Dialog::render() ?>
 </div>

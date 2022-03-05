@@ -716,4 +716,26 @@ abstract class Common {
             }
         }
     }
+
+    public static function getInvoicePeriodOptions() {
+        $periods = [];
+
+        $monday = strtotime('next Monday -1 week');
+        $monday = date('w', $monday)==date('w') ? strtotime(date("Y-m-d",$monday)." +7 days") : $monday;
+        $sunday = strtotime(date("Y-m-d",$monday)." +6 days");
+        $week_sd = date("Y-m-d", $monday);
+        $week_ed = date("Y-m-d", $sunday);
+
+        $periods[ "$week_sd,$week_ed" ] = __( sprintf('This Week (%s-%s)', DateTime::formatDate($week_sd), DateTime::formatDate($week_ed)), 'connectpx_booking' );
+
+        $monday = strtotime('next Monday -2 weeks');
+        $monday = date('w', $monday)==date('w') ? strtotime(date("Y-m-d",$monday)." +7 days") : $monday;
+        $sunday = strtotime(date("Y-m-d",$monday)." +6 days");
+        $week_sd = date("Y-m-d", $monday);
+        $week_ed = date("Y-m-d", $sunday);
+
+        $periods[ "$week_sd,$week_ed" ] = __( sprintf('Last Week (%s-%s)', DateTime::formatDate($week_sd), DateTime::formatDate($week_ed)), 'connectpx_booking' );
+
+        return $periods;
+    }
 }

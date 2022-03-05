@@ -3,7 +3,6 @@ namespace ConnectpxBooking\Lib;
 
 use ConnectpxBooking\Lib;
 use ConnectpxBooking\Lib\Entities\Appointment;
-use ConnectpxBooking\Lib\Entities\Payment;
 
 /**
  * Class Cart

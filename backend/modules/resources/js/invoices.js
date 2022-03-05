@@ -4,12 +4,12 @@ jQuery(function($) {
         $invoicesList   = $('#connectpx_booking-invoices-list'),
         $checkAllButton     = $('#connectpx_booking-check-all'),
         $idFilter           = $('#connectpx_booking-filter-id'),
-        $appointmentDateFilter = $('#connectpx_booking-filter-date'),
+        $invoiceDateFilter = $('#connectpx_booking-filter-date'),
         $creationDateFilter = $('#connectpx_booking-filter-creation-date'),
         $customerFilter     = $('#connectpx_booking-filter-customer'),
         $serviceFilter      = $('#connectpx_booking-filter-service'),
         $statusFilter       = $('#connectpx_booking-filter-status'),
-        $newAppointmentBtn  = $('#connectpx_booking-new-appointment'),
+        $newInvoiceBtn  = $('#connectpx_booking-new-invoice'),
         $printDialog        = $('#connectpx_booking-print-dialog'),
         $printSelectAll     = $('#connectpx_booking-js-print-select-all', $printDialog),
         $printButton        = $(':submit',$printDialog),
@@ -23,7 +23,7 @@ jQuery(function($) {
         order               = [],
         pickers = {
             dateFormat:       'YYYY-MM-DD',
-            appointmentDate: {
+            invoiceDate: {
                 startDate: moment().startOf('month'),
                 endDate  : moment().endOf('month'),
             },
@@ -47,18 +47,18 @@ jQuery(function($) {
     if (urlParts.length > 1) {
         urlParts[1].split('&').forEach(function (part) {
             var params = part.split('=');
-            if (params[0] == 'appointment-date') {
+            if (params[0] == 'invoice-date') {
                 if (params['1'] == 'any') {
-                    $appointmentDateFilter
+                    $invoiceDateFilter
                         .data('date', 'any').find('span')
                         .html(ConnectpxBookingL10n.dateRange.anyTime);
                 } else {
-                    pickers.appointmentDate.startDate = moment(params['1'].substring(0, 10));
-                    pickers.appointmentDate.endDate = moment(params['1'].substring(11));
-                    $appointmentDateFilter
-                        .data('date', pickers.appointmentDate.startDate.format(pickers.dateFormat) + ' - ' + pickers.appointmentDate.endDate.format(pickers.dateFormat))
+                    pickers.invoiceDate.startDate = moment(params['1'].substring(0, 10));
+                    pickers.invoiceDate.endDate = moment(params['1'].substring(11));
+                    $invoiceDateFilter
+                        .data('date', pickers.invoiceDate.startDate.format(pickers.dateFormat) + ' - ' + pickers.invoiceDate.endDate.format(pickers.dateFormat))
                         .find('span')
-                        .html(pickers.appointmentDate.startDate.format(ConnectpxBookingL10n.dateRange.format) + ' - ' + pickers.appointmentDate.endDate.format(ConnectpxBookingL10n.dateRange.format));
+                        .html(pickers.invoiceDate.startDate.format(ConnectpxBookingL10n.dateRange.format) + ' - ' + pickers.invoiceDate.endDate.format(ConnectpxBookingL10n.dateRange.format));
                 }
             } else if (params[0] == 'created-date') {
                 pickers.creationDate.startDate = moment(params['1'].substring(0, 10));
@@ -157,7 +157,7 @@ jQuery(function($) {
         render            : function (data, type, row, meta) {
             const cb_id = 'connectpx_booking-dt-a-' + row.id;
             return '<div class="custom-control custom-checkbox">' +
-                '<input value="' + row.id + '" data-appointment="' + row.id + '" id="' + cb_id + '" type="checkbox" class="custom-control-input">' +
+                '<input value="' + row.id + '" data-invoice="' + row.id + '" id="' + cb_id + '" type="checkbox" class="custom-control-input">' +
                 '<label for="' + cb_id + '" class="custom-control-label"></label>' +
                 '</div>';
         }
@@ -197,7 +197,7 @@ jQuery(function($) {
                 return $.extend({action: 'connectpx_booking_get_invoices', csrf_token: ConnectpxBookingL10nGlobal.csrf_token}, {
                     filter: {
                         id: $idFilter.val(),
-                        date: $appointmentDateFilter.data('date'),
+                        date: $invoiceDateFilter.data('date'),
                         created_date: $creationDateFilter.data('date'),
                         customer: $customerFilter.val(),
                         service: $serviceFilter.val(),
@@ -224,11 +224,10 @@ jQuery(function($) {
     });
 
     /**
-     * Add appointment.
+     * Add invoice.
      */
-    $newAppointmentBtn.on('click', function () {
-        ConnectpxBookingAppointmentDialog.showDialog(
-            null,
+    $newInvoiceBtn.on('click', function () {
+        ConnectpxBookingInvoiceDialog.showCreateInvoiceDialog(
             function(event) {
                 dt.ajax.reload();
             }
@@ -241,7 +240,7 @@ jQuery(function($) {
     $exportForm.on('submit', function () {
         $('[name="filter"]', $exportDialog).val(JSON.stringify({
             id          : $idFilter.val(),
-            date        : $appointmentDateFilter.data('date'),
+            date        : $invoiceDateFilter.data('date'),
             created_date: $creationDateFilter.data('date'),
             customer    : $customerFilter.val(),
             service     : $serviceFilter.val(),
@@ -280,7 +279,7 @@ jQuery(function($) {
             },
             customize: function (win) {
                 win.document.firstChild.style.backgroundColor = '#fff';
-                win.document.body.id = 'connectpx_booking-tbs';
+                win.document.body.id = 'connectpx_booking_tbs';
                 $(win.document.body).find('table').removeClass('collapsed');
             }
         };
@@ -308,7 +307,7 @@ jQuery(function($) {
     });
 
     $invoicesList
-        // On appointment select.
+        // On invoice select.
         .on('change', 'tbody input:checkbox', function () {
             $checkAllButton.prop('checked', $invoicesList.find('tbody input:not(:checked)').length == 0);
         })
@@ -321,10 +320,10 @@ jQuery(function($) {
                 }
             });
         })
-        // Edit appointment.
+        // Edit invoice.
         .on('click', '[data-action=edit]', function (e) {
             e.preventDefault();
-            ConnectpxBookingAppointmentDialog.showDialog(
+            ConnectpxBookingInvoiceDialog.showDialog(
                 getDTRowData(this).id,
                 function (event) {
                     dt.ajax.reload();
@@ -337,10 +336,10 @@ jQuery(function($) {
             $checkboxes = $invoicesList.find('tbody input:checked');
 
         $checkboxes.each(function () {
-            data.push({ca_id: this.value, id: $(this).data('appointment')});
+            data.push({ca_id: this.value, id: $(this).data('invoice')});
         });
 
-        new ConnectpxBookingConfirmDeletingAppointment({
+        new ConnectpxBookingConfirmDeletingInvoice({
                 action: 'connectpx_booking_delete_customer_invoices',
                 data: data,
                 csrf_token: ConnectpxBookingL10nGlobal.csrf_token,
@@ -368,11 +367,11 @@ jQuery(function($) {
     $.extend(pickerRanges2, pickerRanges1);
 
 
-    $appointmentDateFilter.daterangepicker(
+    $invoiceDateFilter.daterangepicker(
         {
-            parentEl : $appointmentDateFilter.parent(),
-            startDate: pickers.appointmentDate.startDate,
-            endDate  : pickers.appointmentDate.endDate,
+            parentEl : $invoiceDateFilter.parent(),
+            startDate: pickers.invoiceDate.startDate,
+            endDate  : pickers.invoiceDate.endDate,
             ranges   : pickerRanges1,
             showDropdowns  : true,
             linkedCalendars: false,
@@ -382,13 +381,13 @@ jQuery(function($) {
         function(start, end, label) {
             switch (label) {
                 case ConnectpxBookingL10n.dateRange.anyTime:
-                    $appointmentDateFilter
+                    $invoiceDateFilter
                         .data('date', 'any')
                         .find('span')
                         .html(ConnectpxBookingL10n.dateRange.anyTime);
                     break;
                 default:
-                    $appointmentDateFilter
+                    $invoiceDateFilter
                         .data('date', start.format(pickers.dateFormat) + ' - ' + end.format(pickers.dateFormat))
                         .find('span')
                         .html(start.format(ConnectpxBookingL10n.dateRange.format) + ' - ' + end.format(ConnectpxBookingL10n.dateRange.format));
@@ -431,7 +430,7 @@ jQuery(function($) {
         .select2({
             width: '100%',
             theme: 'bootstrap4',
-            dropdownParent: '#connectpx_booking-tbs',
+            dropdownParent: '#connectpx_booking_tbs',
             allowClear: true,
             placeholder: '',
             language: {
@@ -460,7 +459,7 @@ jQuery(function($) {
         .select2({
             width: '100%',
             theme: 'bootstrap4',
-            dropdownParent: '#connectpx_booking-tbs',
+            dropdownParent: '#connectpx_booking_tbs',
             allowClear: true,
             placeholder: '',
             language  : {
@@ -492,7 +491,7 @@ jQuery(function($) {
     }
 
     $idFilter.on('keyup', function () { dt.ajax.reload(); });
-    $appointmentDateFilter.on('apply.daterangepicker', function () { dt.ajax.reload(); });
+    $invoiceDateFilter.on('apply.daterangepicker', function () { dt.ajax.reload(); });
     $creationDateFilter.on('apply.daterangepicker', function () { dt.ajax.reload(); });
     $customerFilter.on('change', function () { dt.ajax.reload(); });
     $serviceFilter.on('change', function () { dt.ajax.reload(); });

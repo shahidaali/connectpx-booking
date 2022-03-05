@@ -1028,25 +1028,6 @@ class Appointment extends Lib\Base\Entity
      **************************************************************************/
 
     /**
-     * Save appointment to database
-     *(and delete event in Google Calendar if staff changes).
-     *
-     * @return false|int
-     */
-    public function save()
-    {
-        if ( $this->getId() == null ) {
-            $this
-                ->setCreatedAt( current_time( 'mysql' ) )
-                ->setUpdatedAt( current_time( 'mysql' ) );
-        } elseif ( $this->getModified() ) {
-            $this->setUpdatedAt( current_time( 'mysql' ) );
-        }
-
-        return parent::save();
-    }
-
-    /**
      * Delete entity from database
      *(and delete event in Google Calendar if it exists).
      *
@@ -1071,9 +1052,28 @@ class Appointment extends Lib\Base\Entity
                 self::STATUS_APPROVED,
                 self::STATUS_CANCELLED,
                 self::STATUS_REJECTED,
+                self::STATUS_DONE,
                 self::STATUS_NOSHOW,
             );
             self::putInCache( __FUNCTION__, $statuses );
+        }
+
+        return self::getFromCache( __FUNCTION__ );
+    }
+
+    /**
+     * Get appointment statuses.
+     *
+     * @return array
+     */
+    public static function getCompletedStatuses()
+    {
+        if ( ! self::hasInCache( __FUNCTION__ ) ) {
+            $completedStatuses = array(
+                self::STATUS_DONE,
+                self::STATUS_NOSHOW,
+            );
+            self::putInCache( __FUNCTION__, $completedStatuses );
         }
 
         return self::getFromCache( __FUNCTION__ );
@@ -1165,5 +1165,47 @@ class Appointment extends Lib\Base\Entity
             case self::PAYMENT_REJECTED:   return 'fas fa-ban';
             default: return '';
         }
+    }
+
+    /**
+     * @param array|\stdClass $data
+     * @param bool            $overwrite_loaded_values
+     * @return $this
+     */
+    public function setFields( $data, $overwrite_loaded_values = false )
+    {
+        if ( $data = (array) $data ) {
+            if ( $this->last_status === null && array_key_exists( 'status', $data ) ) {
+                $this->last_status = $data['status'];
+            }
+        }
+
+        return parent::setFields( $data, $overwrite_loaded_values );
+    }
+
+    /**
+     * Save entity to database.
+     * Generate token before saving.
+     *
+     * @return int|false
+     */
+    public function save()
+    {
+
+        if ( $this->getId() == null ) {
+            $this
+                ->setCreatedAt( current_time( 'mysql' ) )
+                ->setUpdatedAt( current_time( 'mysql' ) );
+        } elseif ( $this->getModified() ) {
+            $this->setUpdatedAt( current_time( 'mysql' ) );
+        }
+
+        if ( $this->status != $this->last_status ) {
+            $this->setStatusChangedAt( current_time( 'mysql' ) );
+        }
+
+        $this->just_created = $this->getId() === null;
+
+        return parent::save();
     }
 }

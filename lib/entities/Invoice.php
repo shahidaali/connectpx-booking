@@ -4,23 +4,25 @@ namespace ConnectpxBooking\Lib\Entities;
 use ConnectpxBooking\Lib;
 
 /**
- * Class Payment
+ * Class Invoice
  * @package ConnectpxBooking\Lib\Entities
  */
-class Payment extends Lib\Base\Entity
+class Invoice extends Lib\Base\Entity
 {
-    const TYPE_LOCAL        = 'local';
-    const TYPE_FREE         = 'free';
-    const TYPE_WOOCOMMERCE  = 'woocommerce';
-
     const STATUS_COMPLETED  = 'completed';
     const STATUS_PENDING    = 'pending';
     const STATUS_REJECTED   = 'rejected';
 
-    /** @var string */
-    protected $type;
+    /** @var int */
+    protected $customer_id;
+    /** @var datetime */
+    protected $start_date;
+    /** @var datetime */
+    protected $end_date;
     /** @var float */
-    protected $total;
+    protected $total_amount;
+    /** @var float */
+    protected $paid_amount;
     /** @var string */
     protected $status = self::STATUS_COMPLETED;
     /** @var string */
@@ -30,21 +32,21 @@ class Payment extends Lib\Base\Entity
     /** @var string */
     protected $updated_at;
 
-    /**
-     * Get display name for given payment type.
-     *
-     * @param string $type
-     * @return string
-     */
-    public static function typeToString( $type )
-    {
-        switch ( $type ) {
-            case self::TYPE_LOCAL:        return __( 'Local', 'connectpx_booking' );
-            case self::TYPE_FREE:         return __( 'Free', 'connectpx_booking' );
-            case self::TYPE_WOOCOMMERCE:  return 'WooCommerce';
-            default:                      return '';
-        }
-    }
+    protected static $table = 'connectpx_booking_invoices';
+
+    protected static $schema = array(
+        'id'                       => array( 'format' => '%d' ),
+        'customer_id'               => array( 'format' => '%d', 'reference' => array( 'entity' => 'Customer' ) ),
+        'start_date'               => array( 'format' => '%s' ),
+        'end_date'                 => array( 'format' => '%s' ),
+        'total_amount'          => array( 'format' => '%s' ),
+        'paid_amount'          => array( 'format' => '%s' ),
+        'status'          => array( 'format' => '%s' ),
+        'details'            => array( 'format' => '%s' ),
+        'due_date'            => array( 'format' => '%s' ),
+        'created_at'               => array( 'format' => '%s' ),
+        'updated_at'               => array( 'format' => '%s' ),
+    );
 
     /**
      * Get status of payment.
@@ -62,107 +64,75 @@ class Payment extends Lib\Base\Entity
         }
     }
 
-    /**
-     * Payment data for rendering payment details and invoice.
-     *
-     * @return array
-     */
-    public function getPaymentData()
-    {
-        $customer = Lib\Entities\Customer::query( 'c' )
-            ->select( 'c.full_name' )
-            ->leftJoin( 'Appointment', 'a', 'a.customer_id = c.id' )
-            ->where( 'a.id', $this->getId() )
-            ->fetchRow();
-
-        $details = json_decode( $this->getDetails(), true );
-
-        return array(
-            'payment' => array(
-                'id' => (int) $this->id,
-                'status' => $this->status,
-                'type' => $this->type,
-                'created_at' => $this->created_at,
-                'customer' => empty ( $customer)  ? $details['customer'] : $customer['full_name'],
-                'items' => $details['items'],
-                'subtotal' => $details['subtotal'],
-                'total' => $this->total,
-            ),
-            'adjustments' => isset( $details['adjustments'] ) ? $details['adjustments'] : array(),
-        );
-    }
-
-    /**
-     * Get HTML for payment info displayed in a popover in the edit appointment form
-     *
-     * @param float $paid
-     * @param float $total
-     * @param string $type
-     * @param string $status
-     * @return string
-     */
-    public static function paymentInfo( $paid, $total, $type, $status )
-    {
-        $result = Lib\Utils\Price::format( $paid );
-        if ( $paid != $total ) {
-            $result = sprintf( __( '%s of %s', 'connectpx_booking' ), $result, Lib\Utils\Price::format( $total ) );
-        }
-        $result .= sprintf(
-            ' %s <span%s>%s</span>',
-            self::typeToString( $type ),
-            $status == self::STATUS_PENDING ? ' class="text-danger"' : '',
-            self::statusToString( $status )
-        );
-
-        return $result;
-    }
-
     /**************************************************************************
      * Entity Fields Getters & Setters                                        *
      **************************************************************************/
 
     /**
-     * Gets details
+     * Gets customer_id
      *
-     * @return string
+     * @return float
      */
-    public function getDetails()
+    public function getCustomerId()
     {
-        return $this->details;
+        return $this->customer_id;
     }
 
     /**
-     * Sets details
+     * Sets customer_id
      *
-     * @param string $details
+     * @param float $customer_id
      * @return $this
      */
-    public function setDetails( $details )
+    public function setCustomerId( $customer_id )
     {
-        $this->details = $details;
+        $this->customer_id = $customer_id;
 
         return $this;
     }
 
     /**
-     * Gets type
+     * Gets start_date
      *
-     * @return string
+     * @return float
      */
-    public function getType()
+    public function getStartDate()
     {
-        return $this->type;
+        return $this->start_date;
     }
 
     /**
-     * Sets type
+     * Sets start_date
      *
-     * @param string $type
+     * @param float $start_date
      * @return $this
      */
-    public function setType( $type )
+    public function setStartDate( $start_date )
     {
-        $this->type = $type;
+        $this->start_date = $start_date;
+
+        return $this;
+    }
+
+    /**
+     * Gets end_date
+     *
+     * @return float
+     */
+    public function getEndDate()
+    {
+        return $this->end_date;
+    }
+
+    /**
+     * Sets end_date
+     *
+     * @param float $end_date
+     * @return $this
+     */
+    public function setEndDate( $end_date )
+    {
+        $this->end_date = $end_date;
 
         return $this;
     }
@@ -172,20 +142,43 @@ class Payment extends Lib\Base\Entity
      *
      * @return float
      */
-    public function getTotal()
+    public function getTotalAmount()
     {
-        return $this->total;
+        return $this->total_amount;
     }
 
     /**
-     * Sets total
+     * Sets total_amount
      *
-     * @param float $total
+     * @param float $total_amount
      * @return $this
      */
-    public function setTotal( $total )
+    public function setTotalAmount( $total_amount )
     {
-        $this->total = $total;
+        $this->total_amount = $total_amount;
+
+        return $this;
+    }
+
+    /**
+     * Gets paid_amount
+     *
+     * @return float
+     */
+    public function getPaidAmount()
+    {
+        return $this->paid_amount;
+    }
+
+    /**
+     * Sets paid_amount
+     *
+     * @param float $paid_amount
+     * @return $this
+     */
+    public function setPaidAmount( $paid_amount )
+    {
+        $this->paid_amount = $paid_amount;
 
         return $this;
     }
@@ -213,6 +206,28 @@ class Payment extends Lib\Base\Entity
         return $this;
     }
 
+    /**
+     * Gets details
+     *
+     * @return string
+     */
+    public function getDetails()
+    {
+        return $this->details;
+    }
+
+    /**
+     * Sets details
+     *
+     * @param string $details
+     * @return $this
+     */
+    public function setDetails( $details )
+    {
+        $this->details = $details;
+
+        return $this;
+    }
 
     /**
      * Gets created_at

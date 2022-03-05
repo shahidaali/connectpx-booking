@@ -18,7 +18,7 @@
 
 <div class="cbf-step step-service">
     <div class="cbf-box">
-        <h4><?php echo __('Select Service', 'connectpx_booking'); ?></h4>
+        <h4><?php echo __('Trip Type', 'connectpx_booking'); ?></h4>
         <div class="connectpx_booking_form_errors"></div>
         <?php if($sub_services): ?>
             <div class="choose-service">
