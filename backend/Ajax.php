@@ -54,7 +54,7 @@ class Ajax extends Lib\Base\Ajax
             'start'  => self::parameter( 'start' ),
         );
 
-        $data = self::getAppointmentsTableData( $filter, $limits, $columns, $order );
+        $data = self::getInvoicesTableData( $filter, $limits, $columns, $order );
 
         unset( $filter['date'] );
 
@@ -194,6 +194,92 @@ class Ajax extends Lib\Base\Ajax
                 'payment_raw_title' => $payment_raw_title,
                 'notes'             => $row['notes'],
                 'created_date'      => Lib\Utils\DateTime::formatDateTime( $row['created_date'] ),
+            );
+        }
+
+        return compact( 'data', 'total', 'filtered' );
+    }
+
+    /**
+     * @param array $filter
+     * @param array $limits
+     * @param array $columns
+     * @param array $order
+     * @return array
+     */
+    public static function getInvoicesTableData( $filter = array(), $limits = array(), $columns = array(), $order = array() )
+    {
+        $query = Lib\Entities\Invoice::query( 'i' )
+            ->select( 'i.id,
+                i.status,
+                i.created_at AS created_date,
+                i.start_date,
+                i.end_date,
+                i.due_date,
+                i.total_amount,
+                i.paid_amount,
+                i.status,
+                CONCAT(c.first_name, " ", c.last_name)  AS customer_full_name' 
+            )
+            ->leftJoin( 'Customer', 'c', 'c.id = i.customer_id' );
+
+        $total = $query->count();
+
+        if ( $filter['id'] != '' ) {
+            $query->where( 'i.id', $filter['id'] );
+        }
+
+        if ( $filter['date'] == 'any' ) {
+            $query->whereNot( 'i.start_date', null );
+        } elseif ( $filter['date'] == 'null' ) {
+            $query->where( 'i.start_date', null );
+        } else {
+            list ( $start, $end ) = explode( ' - ', $filter['date'], 2 );
+            $end = date( 'Y-m-d', strtotime( $end ) + DAY_IN_SECONDS );
+            $query->whereBetween( 'i.start_date', $start, $end );
+        }
+
+        if ( $filter['created_date'] != 'any' ) {
+            list ( $start, $end ) = explode( ' - ', $filter['created_date'], 2 );
+            $end = date( 'Y-m-d', strtotime( $end ) + DAY_IN_SECONDS );
+            $query->whereBetween( 'i.created_at', $start, $end );
+        }
+
+        if ( $filter['customer'] != '' ) {
+            $query->where( 'i.customer_id', $filter['customer'] );
+        }
+
+        if ( $filter['status'] != '' ) {
+            $query->where( 'i.status', $filter['status'] );
+        }
+
+        foreach ( $order as $sort_by ) {
+            $query->sortBy( str_replace( '.', '_', $columns[ $sort_by['column'] ]['data'] ) )
+                ->order( $sort_by['dir'] == 'desc' ? Lib\Query::ORDER_DESCENDING : Lib\Query::ORDER_ASCENDING );
+        }
+
+        $filtered = $query->count();
+
+        if ( ! empty( $limits ) ) {
+            $query->limit( $limits['length'] )->offset( $limits['start'] );
+        }
+
+        $data = array();
+        foreach ( $query->fetchArray() as $row ) {
+
+            $data[] = array(
+                'id'                => $row['id'],
+                'start_date'        => Lib\Utils\DateTime::formatDate( $row['start_date'], 'd/m/Y' ),
+                'end_date'        => Lib\Utils\DateTime::formatDate( $row['end_date'], 'd/m/Y' ),
+                'customer'          => array(
+                    'full_name' => $row['customer_full_name'],
+                ),
+                'status'            => Lib\Entities\Invoice::statusToString( $row['status'] ),
+                'total_amount'           => Lib\Utils\Price::format( $row['total_amount'] ),
+                'due_amount'           => Lib\Utils\Price::format( $row['total_amount'] - $row['paid_amount'] ),
+                'payment'           => $payment_title,
+                'payment_raw_title' => $payment_raw_title,
+                'created_date'      => Lib\Utils\DateTime::formatDate( $row['created_date'], 'd/m/Y' ),
             );
         }
 

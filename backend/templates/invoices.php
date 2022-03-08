@@ -29,10 +29,10 @@ use ConnectpxBooking\Backend\Components\Controls;
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <button type="button" class="btn btn-default w-100 mb-3 text-truncate text-left" id="connectpx_booking-filter-date" data-date="<?php echo date( 'Y-m-d', strtotime( 'first day of' ) ) ?> - <?php echo date( 'Y-m-d', strtotime( 'last day of' ) ) ?>">
+                    <button type="button" class="btn btn-default w-100 mb-3 text-truncate text-left" id="connectpx_booking-filter-date" data-date="<?php echo date( 'Y-m-d', strtotime( 'first day of previous month' ) ) ?> - <?php echo date( 'Y-m-d', strtotime( 'last day of this month' ) ) ?>">
                         <i class="far fa-calendar-alt mr-1"></i>
                         <span>
-                            <?php echo DateTime::formatDate( 'first day of this month' ) ?> - <?php echo DateTime::formatDate( 'last day of this month' ) ?>
+                            <?php echo DateTime::formatDate( 'first day of previous month' ) ?> - <?php echo DateTime::formatDate( 'last day of this month' ) ?>
                         </span>
                     </button>
                 </div>

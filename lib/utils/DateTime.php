@@ -102,9 +102,10 @@ class DateTime
      * @param string|integer $iso_date
      * @return string
      */
-    public static function formatDate( $iso_date )
+    public static function formatDate( $iso_date, $format = null )
     {
-        return date_i18n( get_option( 'date_format' ), is_numeric( $iso_date ) ? $iso_date : strtotime( $iso_date, current_time( 'timestamp' ) ) );
+        $format = $format ?: get_option( 'date_format' );
+        return date_i18n( $format, is_numeric( $iso_date ) ? $iso_date : strtotime( $iso_date, current_time( 'timestamp' ) ) );
     }
 
     /**

@@ -621,4 +621,18 @@ class Customer extends Lib\Base\Entity
         return $return;
     }
 
+    /**
+     * @inheritDoc
+     */
+    public function getCodes()
+    {
+        $codes['{client_email}'] = $this->getEmail();
+        $codes['{client_first_name}'] = $this->getFirstName();
+        $codes['{client_last_name}'] = $this->getLastName();
+        $codes['{client_name}'] = $this->getFullName();
+        $codes['{client_phone}'] = $this->getPhone();
+        $codes['{client_address}'] = $this->getAddress();
+        $codes['{client_note}'] = $this->getNotes();
+        return $codes;
+    }
 }

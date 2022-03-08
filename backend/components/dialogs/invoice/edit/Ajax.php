@@ -40,8 +40,12 @@ class Ajax extends Lib\Base\Ajax
             $customers[ $customer['id'] ] = $name;
         }
 
-        $periods = Lib\Utils\Common::getInvoicePeriodOptions();
-        $periods['all'] = __( 'All', 'connectpx_booking' );
+        $periods_options = Lib\Utils\Common::getInvoicePeriodOptions();
+
+        $periods = [];
+        foreach ( $periods_options as $key => $periods_option ) {
+            $periods[ $key ] = $periods_option['label'];
+        }
 
         $response = array( 
             'success' => true, 
@@ -58,7 +62,7 @@ class Ajax extends Lib\Base\Ajax
     public static function updateInvoices()
     {
         $customer       = self::parameter( 'customer', 'all' );
-        $period       = self::parameter( 'period', 'all' );
+        $period         = self::parameter( 'period', 'last_week' );
 
         $customers = [];
         if( !$customer || $customer == 'all' ) {
@@ -69,67 +73,45 @@ class Ajax extends Lib\Base\Ajax
             $customers[] = $customer;
         }
 
-        $weeks = [];
-        if( !$period || $period == 'all' ) {
-
-        } else {
-            $weeks[] = explode(",", $period);
-        }
+        $periods = Lib\Utils\Common::getInvoicePeriodOptions();
+        $weeks = $periods[$period]['weeks'];
 
         foreach ( $weeks as $week ) {
+            $startDate = $week['start']->format('Y-m-d');
+            $endDate = $week['end']->format('Y-m-d');
+
             foreach ( $customers as $customer_id ) {
                 $appointments = Appointment::query( 'a' )
                     ->select( 'a.*' )
-                    ->whereGte('DATE(a.pickup_datetime)', $week[0])
-                    ->whereLte('DATE(a.pickup_datetime)', $week[1])
+                    ->whereGte('DATE(a.pickup_datetime)', $startDate)
+                    ->whereLte('DATE(a.pickup_datetime)', $endDate)
                     ->where('a.customer_id', $customer_id)
                     ->whereIn('a.status', Appointment::getCompletedStatuses())
                     ->sortBy('DATE(a.pickup_datetime)')
                     ->order('DESC')
                     ->fetchArray();
 
-                if( !empty($appointments) ) {
-                    $total_amount = 0;    
-                    $paid_amount = 0;    
-                    $a_ids = [];    
-                    foreach ($appointments as $key => $appointment) {
-                        $a_ids[] = $appointment['id'];
-                        $total_amount += $appointment['total_amount'];
-                        $paid_amount += $appointment['paid_amount'];
-                    }
-
+                if( !empty( $appointments ) ) {
                     $invoice = Invoice::query( 'i' )
                         ->select( 'i.*' )
-                        ->where('i.start_date', $week[0])
-                        ->where('i.end_date', $week[1])
+                        ->where('i.start_date', $startDate)
+                        ->where('i.end_date', $endDate)
                         ->where('i.customer_id', $customer_id)
                         ->fetchRow();
-                    
-                    $details = [];
 
                     if( !empty($invoice) ) {
                         $invoice = new Invoice( $invoice );
-
-                        if( $invoice->getStatus() == Invoice::STATUS_COMPLETED ) {
-                            continue;
-                        }
-
-                        $details = !empty($invoice->getDetails()) ? json_decode($invoice->getDetails()) : [];
                     } else {
                         $invoice = new Invoice();
                     }
 
-                    $details['a_ids'] = $a_ids;
-
                     $invoice
                         ->setCustomerId($customer_id)
-                        ->setStartDate($week[0])
-                        ->setEndDate($week[1])
-                        ->setTotalAmount($total_amount)
-                        ->setPaidAmount($paid_amount)
-                        ->setDetails( json_encode( $details ) );
+                        ->setStartDate($startDate)
+                        ->setEndDate($endDate)
+                        ->save();
 
-                    $invoice->save();
+                    $invoice->updateTotals( $appointments );
                 }
                 
             }

@@ -1086,7 +1086,7 @@ class Appointment extends Lib\Base\Entity
             case self::STATUS_APPROVED:   return __( 'Approved',  'connectpx_booking' );
             case self::STATUS_CANCELLED:  return __( 'Cancelled', 'connectpx_booking' );
             case self::STATUS_REJECTED:   return __( 'Rejected',  'connectpx_booking' );
-            case self::STATUS_DONE:       return __( 'Done', 'connectpx_booking' );
+            case self::STATUS_DONE:       return __( 'Completed', 'connectpx_booking' );
             case self::STATUS_NOSHOW:     return __( 'No Show', 'connectpx_booking' );
             case 'mixed':                 return __( 'Mixed', 'connectpx_booking' );
             default: return '';

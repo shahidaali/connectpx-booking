@@ -96,33 +96,6 @@ jQuery(function($) {
                 case 'customer_full_name':
                     columns.push({data: 'customer.full_name', render: $.fn.dataTable.render.text()});
                     break;
-                case 'customer_phone':
-                    columns.push({
-                        data: 'customer.phone',
-                        render: function (data, type, row, meta) {
-                            if (isMobile) {
-                                return '<a href="tel:' + $.fn.dataTable.render.text().display(data) + '">' + $.fn.dataTable.render.text().display(data) + '</a>';
-                            } else {
-                                return $.fn.dataTable.render.text().display(data);
-                            }
-                        }
-                    });
-                    break;
-                case 'customer_email':
-                    columns.push({data: 'customer.email', render: $.fn.dataTable.render.text()});
-                    break;
-                case 'customer_address':
-                    columns.push({data: 'customer.address', render: $.fn.dataTable.render.text()});
-                    break;
-                case 'service_title':
-                    columns.push({
-                        data: 'service.title',
-                        render: function ( data, type, row, meta ) {
-                            data = $.fn.dataTable.render.text().display(data);
-                            return data;
-                        }
-                    });
-                    break;
                 case 'payment':
                     columns.push({
                         data: 'payment',
@@ -133,9 +106,6 @@ jQuery(function($) {
                             return '';
                         }
                     });
-                    break;
-                case 'notes':
-                    columns.push({data: column, render: $.fn.dataTable.render.text()});
                     break;
                 default:
                     columns.push({data: column, render: $.fn.dataTable.render.text()});
@@ -148,7 +118,7 @@ jQuery(function($) {
         orderable : false,
         width     : 120,
         render    : function (data, type, row, meta) {
-            return '<button type="button" class="btn btn-default" data-action="edit"><i class="far fa-fw fa-edit mr-lg-1"></i><span class="d-none d-lg-inline">' + ConnectpxBookingL10n.edit + '…</span></button>';
+            return '<button type="button" class="btn btn-default" data-action="view"><i class="far fa-fw fa-eye mr-lg-1"></i><span class="d-none d-lg-inline">' + ConnectpxBookingL10n.view + '…</span></button>';
         }
     });
     columns.push({

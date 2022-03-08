@@ -45,7 +45,7 @@ use ConnectpxBooking\Lib\Utils;
 							<div class="connectpx-booking-field-info"><?php echo __('Select a time interval which will be used as a step for pickup time.', 'connectpx_booking') ?></div>
 						</td>
 					</tr>
-					<tr>
+					<!-- <tr>
 						<th scope="row"><?php _e('Display available time slots in client\'s time zone', 'connectpx_booking'); ?></th>
 						<td>
 							<select name="connectpx_booking[use_client_time_zone]">
@@ -59,7 +59,7 @@ use ConnectpxBooking\Lib\Utils;
 							</select>
 							<div class="connectpx-booking-field-info"><?php echo __('The value is taken from client\'s browser.', 'connectpx_booking') ?></div>
 						</td>
-					</tr>
+					</tr> -->
 					<tr>
 						<th scope="row"><?php _e('Minimum time requirement prior to booking', 'connectpx_booking'); ?></th>
 						<td>

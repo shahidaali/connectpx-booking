@@ -31,6 +31,20 @@ class Backend {
 
 		add_action( 'admin_enqueue_scripts', array(__CLASS__, 'enqueueScripts') );
 		add_action( 'admin_menu', array(__CLASS__, 'adminMenu') );
+
+		// __pre(Lib\Utils\Common::getInvoicePeriodOptions());
+		// exit;
+
+		if( 
+			( !empty($_GET['page']) && $_GET['page'] == 'connectpx_booking_invoices' ) && 
+			( !empty($_GET['tab']) && $_GET['tab'] == 'download' ) && 
+			!empty($_GET['id']) 
+		) 
+		{
+			$invoice = Lib\Entities\Invoice::find($_GET['id']);
+	        $invoice->downloadInvoice();
+	        exit();
+		}
 	}
 
 	/**

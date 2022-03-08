@@ -459,9 +459,11 @@ class SubService
             }
         }
         
+        $total_adjustments = 0;
         foreach ($adjustments as $key => $adjustment) {
             $amount = (float) $adjustment['amount'];
             $totals += $amount;
+            $total_adjustments += $amount;
 
             $items['adjustment_' . $key] = [
                 'label' => __($adjustment['reason'], 'connectpx_booking'),
@@ -473,6 +475,7 @@ class SubService
 
         $line_items = [
             'totals' => $totals,
+            'total_adjustments' => $total_adjustments,
             'items' => $items,
         ];
 

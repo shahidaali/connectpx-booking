@@ -717,25 +717,117 @@ abstract class Common {
         }
     }
 
+    public static function getWeekDates( $startDateStr, $endDateStr = null ) {
+        $startDate = Lib\Slots\DatePoint::fromStr( $startDateStr );
+        $endDate = $endDateStr ? Lib\Slots\DatePoint::fromStr( $endDateStr ) : Lib\Slots\DatePoint::now();
+
+        $monday = clone $startDate->modify('Monday this week');
+        $sunday = clone $startDate->modify('Sunday this week');
+        $week = [
+            'start' => $monday, 
+            'end' => $sunday
+        ];
+
+        $weeks[] = $week;
+        while ( $week['end']->lt( $endDate ) ) {
+            $monday = clone $week['end']->modify('+1 day');
+            $sunday = clone $week['end']->modify('+7 days');
+            $week = [
+                'start' => $monday, 
+                'end' => $sunday
+            ];
+            $weeks[] = $week;
+        }
+
+        return [
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'weeks' => $weeks,
+        ];
+    }
+
     public static function getInvoicePeriodOptions() {
-        $periods = [];
+        $periods = [
+            [
+                'key' => 'this_week',
+                'start' => date('Y-m-d'),
+                'end' => null,
+                'label' => 'This Week (%s - %s)',
+            ],
+            [
+                'key' => 'last_week',
+                'start' => date('Y-m-d', strtotime('Monday last week')),
+                'end' => date('Y-m-d', strtotime('Monday last week')),
+                'label' => 'Last Week (%s - %s)',
+            ],
+            [
+                'key' => 'last_three_months',
+                'start' => date('Y-m-d', strtotime('-3 months')),
+                'end' => null,
+                'label' => 'Last 3 Months (%s - %s)',
+            ],
+            [
+                'key' => 'last_six_months',
+                'start' => date('Y-m-d', strtotime('-6 months')),
+                'end' => null,
+                'label' => 'Last 6 Months (%s - %s)',
+            ],
+            [
+                'key' => 'this_year',
+                'start' => date('Y-01-01'),
+                'end' => null,
+                'label' => 'This Year (%s - %s)',
+            ],
+            [
+                'key' => 'last_year',
+                'start' => date('Y-m-d', strtotime('first day of january last year')),
+                'end' => null,
+                'label' => 'Last Year (%s - %s)',
+            ],
+        ];
 
-        $monday = strtotime('next Monday -1 week');
-        $monday = date('w', $monday)==date('w') ? strtotime(date("Y-m-d",$monday)." +7 days") : $monday;
-        $sunday = strtotime(date("Y-m-d",$monday)." +6 days");
-        $week_sd = date("Y-m-d", $monday);
-        $week_ed = date("Y-m-d", $sunday);
+        $options = [];
 
-        $periods[ "$week_sd,$week_ed" ] = __( sprintf('This Week (%s-%s)', DateTime::formatDate($week_sd), DateTime::formatDate($week_ed)), 'connectpx_booking' );
+        foreach( $periods as $period ) {
+            $dates = Lib\Utils\Common::getWeekDates( $period['start'], $period['end'] );
+            $options[ $period['key'] ] = [
+                'weeks' => $dates['weeks'],
+                'label' => __( sprintf( $period['label'], $dates['start_date']->format('d/m/Y'), $dates['end_date']->format('d/m/Y') ), 'connectpx_booking' ),
+            ];
+        }
 
-        $monday = strtotime('next Monday -2 weeks');
-        $monday = date('w', $monday)==date('w') ? strtotime(date("Y-m-d",$monday)." +7 days") : $monday;
-        $sunday = strtotime(date("Y-m-d",$monday)." +6 days");
-        $week_sd = date("Y-m-d", $monday);
-        $week_ed = date("Y-m-d", $sunday);
+        return $options;
+    }
 
-        $periods[ "$week_sd,$week_ed" ] = __( sprintf('Last Week (%s-%s)', DateTime::formatDate($week_sd), DateTime::formatDate($week_ed)), 'connectpx_booking' );
+    /**
+     * @inheritDoc
+     */
+    public static function getCompanyDetails()
+    {
+        $company_logo = self::getOptionMediaSource('company_logo_attachment_id');
+        $codes = [
+            'company_address' => nl2br( self::getOption('company_address', '') ),
+            'company_logo' => $company_logo,
+            'company_name' => self::getOption('company_name', ''),
+            'company_phone' => self::getOption('company_phone', ''),
+            'company_website' => self::getOption('company_website', ''),
+        ];
+        return $codes;
+    }
 
-        return $periods;
+    /**
+     * @inheritDoc
+     */
+    public static function getCompanyDetailCodes()
+    {
+        $company_logo = self::getOptionMediaSource('company_logo_attachment_id');
+        $codes = [
+            '{company_address}' => nl2br( self::getOption('company_address', '') ),
+            '{company_logo}' => $company_logo ? sprintf( '<img src="%s"/>', esc_attr( $company_logo ) ) : '',
+            '{company_name}' => self::getOption('company_name', ''),
+            '{company_phone}' => self::getOption('company_phone', ''),
+            '{company_website}' => self::getOption('company_website', ''),
+        ];
+        return $codes;
     }
 }

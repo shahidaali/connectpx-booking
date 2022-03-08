@@ -2,6 +2,7 @@
 namespace ConnectpxBooking\Lib\Entities;
 
 use ConnectpxBooking\Lib;
+use ConnectpxBooking\Backend;
 
 /**
  * Class Invoice
@@ -24,9 +25,11 @@ class Invoice extends Lib\Base\Entity
     /** @var float */
     protected $paid_amount;
     /** @var string */
-    protected $status = self::STATUS_COMPLETED;
+    protected $status = self::STATUS_PENDING;
     /** @var string */
     protected $details;
+    /** @var string */
+    protected $due_date;
     /** @var string */
     protected $created_at;
     /** @var string */
@@ -89,6 +92,16 @@ class Invoice extends Lib\Base\Entity
         $this->customer_id = $customer_id;
 
         return $this;
+    }
+
+    /**
+     * Gets customer_id
+     *
+     * @return float
+     */
+    public function getCustomer()
+    {
+        return Lib\Entities\Customer::find( $this->customer_id );
     }
 
     /**
@@ -230,6 +243,27 @@ class Invoice extends Lib\Base\Entity
     }
 
     /**
+     * Gets customer_id
+     *
+     * @return float
+     */
+    public function loadAppointments()
+    {
+        $details = $this->getDetails() ? json_decode($this->getDetails(), true) : [];
+        $aids = $details['a_ids'] ?? [];
+        $rows = Lib\Entities\Appointment::query( 'a' )
+            ->whereIn( 'a.id', $aids )
+            ->fetchArray();
+
+        $appointments = [];
+        foreach ($rows as $key => $row) {
+            $appointments[] = new Lib\Entities\Appointment( $row );
+        }
+
+        return $appointments;
+    }
+
+    /**
      * Gets created_at
      *
      * @return string
@@ -302,5 +336,123 @@ class Invoice extends Lib\Base\Entity
         }
 
         return parent::save();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function updateTotals( array $appointments = [] )
+    {
+        
+        $total_amount = 0;    
+        $paid_amount = 0;    
+        $a_ids = [];  
+
+        if( empty( $appointments ) ) {
+            $appointments = Lib\Entities\InvoiceAppointment::query( 'a' )
+                ->select( 'a.*' )
+                ->innerJoin( 'Appointment', 'a', 'ia.appointment_id = a.id' )
+                ->where('ia.invoice_id', $this->id)
+                ->order('DESC')
+                ->fetchArray();
+        }
+
+        if( !empty( $appointments ) ) {
+            foreach ($appointments as $key => $appointment) {
+                $a_ids[] = $appointment['id'];
+                $total_amount += $appointment['total_amount'];
+                $paid_amount += $appointment['paid_amount'];
+
+                $invoiceAppointment = new Lib\Entities\InvoiceAppointment();
+                $invoiceAppointment->loadBy([
+                    'invoice_id' => $this->id,
+                    'appointment_id' => $appointment['id'],
+                ]);
+
+                if( $invoiceAppointment->isLoaded() ) {
+                    $invoiceAppointment->setId( $invoiceAppointment->getId() );
+                } else {
+                    $invoiceAppointment->setFields([
+                        'invoice_id' => $this->id,
+                        'appointment_id' => $appointment['id'],
+                    ]);
+                }
+
+                $invoiceAppointment->save();
+            }
+        }
+
+        // Delete not existing appointments
+        $appointments = Lib\Entities\InvoiceAppointment::query()
+            ->where('invoice_id', $this->id)
+            ->whereNotIn('appointment_id', $a_ids)
+            ->delete();
+
+        $this
+            ->setTotalAmount($total_amount)
+            ->setPaidAmount($paid_amount)
+            ->save();
+
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getInvoicePath()
+    {
+        $pdf  = $this->getInvoicePdf();
+        $path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . wp_unique_filename( sys_get_temp_dir(), 'Invoice_' . $this->getId() . '.pdf' );
+
+        $pdf->Output( $path, 'F' );
+
+        return $path;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function downloadInvoice()
+    {
+        $pdf = $this->getInvoicePdf();
+        $pdf->Output( 'Invoice_' . $this->getId() . '.pdf', 'D' );
+        exit();
+    }
+
+    /**
+     * @param BooklyLib\Entities\Payment $payment
+     * @return \TCPDF
+     */
+    public function getInvoicePdf()
+    {
+        include_once Lib\Plugin::pluginDir() . '/lib/TCPDF/tcpdf.php';
+
+        $font_name = 'freesans';
+        $font_size = $font_name === 'freesans' ? 5 : 2;
+        $pdf = new \TCPDF();
+        $pdf->setImageScale( 2.3 );
+        $pdf->setPrintHeader( false );
+        $pdf->setPrintFooter( false );
+        $pdf->AddPage();
+        $pdf->SetFont( $font_name, '', $font_size );
+        $data = Backend\Components\Invoice\Invoice::render( $this );
+        $pdf->writeHTML( $data );
+
+        return $pdf;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getCodes()
+    {
+        $codes = array(
+            '{invoice_number}' => $this->id,
+            '{invoice_link}' => $this->id ? admin_url( 'admin-ajax.php?action=connectpx_booking_invoices_download' ) : '',
+            '{invoice_date}' => Lib\Utils\DateTime::formatDate( $created_at->format( 'Y-m-d' ) ),
+            '{invoice_due_date}' => Lib\Utils\DateTime::formatDate( $created_at->modify( Lib\Utils\Common::getOption('invoices_due_days', 30) * DAY_IN_SECONDS )->format( 'Y-m-d' ) ),
+            '{invoice_due_days}' => Lib\Utils\Common::getOption('invoices_due_days', 30),
+        );
+        return $codes;
     }
 }

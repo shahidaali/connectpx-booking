@@ -12,6 +12,7 @@ abstract class Tables
 {
     const APPOINTMENTS = 'appointments';
     const INVOICES = 'invoices';
+    const INVOICE_PDF = 'invoice_pdf';
     const CUSTOMERS = 'customers';
     const EMAIL_NOTIFICATIONS = 'email_notifications';
     const SERVICES = 'services';
@@ -43,15 +44,36 @@ abstract class Tables
             case self::INVOICES:
                 $columns = array(
                     'id' => esc_html__( 'No.', 'connectpx_booking' ),
-                    'pickup_datetime' => esc_html__( 'Date', 'connectpx_booking' ),
+                    'start_date' => esc_html__( 'Start Date', 'connectpx_booking' ),
+                    'end_date' => esc_html__( 'End Date', 'connectpx_booking' ),
                     'customer_full_name' => esc_html__( 'Name', 'connectpx_booking' ),
-                    'customer_phone' => esc_html__( 'Phone', 'connectpx_booking' ),
-                    'customer_email' => esc_html__( 'Email', 'connectpx_booking' ),
-                    'service_title' => esc_html__( 'Service', 'connectpx_booking' ),
                     'status' => esc_html__( 'Status', 'connectpx_booking' ),
-                    'payment' => esc_html__( 'Payment', 'connectpx_booking' ),
-                    'notes' => esc_html__( 'Notes', 'connectpx_booking' ),
+                    'total_amount' => esc_html__( 'Total Amount', 'connectpx_booking' ),
+                    'due_amount' => esc_html__( 'Due Amount', 'connectpx_booking' ),
                     'created_date' => esc_html__( 'Created', 'connectpx_booking' ),
+                );
+                break;
+            case self::INVOICE_PDF:
+                $columns = array(
+                    'id' => esc_html__( '#', 'connectpx_booking' ),
+                    'date' => esc_html__( 'Date', 'connectpx_booking' ),
+                    'patient' => esc_html__( 'Patient', 'connectpx_booking' ),
+                    'pickup_time' => esc_html__( 'Pup', 'connectpx_booking' ),
+                    'clinic' => esc_html__( 'Clinic', 'connectpx_booking' ),
+                    'address' => esc_html__( 'Address', 'connectpx_booking' ),
+                    'city' => esc_html__( 'City, State', 'connectpx_booking' ),
+                    'zip' => esc_html__( 'ZIP', 'connectpx_booking' ),
+                    'trip_type' => esc_html__( 'RT/O', 'connectpx_booking' ),
+                    'status' => esc_html__( 'Status', 'connectpx_booking' ),
+                    'flat_rate' => esc_html__( 'Flat Rate', 'connectpx_booking' ),
+                    'mileage' => esc_html__( 'Mileage', 'connectpx_booking' ),
+                    'mileage_fee' => esc_html__( 'Mileage Fee', 'connectpx_booking' ),
+                    'total_mileage_fee' => esc_html__( 'Total Milage Fee', 'connectpx_booking' ),
+                    'after_hours_fee' => esc_html__( 'After Hours Fee', 'connectpx_booking' ),
+                    'waiting_fee' => esc_html__( 'Waiting Fee', 'connectpx_booking' ),
+                    'no_show_fee' => esc_html__( 'No Show', 'connectpx_booking' ),
+                    'extras' => esc_html__( 'Extras', 'connectpx_booking' ),
+                    'total' => esc_html__( 'Total', 'connectpx_booking' ),
                 );
                 break;
             case self::CUSTOMERS:
@@ -197,7 +219,6 @@ abstract class Tables
             case self::INVOICES:
                 $columns = array( 'internal_note' => false, );
                 break;
-            case self::EMAIL_LOGS:
             case self::EMAIL_NOTIFICATIONS:
             case self::SERVICES:
                 $columns = array( 'id' => false, );
