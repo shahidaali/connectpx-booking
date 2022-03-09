@@ -138,7 +138,7 @@ class Ajax extends Lib\Base\Ajax
                     if ( $appointment->save() !== false ) {
                         $response['success'] = true;
                     } else {
-                        $response['errors'] = array( 'db' => __( 'Could not save appointment in database.', 'bookly' ) );
+                        $response['errors'] = array( 'db' => __( 'Could not save appointment in database.', 'connectpx_booking' ) );
                     }
                 }
             }
@@ -172,7 +172,7 @@ class Ajax extends Lib\Base\Ajax
             if ( $appointment->save() !== false ) {
                 $response['success'] = true;
             } else {
-                $response['errors'] = array( 'db' => __( 'Could not save appointment in database.', 'bookly' ) );
+                $response['errors'] = array( 'db' => __( 'Could not save appointment in database.', 'connectpx_booking' ) );
             }
         }
 
@@ -201,8 +201,8 @@ class Ajax extends Lib\Base\Ajax
                 $payment_details = !empty($appointment->getPaymentDetails()) ? json_decode($appointment->getPaymentDetails(), true) : [];
                 $adjustments = isset($payment_details['adjustments']) ? $payment_details['adjustments'] : [];
 
-                $adjustments = $appointment->getPaymentAdjustments();
-                if( !empty($adjustment_reason) && $adjustment_reason <> 0 ) {
+                // $adjustments = $appointment->getPaymentAdjustments();
+                if( !empty($adjustment_reason) && $adjustment_amount <> 0 ) {
                     $adjustments[] = [
                         'reason' => $adjustment_reason,
                         'amount' => $adjustment_amount
@@ -229,11 +229,23 @@ class Ajax extends Lib\Base\Ajax
                         ->setPaymentDetails( json_encode( $payment_details ) );
                 }
 
-                $modified = $appointment->getModified();
                 if ( $appointment->save() !== false ) {
+
+                    // Update Invoice if exists
+                    $invoiceRow = Lib\Entities\InvoiceAppointment::query( 'ia' )
+                        ->select( 'i.*' )
+                        ->innerJoin( 'Invoice', 'i', 'ia.invoice_id = i.id' )
+                        ->where('ia.appointment_id', $appointment->getId())
+                        ->fetchRow();
+                    if( !empty($invoiceRow) ) {
+                        $invoice = new Lib\Entities\Invoice();
+                        $invoice->setFields($invoiceRow, true);
+                        $invoice->updateTotals();
+                    }
+
                     $response['success'] = true;
                 } else {
-                    $response['errors'] = array( 'db' => __( 'Could not save appointment in database.', 'bookly' ) );
+                    $response['errors'] = array( 'db' => __( 'Could not save appointment in database.', 'connectpx_booking' ) );
                 }
             }
             
@@ -265,7 +277,7 @@ class Ajax extends Lib\Base\Ajax
                     if ( $appointment->save() !== false ) {
                         $response['success'] = true;
                     } else {
-                        $response['errors'] = array( 'db' => __( 'Could not save appointment in database.', 'bookly' ) );
+                        $response['errors'] = array( 'db' => __( 'Could not save appointment in database.', 'connectpx_booking' ) );
                     }
                 }
             }

@@ -87,7 +87,7 @@ class Invoice extends Lib\Base\Component
         ]; 
         $data['appointments'] = $appointments; 
         $data['due_text'] = __(sprintf("Due After %d Days of Receipt", $due_days), 'connectpx_booking'); 
-        $data['thank_you_text'] = Lib\Utils\Common::getOption('invoices_thank_you_text', 'Thank you for your business!'); 
+        $data['thank_you_text'] = Lib\Utils\Common::getOption('invoices_thank_you_text', ''); 
         $data['due_date'] = Lib\Utils\DateTime::formatDate( $created_at->modify( $due_days * DAY_IN_SECONDS )->format( 'Y-m-d' ) ); 
         $data['invoice']['id'] = $invoice->getId(); 
         $data['invoice']['created_date'] = Lib\Utils\DateTime::formatDate( $invoice->getCreatedAt(), 'd-M-y' ); 

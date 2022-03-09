@@ -3,18 +3,21 @@ use ConnectpxBooking\Lib;
 use ConnectpxBooking\Lib\Utils;
 ?>
 <style type="text/css">
-	.preview-table {
-		font-size: 11px;
-	}
+    .preview-table {
+        font-size: 11px;
+    }
+    #connectpx_booking_tbs table#invoice-appointments tr td {
+        padding: 2px;
+    }
 </style>
-<div class="wrap">
+<div id="connectpx_booking_tbs" class="wrap">
     <div class="form-row align-items-center mb-3">
-        <h2 class="col m-0"><?php esc_html_e( sprintf('Invoice #%d', $invoice->getId()), 'connectpx_booking' ) ?></h2>
+        <h4 class="col m-0"><?php esc_html_e( sprintf('Invoice #%d', $invoice->getId()), 'connectpx_booking' ) ?></h4>
     </div>
-
+    <br>
     <?php echo Utils\Session::falsh_messages(); ?>
 
-    <div class="preview-table">
-		<?php echo $preview; ?>
-	</div>
+    <div id="invoice_peview">
+        
+    </div>
 </div>

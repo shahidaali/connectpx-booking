@@ -28,6 +28,8 @@ class Backend {
 		Ajax::init();
 		Components\Dialogs\Appointment\Edit\Ajax::init();
 		Components\Dialogs\Invoice\Edit\Ajax::init();
+		Components\Dialogs\Invoice\View\Ajax::init();
+		Components\Dialogs\Notifications\Ajax::init();
 
 		add_action( 'admin_enqueue_scripts', array(__CLASS__, 'enqueueScripts') );
 		add_action( 'admin_menu', array(__CLASS__, 'adminMenu') );
@@ -56,6 +58,48 @@ class Backend {
 		Plugin::globalScripts();
 		$admin_resources = plugin_dir_url( __FILE__ );
 
+		// Ace Editor
+		wp_register_script( 
+			'connectpx_booking_editor_ace', 
+			$admin_resources . 'components/ace/resources/js/ace.js', 
+			array(), 
+			Plugin::version(), 
+			false 
+		);
+		wp_register_script( 
+			'connectpx_booking_editor_ext_language', 
+			$admin_resources . 'components/ace/resources/js/ext-language_tools.js', 
+			array(), 
+			Plugin::version(), 
+			false 
+		);
+		wp_register_script( 
+			'connectpx_booking_editor_mode', 
+			$admin_resources . 'components/ace/resources/js/mode-connectpx_booking.js', 
+			array(), 
+			Plugin::version(), 
+			false 
+		);
+		wp_register_script( 
+			'connectpx_booking_editor', 
+			$admin_resources . 'components/ace/resources/js/editor.js', 
+			array(
+				'connectpx_booking_editor_ace',
+				'connectpx_booking_editor_ext_language',
+				'connectpx_booking_editor_mode',
+			), 
+			Plugin::version(), 
+			false 
+		);
+		wp_register_style( 
+			'connectpx_booking_editor', 
+			$admin_resources . 'components/ace/resources/css/ace.css', 
+			array(), 
+			Plugin::version(), 
+			'all' 
+		);
+
+		// Admin Scripts
 		wp_enqueue_style( 
 			'connectpx_booking_admin', 
 			$admin_resources . 'resources/css/admin.css', 
@@ -94,6 +138,46 @@ class Backend {
 				'connectpx_booking_moment', 
 				'connectpx_booking_daterangepicker',
 				'connectpx_booking_select2' 
+			), 
+			Plugin::version(), 
+			false 
+		);
+		wp_enqueue_script( 
+			'connectpx_booking_notifications_list', 
+			$admin_resources . 'modules/resources/js/notifications-list.js', 
+			array(), 
+			Plugin::version(), 
+			false 
+		);
+		wp_register_script( 
+			'connectpx_booking_notifications', 
+			$admin_resources . 'modules/resources/js/notifications.js', 
+			array( 
+				'jquery', 
+				'connectpx_booking_global',
+				'connectpx_booking_datatables', 
+				'connectpx_booking_moment', 
+				'connectpx_booking_daterangepicker',
+				'connectpx_booking_select2',
+				'connectpx_booking_notifications_list'
+			), 
+			Plugin::version(), 
+			false 
+		);
+
+		// Notification Dialog
+		wp_register_script( 
+			'connectpx_booking_notification_dialog', 
+			$admin_resources . 'components/dialogs/notifications/resources/js/notification-dialog.js', 
+			array( 
+				'jquery', 
+				'connectpx_booking_global',
+				'connectpx_booking_bootstrap',
+				'connectpx_booking_moment', 
+				'connectpx_booking_daterangepicker',
+				'connectpx_booking_select2',
+				'connectpx_booking_dropdown',
+				'connectpx_booking_editor' 
 			), 
 			Plugin::version(), 
 			false 
@@ -156,6 +240,7 @@ class Backend {
         $appointments = __( 'Appointments', 'connectpx_booking' );
         $calendar = __( 'Calendar', 'connectpx_booking' );
         $invoices = __( 'Invoices', 'connectpx_booking' );
+        $notifications = __( 'Notifications', 'connectpx_booking' );
         $settings = __( 'Settings', 'connectpx_booking' );
 
 		add_menu_page( $bookings, $bookings, 'manage_options', $slug, '', 'dashicons-admin-settings', 100 ); 
@@ -188,6 +273,11 @@ class Backend {
 		add_submenu_page( $slug, $invoices, $invoices, 'manage_options', Modules\Invoices::pageSlug(),
 			function() {
 				Modules\Invoices::render();
+			}
+		);
+		add_submenu_page( $slug, $notifications, $notifications, 'manage_options', Modules\Notifications::pageSlug(),
+			function() {
+				Modules\Notifications::render();
 			}
 		);
 		add_submenu_page( $slug, $settings, $settings, 'manage_options', Modules\Settings::pageSlug(),

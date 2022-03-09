@@ -118,7 +118,7 @@ jQuery(function($) {
         orderable : false,
         width     : 120,
         render    : function (data, type, row, meta) {
-            return '<button type="button" class="btn btn-default" data-action="view"><i class="far fa-fw fa-eye mr-lg-1"></i><span class="d-none d-lg-inline">' + ConnectpxBookingL10n.view + '…</span></button>';
+            return '<button type="button" class="btn btn-default" data-action="view"><i class="far fa-fw fa-eye mr-lg-1"></i></button> <a type="button" class="btn btn-default" href="'+ ConnectpxBookingL10n.download_link +'&id=2" target="_blank"><i class="fa fa-fw fa-download mr-lg-1"></i></a>';
         }
     });
     columns.push({
@@ -205,71 +205,6 @@ jQuery(function($) {
     });
 
     /**
-     * Export.
-     */
-    $exportForm.on('submit', function () {
-        $('[name="filter"]', $exportDialog).val(JSON.stringify({
-            id          : $idFilter.val(),
-            date        : $invoiceDateFilter.data('date'),
-            created_date: $creationDateFilter.data('date'),
-            customer    : $customerFilter.val(),
-            service     : $serviceFilter.val(),
-            status      : $statusFilter.val(),
-        }));
-        $exportDialog.connectpx_bookingModal('hide');
-
-        return true;
-    });
-
-    $exportSelectAll
-        .on('click', function () {
-            let checked = this.checked;
-            $('.connectpx_booking-js-columns input', $exportDialog).each(function () {
-                $(this).prop('checked', checked);
-            });
-        });
-
-    $('.connectpx_booking-js-columns input', $exportDialog)
-        .on('change', function () {
-            $exportSelectAll.prop('checked', $('.connectpx_booking-js-columns input:checked', $exportDialog).length == $('.connectpx_booking-js-columns input', $exportDialog).length);
-        });
-
-    /**
-     * Print.
-     */
-    $printButton.on('click', function () {
-        let columns = [];
-        $('input:checked', $printDialog).each(function () {
-            columns.push(this.value);
-        });
-        let config = {
-            title: '&nbsp;',
-            exportOptions: {
-                columns: columns
-            },
-            customize: function (win) {
-                win.document.firstChild.style.backgroundColor = '#fff';
-                win.document.body.id = 'connectpx_booking_tbs';
-                $(win.document.body).find('table').removeClass('collapsed');
-            }
-        };
-        $.fn.dataTable.ext.buttons.print.action(null, dt, null, $.extend({}, $.fn.dataTable.ext.buttons.print, config));
-    });
-
-    $printSelectAll
-        .on('click', function () {
-            let checked = this.checked;
-            $('.connectpx_booking-js-columns input', $printDialog).each(function () {
-                $(this).prop('checked', checked);
-            });
-        });
-
-    $('.connectpx_booking-js-columns input', $printDialog)
-        .on('change', function () {
-            $printSelectAll.prop('checked', $('.connectpx_booking-js-columns input:checked', $printDialog).length == $('.connectpx_booking-js-columns input', $printDialog).length);
-        });
-
-    /**
      * Select all invoices.
      */
     $checkAllButton.on('change', function () {
@@ -281,42 +216,16 @@ jQuery(function($) {
         .on('change', 'tbody input:checkbox', function () {
             $checkAllButton.prop('checked', $invoicesList.find('tbody input:not(:checked)').length == 0);
         })
-        // Show payment details
-        .on('click', '[data-action=show-payment]', function () {
-            ConnectpxBookingPaymentDetailsDialog.showDialog({
-                payment_id: getDTRowData(this).payment_id,
-                done: function (event) {
-                    dt.ajax.reload();
-                }
-            });
-        })
         // Edit invoice.
-        .on('click', '[data-action=edit]', function (e) {
+        .on('click', '[data-action=view]', function (e) {
             e.preventDefault();
-            ConnectpxBookingInvoiceDialog.showDialog(
+            ConnectpxBookingInvoiceViewDialog.showDialog(
                 getDTRowData(this).id,
                 function (event) {
                     dt.ajax.reload();
                 }
             )
         });
-
-    $showDeleteConfirmation.on('click', function () {
-        let data = [],
-            $checkboxes = $invoicesList.find('tbody input:checked');
-
-        $checkboxes.each(function () {
-            data.push({ca_id: this.value, id: $(this).data('invoice')});
-        });
-
-        new ConnectpxBookingConfirmDeletingInvoice({
-                action: 'connectpx_booking_delete_customer_invoices',
-                data: data,
-                csrf_token: ConnectpxBookingL10nGlobal.csrf_token,
-            },
-            function(response) {dt.draw(false);}
-        );
-    });
 
     /**
      * Init date range pickers.

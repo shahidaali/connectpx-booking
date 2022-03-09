@@ -136,7 +136,7 @@ use ConnectpxBooking\Lib;
             <!-- Appointments -->
             <tr>
                 <td>
-                    <table cellpadding="5" cellspacing="0" width="100%" style="border-collapse: collapse; border: 1px solid #000;">
+                    <table cellpadding="5" cellspacing="0" width="100%" style="border-collapse: collapse; border: 1px solid #000;" id="invoice-appointments" class="table">
                         <tbody>
                             <tr>
                                 <?php foreach ($datatables['settings']['columns'] as $name => $show) { ?>
@@ -146,7 +146,19 @@ use ConnectpxBooking\Lib;
                             <?php foreach ($appointments as $appointment) { ?>
                                 <tr>
                                     <?php foreach ($datatables['settings']['columns'] as $name => $show) { ?>
-                                        <td style="vertical-align: middle; border-right-width: 0.1px; border-bottom-width: 0.1; text-align: center;" valign="middle" align="center"><?php echo $appointment[$name]; ?></td>
+                                        <td style="vertical-align: middle; border-right-width: 0.1px; border-bottom-width: 0.1; text-align: center;" valign="middle" align="center">
+                                            <?php
+                                                switch ($name) {
+                                                     case 'id':
+                                                         echo sprintf('<a href="#" data-id="%1$d" class="view-appointment">%1$d</a>', $appointment[$name]);
+                                                         break;
+                                                     
+                                                     default:
+                                                         echo $appointment[$name]; 
+                                                         break;
+                                                 } 
+                                            ?>
+                                        </td>
                                     <?php } ?>
                                 </tr>
                             <?php } ?>
@@ -157,18 +169,27 @@ use ConnectpxBooking\Lib;
             <!-- # Appointments -->
             <!-- Totals -->
             <tr>
-                <td align="right">
-                    <table cellpadding="5" cellspacing="0" width="30%" style="border-collapse: collapse; border: 1px solid #000; background-color: #d8d8d8;">
+                <td>
+                    <table cellpadding="0" cellspacing="0" width="100%">
                         <tbody>
                             <tr>
-                                <td style="font-weight: bold; vertical-align: middle; border-right-width: 0.1px; border-bottom-width: 0.1; color: #2e75b5;" valign="middle">
-                                    <?php echo $thank_you_text; ?>
-                                </td>
-                                <td style="font-weight: bold; vertical-align: middle; border-right-width: 0.1px; border-bottom-width: 0.1; color: #2e75b5;" valign="middle">
-                                    <?php echo __('Total', 'connectpx_booking'); ?>
-                                </td>
-                                <td style="font-weight: bold; vertical-align: middle; border-right-width: 0.1px; border-bottom-width: 0.1; color: #2e75b5;" valign="middle">
-                                    <?php echo $invoice['total']; ?>
+                                <td style="width: 70%;"></td>
+                                <td style="width: 30%;">
+                                    <table cellpadding="5" cellspacing="0" width="100%" style="border-collapse: collapse; border: 1px solid #000; background-color: #d8d8d8;">
+                                        <tbody>
+                                            <tr>
+                                                <td style="font-weight: bold; vertical-align: middle; border-right-width: 0.1px; border-bottom-width: 0.1; color: #2e75b5; width: 60%;" valign="middle">
+                                                    <?php echo $thank_you_text; ?>
+                                                </td>
+                                                <td style="font-weight: bold; vertical-align: middle; border-right-width: 0.1px; border-bottom-width: 0.1; color: #2e75b5; width: 20%;" valign="middle">
+                                                    <?php echo __('Total', 'connectpx_booking'); ?>
+                                                </td>
+                                                <td style="font-weight: bold; vertical-align: middle; border-right-width: 0.1px; border-bottom-width: 0.1; color: #2e75b5;  width: 20%;" valign="middle">
+                                                    <?php echo $invoice['total']; ?>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
                                 </td>
                             </tr>
                         </tbody>

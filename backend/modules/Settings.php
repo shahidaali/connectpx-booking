@@ -32,6 +32,10 @@ class Settings extends Lib\Base\Component {
             Lib\Entities\Appointment::STATUS_PENDING => __("Pending", 'connectpx_booking'),
             Lib\Entities\Appointment::STATUS_APPROVED => __("Approved", 'connectpx_booking'),
         ];
+        $ntf_processing_intervals = [];
+        for ($i=1; $i < 24; $i++) { 
+            $ntf_processing_intervals[$i] = $i . " h";
+        }
         self::renderTemplate( 'backend/templates/settings', compact(
             'messages', 
             'business_hours', 
@@ -39,6 +43,7 @@ class Settings extends Lib\Base\Component {
             'min_time_requirements',
             'wc_products',
             'appointment_statuses',
+            'ntf_processing_intervals',
         ) );
     }
 

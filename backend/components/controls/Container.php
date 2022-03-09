@@ -22,7 +22,7 @@ class Container extends Lib\Base\Component
             $id = 'container_' . mt_rand( 10000, 99999 );
         }
         $opened = (boolean) $opened;
-        self::renderTemplate( 'container', compact( 'title', 'id', 'opened' ) );
+        self::renderTemplate( 'backend/components/controls/templates/container', compact( 'title', 'id', 'opened' ) );
     }
 
     /**

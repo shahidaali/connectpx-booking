@@ -52,6 +52,25 @@ class Invoice extends Lib\Base\Entity
     );
 
     /**
+     * Get appointment statuses.
+     *
+     * @return array
+     */
+    public static function getStatuses()
+    {
+        if ( ! self::hasInCache( __FUNCTION__ ) ) {
+            $statuses = array(
+                self::STATUS_COMPLETED,
+                self::STATUS_PENDING,
+                self::STATUS_REJECTED,
+            );
+            self::putInCache( __FUNCTION__, $statuses );
+        }
+
+        return self::getFromCache( __FUNCTION__ );
+    }
+
+    /**
      * Get status of payment.
      *
      * @param string $status
@@ -64,6 +83,16 @@ class Invoice extends Lib\Base\Entity
             case self::STATUS_PENDING:    return __( 'Pending',   'connectpx_booking' );
             case self::STATUS_REJECTED:   return __( 'Rejected',  'connectpx_booking' );
             default:                      return '';
+        }
+    }
+
+    public static function statusToIcon( $status )
+    {
+        switch ( $status ) {
+            case self::STATUS_PENDING:    return 'far fa-clock';
+            case self::STATUS_COMPLETED:   return 'fas fa-check';
+            case self::STATUS_REJECTED:   return 'fas fa-ban';
+            default: return '';
         }
     }
 
@@ -243,27 +272,6 @@ class Invoice extends Lib\Base\Entity
     }
 
     /**
-     * Gets customer_id
-     *
-     * @return float
-     */
-    public function loadAppointments()
-    {
-        $details = $this->getDetails() ? json_decode($this->getDetails(), true) : [];
-        $aids = $details['a_ids'] ?? [];
-        $rows = Lib\Entities\Appointment::query( 'a' )
-            ->whereIn( 'a.id', $aids )
-            ->fetchArray();
-
-        $appointments = [];
-        foreach ($rows as $key => $row) {
-            $appointments[] = new Lib\Entities\Appointment( $row );
-        }
-
-        return $appointments;
-    }
-
-    /**
      * Gets created_at
      *
      * @return string
@@ -339,6 +347,38 @@ class Invoice extends Lib\Base\Entity
     }
 
     /**
+     * Gets customer_id
+     *
+     * @return float
+     */
+    public function getAppointments()
+    {
+        return Lib\Entities\InvoiceAppointment::query( 'ia' )
+            ->select( 'a.*' )
+            ->innerJoin( 'Appointment', 'a', 'ia.appointment_id = a.id' )
+            ->where('ia.invoice_id', $this->getId())
+            ->order('DESC')
+            ->fetchArray();
+    }
+
+    /**
+     * Gets customer_id
+     *
+     * @return float
+     */
+    public function loadAppointments()
+    {
+        $appointments = [];
+
+        foreach ($this->getAppointments() as $key => $row) {
+            $appointments[] = new Lib\Entities\Appointment( $row );
+        }
+
+        return $appointments;
+    }
+
+
+    /**
      * @inheritDoc
      */
     public function updateTotals( array $appointments = [] )
@@ -349,12 +389,7 @@ class Invoice extends Lib\Base\Entity
         $a_ids = [];  
 
         if( empty( $appointments ) ) {
-            $appointments = Lib\Entities\InvoiceAppointment::query( 'a' )
-                ->select( 'a.*' )
-                ->innerJoin( 'Appointment', 'a', 'ia.appointment_id = a.id' )
-                ->where('ia.invoice_id', $this->id)
-                ->order('DESC')
-                ->fetchArray();
+            $appointments = $this->getAppointments();
         }
 
         if( !empty( $appointments ) ) {
@@ -382,8 +417,8 @@ class Invoice extends Lib\Base\Entity
             }
         }
 
-        // Delete not existing appointments
-        $appointments = Lib\Entities\InvoiceAppointment::query()
+        // Delete removed invoice appointments
+        Lib\Entities\InvoiceAppointment::query()
             ->where('invoice_id', $this->id)
             ->whereNotIn('appointment_id', $a_ids)
             ->delete();

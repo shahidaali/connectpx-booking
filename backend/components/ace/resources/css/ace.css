@@ -1,0 +1,25 @@
+.connectpx_booking-ace-editor {
+    min-height: 360px;
+    width: 100%;
+    border: 1px solid #ced4da;
+    border-radius: .25rem;
+    color: #495057;
+}
+
+.connectpx_booking-ace-editor.connectpx_booking-ace-editor-h80 {
+    min-height: 80px;
+}
+
+.ace_connectpx_booking_each, .ace_connectpx_booking_endeach {
+    color: #e36209;
+}
+.ace_connectpx_booking_if, .ace_connectpx_booking_endif {
+    color: #d73a49;
+}
+.ace_connectpx_booking_code {
+    color: #005cc5;
+}
+
+.rtl .connectpx_booking-tbs #connectpx_booking-ace-editor, .rtl #connectpx_booking-tbs .connectpx_booking-ace-editor * {
+    text-align: initial;
+}

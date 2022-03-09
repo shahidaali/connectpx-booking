@@ -1,7 +1,7 @@
 <?php 
 use ConnectpxBooking\Lib;
 use ConnectpxBooking\Lib\Utils;
-use ConnectpxBooking\Lib\Entities\Appointment;
+use ConnectpxBooking\Lib\Entities\Invoice;
 use ConnectpxBooking\Lib\Utils\Common;
 use ConnectpxBooking\Lib\Utils\DateTime;
 use ConnectpxBooking\Lib\Config;
@@ -59,8 +59,8 @@ use ConnectpxBooking\Backend\Components\Controls;
                 <div class="col-md-1">
                     <div class="form-group">
                         <select class="form-control connectpx_booking-js-select" id="connectpx_booking-filter-status" data-placeholder="<?php esc_attr_e( 'Status', 'connectpx_booking' ) ?>">
-                            <?php foreach ( Appointment::getStatuses() as $status ): ?>
-                                <option value="<?php echo esc_attr( $status ) ?>"><?php echo esc_html( Appointment::statusToString( $status ) ) ?></option>
+                            <?php foreach ( Invoice::getStatuses() as $status ): ?>
+                                <option value="<?php echo esc_attr( $status ) ?>"><?php echo esc_html( Invoice::statusToString( $status ) ) ?></option>
                             <?php endforeach ?>
                         </select>
                     </div>
@@ -85,6 +85,8 @@ use ConnectpxBooking\Backend\Components\Controls;
             </div>
         </div>
     </div>
-
+    
+    <?php Dialogs\Appointment\Edit\Dialog::render() ?>
     <?php Dialogs\Invoice\Edit\Dialog::render() ?>
+    <?php Dialogs\Invoice\View\Dialog::render() ?>
 </div>

@@ -618,4 +618,82 @@ class Ajax extends Lib\Base\Ajax
 
         return array_values( $appointments );
     }
+
+    /**
+     * Test email notifications.
+     */
+    public static function testEmailNotifications()
+    {
+        $to_email      = self::parameter( 'to_email' );
+        $sender_name   = self::parameter( 'connectpx_booking_email_sender_name' );
+        $sender_email  = self::parameter( 'connectpx_booking_email_sender' );
+        $send_as       = self::parameter( 'connectpx_booking_email_send_as' );
+        $notification_ids   = (array) self::parameter( 'notification_ids' );
+        $reply_to_customers = self::parameter( 'connectpx_booking_email_reply_to_customers' );
+
+        Lib\Notifications\Test\Sender::send( $to_email, $sender_name, $sender_email, $send_as, $reply_to_customers, $notification_ids );
+
+        wp_send_json_success();
+    }
+
+    /**
+     * Load tab data for email notifications page.
+     */
+    public static function emailNotificationsLoadTab()
+    {
+        $tab = self::parameter( 'tab', 'notifications' );
+
+        switch ( $tab ) {
+            case 'logs' :
+                $datatables = Lib\Utils\Tables::getSettings( 'email_logs' );
+                $response = array(
+                    'html' => self::renderTemplate( 'backend/templates/partials/notifications/logs', compact( 'datatables' ), false ),
+                );
+                break;
+            default:
+                $datatables = Lib\Utils\Tables::getSettings( 'email_notifications' );
+                $response = array(
+                    'html' => self::renderTemplate( 'backend/templates/partials/notifications/notifications', compact( 'datatables' ), false ),
+                );
+                break;
+        }
+
+        wp_send_json_success( $response );
+    }
+
+    /**
+     * Get data for notification list.
+     */
+    public static function getNotifications()
+    {
+        $types = Lib\Entities\Notification::getTypes( self::parameter( 'gateway' ) );
+
+        $notifications = Lib\Entities\Notification::query()
+            ->select( 'id, name, active, type' )
+            ->where( 'gateway', self::parameter( 'gateway' ) )
+            ->whereIn( 'type', $types )
+            ->fetchArray();
+
+        foreach ( $notifications as &$notification ) {
+            $notification['order'] = array_search( $notification['type'], $types );
+            $notification['icon']  = Lib\Entities\Notification::getIcon( $notification['type'] );
+            $notification['title'] = Lib\Entities\Notification::getTitle( $notification['type'] );
+        }
+
+        wp_send_json_success( $notifications );
+    }
+
+    /**
+     * Activate/Suspend notification.
+     */
+    public static function setNotificationState()
+    {
+        Lib\Entities\Notification::query()
+            ->update()
+            ->set( 'active', (int) self::parameter( 'active' ) )
+            ->where( 'id', self::parameter( 'id' ) )
+            ->execute();
+
+        wp_send_json_success();
+    }
 }

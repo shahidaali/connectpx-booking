@@ -41,9 +41,12 @@ class Invoices extends Lib\Base\Component {
                     'zeroRecords'     => __( 'No invoices for selected period.', 'connectpx_booking' ),
                     'processing'      => __( 'Processing...', 'connectpx_booking' ),
                     'view'            => __( 'View', 'connectpx_booking' ),
+                    'download'            => __( 'Download', 'connectpx_booking' ),
                     'no_result_found' => __( 'No result found', 'connectpx_booking' ),
                     'searching'       => __( 'Searching', 'connectpx_booking' ),
                     'datatables'      => $datatables,
+                    'view_link' => self::escAdminUrl( self::pageSlug(), ['tab' => 'view'] ),
+                    'download_link' => self::escAdminUrl( self::pageSlug(), ['tab' => 'download'] ),
                 ) );
 
                 wp_enqueue_script('connectpx_booking_invoices');

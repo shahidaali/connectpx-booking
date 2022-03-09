@@ -17,6 +17,8 @@ use ConnectpxBooking\Lib\Utils;
 				<li class="active"><a href="#tab-general"><?php _e('General', 'connectpx_booking'); ?></a></li>
 				<li><a href="#tab-company-detail"><?php _e('Company Detail', 'connectpx_booking'); ?></a></li>
 				<li><a href="#tab-business-hours"><?php _e('Office Hours', 'connectpx_booking'); ?></a></li>
+				<li><a href="#tab-invoices"><?php _e('Invoices', 'connectpx_booking'); ?></a></li>
+				<li><a href="#tab-notifications"><?php _e('Notifications', 'connectpx_booking'); ?></a></li>
 				<li><a href="#tab-google-maps"><?php _e('Google Maps', 'connectpx_booking'); ?></a></li>
 				<li><a href="#tab-wocoomerce"><?php _e('WooCommerce', 'connectpx_booking'); ?></a></li>
 			</ul>
@@ -196,6 +198,86 @@ use ConnectpxBooking\Lib\Utils;
 							</td>
 						</tr>
 					<?php endforeach; ?>
+				</tbody>
+			</table>
+		</div>
+
+		<div class="os-tab-content" id="tab-invoices">
+			<table class="form-table" role="presentation">
+				<tbody>
+					<tr>
+						<th colspan="2">
+							<div class="connectpx_booking_instructions">
+				                <h2><?php echo __('Invoice', 'connectpx_booking'); ?></h2>
+				            </div>
+						</th>
+					</tr>
+					<tr>
+						<th scope="row"><?php _e('Invoice due days', 'connectpx_booking'); ?></th>
+						<td>
+							<input name="connectpx_booking[invoices_due_days]" type="number"  value="<?php echo Utils\Common::getOption('invoices_due_days', 30); ?>" size="50">
+							<div class="connectpx-booking-field-info"><?php echo __('This setting specifies the due period for the invoice (in days).', 'connectpx_booking') ?></div>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php _e('Thank you text', 'connectpx_booking'); ?></th>
+						<td>
+							<textarea name="connectpx_booking[invoices_thank_you_text]" rows="5" cols="52"><?php echo Utils\Common::getOption('invoices_thank_you_text', ''); ?></textarea>
+							<div class="connectpx-booking-field-info"><?php echo __('This setting specifies the thank you text on invoice.', 'connectpx_booking') ?></div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<div class="os-tab-content" id="tab-notifications">
+			<table class="form-table" role="presentation">
+				<tbody>
+					<tr>
+						<th colspan="2">
+							<div class="connectpx_booking_instructions">
+				                <h2><?php echo __('Email', 'connectpx_booking'); ?></h2>
+				            </div>
+						</th>
+					</tr>
+					<tr>
+						<th scope="row"><?php _e('Sender Name', 'connectpx_booking'); ?></th>
+						<td>
+						<input name="connectpx_booking[email_sender_name]" type="text"  value="<?php echo Utils\Common::getOption('email_sender_name', ''); ?>" size="50"></td>
+					</tr>
+					<tr>
+						<th scope="row"><?php _e('Sender Email', 'connectpx_booking'); ?></th>
+						<td>
+						<input name="connectpx_booking[email_sender]" type="text"  value="<?php echo Utils\Common::getOption('email_sender', ''); ?>" size="50"></td>
+					</tr>
+					<tr>
+						<th scope="row"><?php _e('Save Email Logs', 'connectpx_booking'); ?></th>
+						<td>
+							<select name="connectpx_booking[save_email_logs]">
+								<?php 
+								echo Utils\Form::selectOptions([
+									'yes' => __('Yes', 'connectpx_booking'), 
+									'no' => __('No', 'connectpx_booking')
+								], 
+								Utils\Common::getOption('save_email_logs', 'yes')); 
+								?>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php _e('Scheduled notifications retry period', 'connectpx_booking'); ?></th>
+						<td>
+							<select name="connectpx_booking[ntf_processing_interval]">
+								<?php 
+								echo Utils\Form::selectOptions(
+									$ntf_processing_intervals, 
+									Utils\Common::getOption('ntf_processing_interval', 'yes')
+								); 
+								?>
+							</select>
+							<div class="connectpx-booking-field-info"><?php echo __('Set period of time when system will attempt to deliver notification to user. Notification will be discarded after period expiration.', 'connectpx_booking') ?></div>
+						</td>
+					</tr>
 				</tbody>
 			</table>
 		</div>

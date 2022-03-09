@@ -88,3 +88,12 @@
 tbody.payment-detail-table td {
     padding: 7px 0.75rem !important;
 }
+#connectpx_booking_tbs .connectpx_booking-modal {
+    z-index: 9999;
+}
+#connectpx_booking_tbs .invoice-preview-table {
+    font-size: 11px;
+}
+#connectpx_booking_tbs table#invoice-appointments tr td {
+    padding: 2px;
+}

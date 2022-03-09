@@ -15,6 +15,7 @@ abstract class Tables
     const INVOICE_PDF = 'invoice_pdf';
     const CUSTOMERS = 'customers';
     const EMAIL_NOTIFICATIONS = 'email_notifications';
+    const EMAIL_LOGS = 'email_logs';
     const SERVICES = 'services';
 
     /**
@@ -98,6 +99,14 @@ abstract class Tables
                     'type' => esc_html__( 'Type', 'connectpx_booking' ),
                     'name' => esc_html__( 'Name', 'connectpx_booking' ),
                     'active' => esc_html__( 'State', 'connectpx_booking' ),
+                );
+                break;
+            case self::EMAIL_LOGS:
+                $columns = array(
+                    'id' => esc_html__( 'ID', 'connectpx_booking' ),
+                    'to' => esc_html__( 'To', 'connectpx_booking' ),
+                    'subject' => esc_html__( 'Subject', 'connectpx_booking' ),
+                    'created_at' => esc_html__( 'Created', 'connectpx_booking' ),
                 );
                 break;
             case self::SERVICES:
@@ -220,6 +229,7 @@ abstract class Tables
                 $columns = array( 'internal_note' => false, );
                 break;
             case self::EMAIL_NOTIFICATIONS:
+            case self::EMAIL_LOGS:
             case self::SERVICES:
                 $columns = array( 'id' => false, );
                 break;

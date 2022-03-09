@@ -7,7 +7,7 @@ use ConnectpxBooking\Lib\Utils\Common;
    <div class="modal-dialog modal-lg">
       <div class="modal-content">
          <div class="modal-header">
-            <h5 class="modal-title"><?php echo __('Appointment Detail', 'connectpx_booking'); ?></h5>
+            <h5 class="modal-title"><?php echo __(sprintf('Appointment #%d', $appointment->getId()), 'connectpx_booking'); ?></h5>
             <button type="button" class="close" data-dismiss="connectpx_booking-modal" aria-label="Close"><span aria-hidden="true">×</span></button>
          </div>
          <div class="modal-body">

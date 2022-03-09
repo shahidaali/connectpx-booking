@@ -8,11 +8,10 @@ var ConnectpxBookingAppointmentDialog = function(Dialog, $, moment, ConnectpxBoo
 		Dialog.loadAppointment({
 			id: appointment_id,
 			tab: tab !== undefined && tab ? tab : 'appointment',
-			callback: callback
-		});
+		}, callback);
 	};
 
-	Dialog.loadAppointment = function (options) {
+	Dialog.loadAppointment = function (options, callback) {
         let data = $.extend({}, options, {
         	action: "connectpx_booking_render_edit_appointment",
             csrf_token: ConnectpxBookingL10nGlobal.csrf_token,
@@ -54,6 +53,11 @@ var ConnectpxBookingAppointmentDialog = function(Dialog, $, moment, ConnectpxBoo
                 	$payment_info.html( appointmentData.payment_info );
 
                     $modal.connectpx_bookingModal('show');
+                    $modal.on('hidden.bs.modal', function(){
+                    	if( callback !== undefined ) {
+	                		callback(appointmentData);
+	                	}
+                    });
 
                     $btn_update_status.click(function(e){
                     	e.preventDefault();
@@ -73,8 +77,8 @@ var ConnectpxBookingAppointmentDialog = function(Dialog, $, moment, ConnectpxBoo
 				            success: function (response) {
 				                if (response.success) {
 				                	$modal.connectpx_bookingModal('hide');
-				                	if( data.callback !== undefined ) {
-				                		data.callback( response );
+				                	if( callback !== undefined ) {
+				                		callback( appointmentData );
 				                	}
 				                }
 				            }
@@ -95,8 +99,8 @@ var ConnectpxBookingAppointmentDialog = function(Dialog, $, moment, ConnectpxBoo
 				            success: function (response) {
 				                if (response.success) {
 				                	$modal.connectpx_bookingModal('hide');
-				                	if( data.callback !== undefined ) {
-				                		data.callback( response );
+				                	if( callback !== undefined ) {
+				                		callback( appointmentData );
 				                	}
 				                }
 				            }
@@ -134,9 +138,8 @@ var ConnectpxBookingAppointmentDialog = function(Dialog, $, moment, ConnectpxBoo
 				                if (response.success) {
 				                	Dialog.loadAppointment({
 										id: data.id,
-										tab: 'payment',
-										callback: data.callback
-									});
+										tab: 'payment'
+									}, callback);
 				                }
 				            }
 				        });
@@ -171,8 +174,7 @@ var ConnectpxBookingAppointmentDialog = function(Dialog, $, moment, ConnectpxBoo
 				                	Dialog.loadAppointment({
 										id: data.id,
 										tab: 'payment',
-										callback: data.callback
-									});
+									}, callback);
 				                }
 				            }
 				        });
