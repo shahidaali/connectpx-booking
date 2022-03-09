@@ -93,7 +93,7 @@ jQuery(function ($) {
 
             switch (notification_type) {
                 case 'appointment_reminder':
-                case 'ca_status_changed':
+                case 'appointment_status_changed':
                     hideStatuses = false;
                     hideServices = false;
                     break;

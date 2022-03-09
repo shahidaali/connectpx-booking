@@ -13,6 +13,7 @@ abstract class Tables
     const APPOINTMENTS = 'appointments';
     const INVOICES = 'invoices';
     const INVOICE_PDF = 'invoice_pdf';
+    const BOOKING_EMAIL = 'booking_email';
     const CUSTOMERS = 'customers';
     const EMAIL_NOTIFICATIONS = 'email_notifications';
     const EMAIL_LOGS = 'email_logs';
@@ -74,6 +75,24 @@ abstract class Tables
                     'waiting_fee' => esc_html__( 'Waiting Fee', 'connectpx_booking' ),
                     'no_show_fee' => esc_html__( 'No Show', 'connectpx_booking' ),
                     'extras' => esc_html__( 'Extras', 'connectpx_booking' ),
+                    'total' => esc_html__( 'Total', 'connectpx_booking' ),
+                );
+                break;
+            case self::BOOKING_EMAIL:
+                $columns = array(
+                    'id' => esc_html__( '#', 'connectpx_booking' ),
+                    'date' => esc_html__( 'Date', 'connectpx_booking' ),
+                    'patient' => esc_html__( 'Patient', 'connectpx_booking' ),
+                    'pickup_time' => esc_html__( 'Pup', 'connectpx_booking' ),
+                    'trip_type' => esc_html__( 'RT/O', 'connectpx_booking' ),
+                    'status' => esc_html__( 'Status', 'connectpx_booking' ),
+                    'flat_rate' => esc_html__( 'Flat Rate', 'connectpx_booking' ),
+                    'mileage' => esc_html__( 'Mileage', 'connectpx_booking' ),
+                    'mileage_fee' => esc_html__( 'Mileage Fee', 'connectpx_booking' ),
+                    'total_mileage_fee' => esc_html__( 'Total Milage Fee', 'connectpx_booking' ),
+                    'after_hours_fee' => esc_html__( 'After Hours Fee', 'connectpx_booking' ),
+                    'waiting_fee' => esc_html__( 'Waiting Fee', 'connectpx_booking' ),
+                    'no_show_fee' => esc_html__( 'No Show', 'connectpx_booking' ),
                     'total' => esc_html__( 'Total', 'connectpx_booking' ),
                 );
                 break;

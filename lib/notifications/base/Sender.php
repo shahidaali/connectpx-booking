@@ -20,6 +20,7 @@ abstract class Sender extends Reminder
     {
         $result = array(
             'client' => array(),
+            'admin' => array(),
         );
 
         $query = Notification::query( 'n' )
@@ -35,6 +36,9 @@ abstract class Sender extends Reminder
                 if ( $settings->getInstant() ) {
                     if ( $notification->getToCustomer() ) {
                         $result['client'][] = $notification;
+                    }
+                    if ( $notification->getToAdmin() ) {
+                        $result['admin'][] = $notification;
                     }
                 }
             }

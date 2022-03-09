@@ -64,7 +64,7 @@ abstract class Routine
                 }
             } else {
                 foreach ( $customers as $customer ) {
-                    $codes = new Assets\ClientBirthday\Codes( $customer );
+                    $codes = new Assets\Customer\Codes( $customer );
                     if ( $notification->getToCustomer() && Base\Reminder::sendToClient( $customer, $notification, $codes ) ) {
                         self::wasSent( $notification, $customer->getId() );
                     }
@@ -135,7 +135,7 @@ abstract class Routine
     {
         return sprintf( '
                 SELECT * FROM `%s` `sn` 
-                WHERE `sn`.`ref_id` = `ca`.`id`
+                WHERE `sn`.`ref_id` = `a`.`id`
                   AND `sn`.`notification_id` = %d
             ',
             SentNotification::getTableName(),
@@ -190,7 +190,7 @@ abstract class Routine
         self::$today = Lib\Slots\DatePoint::fromStr( 'today' );
         self::$mysql_today = self::$today->format( 'Y-m-d' );
         self::$hours = self::$date_point->format( 'H' );
-        self::$processing_interval = (int) Lib\Utils\Common( 'ntf_processing_interval', 2 );
+        self::$processing_interval = (int) Lib\Utils\Common::getOption( 'ntf_processing_interval', 2 );
 
         // Custom notifications.
         $custom_notifications = Notification::query()

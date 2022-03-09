@@ -33,17 +33,21 @@ class NotificationCodes
                 'appointment_notes' => array( 'description' => __( 'Customer notes for appointment', 'connectpx_booking' ), 'if' => true ),
                 'booking_number' => array( 'description' => __( 'Booking number', 'connectpx_booking' ) ),
                 'admin_notes' => array( 'description' => __( 'Admin notes', 'connectpx_booking' ) ),
-                'approve_appointment_url' => array( 'description' => __( 'URL of approve appointment link (to use inside <a> tag)', 'connectpx_booking' ) ),
-                'cancel_appointment_confirm_url' => array( 'description' => __( 'URL of cancel appointment link with confirmation (to use inside <a> tag)', 'connectpx_booking' ) ),
-                'cancel_appointment_url' => array( 'description' => __( 'URL of cancel appointment link (to use inside <a> tag)', 'connectpx_booking' ) ),
-                'cancellation_reason' => array( 'description' => __( 'Reason mentioned while cancelling appointment', 'connectpx_booking' ), 'if' => true ),
-                'reject_appointment_url' => array( 'description' => __( 'URL of reject appointment link (to use inside <a> tag)', 'connectpx_booking' ) ),
+                'status' => array( 'description' => __( 'Appointment status', 'connectpx_booking' ) ),
                 'cancellation_time_limit' => array( 'description' => __( 'Time limit to which appointments can be cancelled ', 'connectpx_booking' ) ),
+                'sub_service_name' => array( 'description' => __( 'Name of sub service', 'connectpx_booking' ) ),
+                'trip_type' => array( 'description' => __( 'Type of trip', 'connectpx_booking' ) ),
+                'flat_rate' => array( 'description' => __( 'Flat rate', 'connectpx_booking' ) ),
+                'mileage' => array( 'description' => __( 'Milage', 'connectpx_booking' ) ),
+                'mileage_fee' => array( 'description' => __( 'Per mile fee', 'connectpx_booking' ) ),
+                'total_mileage_fee' => array( 'description' => __( 'Total milage fee', 'connectpx_booking' ) ),
+                'waiting_fee' => array( 'description' => __( 'Waiting fee', 'connectpx_booking' ) ),
+                'after_hours_fee' => array( 'description' => __( 'After hours fee', 'connectpx_booking' ) ),
+                'no_show_fee' => array( 'description' => __( 'No show fee', 'connectpx_booking' )),
+                'extras_fee' => array( 'description' => __( 'Manual adjustments', 'connectpx_booking' )),
             ),
             'cart' => array(
-                'cart_info' => array( 'description' => __( 'Cart information', 'connectpx_booking' ) ),
-                'cart_info_c' => array( 'description' => __( 'Cart information with cancel', 'connectpx_booking' ) ),
-                'appointment_notes' => array( 'description' => __( 'Customer notes for appointment', 'connectpx_booking' ), 'if' => true ),
+                'appointments_table' => array( 'description' => __( 'Detail of booked appointments', 'connectpx_booking' )),
             ),
             'company' => array(
                 'company_address' => array( 'description' => __( 'Address of company', 'connectpx_booking' ), 'if' => true ),
@@ -66,10 +70,14 @@ class NotificationCodes
             'payment' => array(
                 'payment_type' => array( 'description' => __( 'Payment type', 'connectpx_booking' ) ),
                 'payment_status' => array( 'description' => __( 'Payment status', 'connectpx_booking' ) ),
-                'total_price' => array( 'description' => __( 'Total price of booking (sum of all cart items after applying coupon)' ) ),
+                'payment_status' => array( 'description' => __( 'Appointment payment status', 'connectpx_booking' )),
+                'payment_type' => array( 'description' => __( 'Payment method', 'connectpx_booking' )),
+                'amount_total' => array( 'description' => __( 'Total amount', 'connectpx_booking' )),
+                'amount_paid' => array( 'description' => __( 'Paid amount', 'connectpx_booking' )),
+                'amount_due' => array( 'description' => __( 'Due amount', 'connectpx_booking' )),
             ),
             'service' => array(
-                'service_info' => array( 'description' => __( 'Info of service', 'connectpx_booking' ), 'if' => true ),
+                'service_description' => array( 'description' => __( 'Info of service', 'connectpx_booking' ), 'if' => true ),
                 'service_name' => array( 'description' => __( 'Name of service', 'connectpx_booking' ) ),
             ),
             'user_credentials' => array(
@@ -155,13 +163,22 @@ class NotificationCodes
 
         switch ( $notification_type ) {
             case Notification::TYPE_APPOINTMENT_REMINDER:
-            case Notification::TYPE_NEW_BOOKING:
             case Notification::TYPE_APPOINTMENT_STATUS_CHANGED:
                 $codes = array_merge(
                     $this->codes['appointment'],
                     $this->codes['company'],
                     $this->codes['customer'],
                     $this->codes['customer_timezone'],
+                    $this->codes['payment'],
+                    $this->codes['service'],
+                );
+                break;
+            case Notification::TYPE_NEW_BOOKING:
+                $codes = array_merge(
+                    $this->codes['company'],
+                    $this->codes['cart'],
+                    $this->codes['customer_timezone'],
+                    $this->codes['customer'],
                     $this->codes['payment'],
                     $this->codes['service'],
                 );

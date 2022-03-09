@@ -424,6 +424,16 @@ class Appointment extends Lib\Base\Entity
     }
 
     /**
+     * Gets customer
+     * @param Customer $customer
+     * @return $this
+     */
+    public function getCustomer()
+    {
+        return Customer::find( $this->getCustomerId() );
+    }
+
+    /**
      * Sets customer
      * @param Customer $customer
      * @return $this
@@ -1207,5 +1217,76 @@ class Appointment extends Lib\Base\Entity
         $this->just_created = $this->getId() === null;
 
         return parent::save();
+    }
+
+    /**
+     * @param array|\stdClass $data
+     * @param bool            $overwrite_loaded_values
+     * @return $this
+     */
+    public function getLineItems( $subService = null )
+    {
+        $subService = $subService ?: $this->getSubService();
+        $payment_details = !empty($this->getPaymentDetails()) ? json_decode($this->getPaymentDetails(), true) : null;
+        $payment_adjustments = $payment_details && isset($payment_details['adjustments']) ? $payment_details['adjustments'] : [];
+
+        $lineItems = $subService->paymentLineItems(
+            $this->getDistance(),
+            $this->getWaitingTime(),
+            $this->getIsAfterHours(),
+            $this->getIsNoShow(),
+            $payment_adjustments
+        );
+
+        return $lineItems;
+    }
+
+    /**
+     * @param array|\stdClass $data
+     * @param bool            $overwrite_loaded_values
+     * @return $this
+     */
+    public function getAppointmentData( $customer = null, $subService = null, $lineItems = null )
+    {
+        $customer = $customer ?: $this->getCustomer();
+        $subService = $subService ?: $this->getSubService();
+        $lineItems = $lineItems ?: $this->getLineItems( $subService );
+        $milesToCharge = $subService->getMilesToCharge( $this->getDistance() );
+        $perMilePrice = $subService->getRatePerMile();
+        $pickup_details = $this->getPickupDetail() ? json_decode($this->getPickupDetail(), true) : [];
+        $destination_details = $this->getDestinationDetail() ? json_decode($this->getDestinationDetail(), true) : [];
+
+        $data['id'] = $this->getId();
+        $data['date'] = Lib\Utils\DateTime::formatDate($this->getPickupDateTime(), 'm/d/Y');
+        $data['patient'] = $pickup_details['patient_name'] ?? 'N/A';
+        $data['pickup_time'] = Lib\Utils\DateTime::formatTime($this->getPickupDateTime());
+        $data['clinic'] = $destination_details['hospital'] ?? 'N/A';
+        $data['address'] = $destination_details['address']['address'] ?? 'N/A';
+        // $data['address'] = 'N/A';
+        $data['city'] = sprintf("%s, %s", $destination_details['address']['city'], $destination_details['address']['state']);
+        $data['zip'] = $destination_details['address']['postcode'] ?: ($customer ? $customer->getPostcode() : 'N/A');
+        $data['trip_type'] = $subService->isRoundTrip() ? 'RT' : 'O';
+        $data['status'] = Lib\Entities\Appointment::statusToString($this->getStatus());
+        $data['flat_rate'] = isset($lineItems['items']['flat_rate']) 
+            ? Lib\Utils\Price::format( $lineItems['items']['flat_rate']['total'] ) 
+            : Lib\Utils\Price::format( 0 );
+        $data['mileage'] = $milesToCharge;
+        $data['mileage_fee'] = Lib\Utils\Price::format( $perMilePrice );
+        $data['total_mileage_fee'] = isset($lineItems['items']['milage']) 
+            ? Lib\Utils\Price::format( $lineItems['items']['milage']['total'] ) 
+            : Lib\Utils\Price::format( 0 );
+        $data['after_hours_fee'] = isset($lineItems['items']['after_hours']) 
+            ? Lib\Utils\Price::format( $lineItems['items']['after_hours']['total'] ) 
+            : Lib\Utils\Price::format( 0 );
+        $data['waiting_fee'] = isset($lineItems['items']['waiting_time']) 
+            ? Lib\Utils\Price::format( $lineItems['items']['waiting_time']['total'] ) 
+            : Lib\Utils\Price::format( 0 );
+        $data['no_show_fee'] = isset($lineItems['items']['no_show']) 
+            ? Lib\Utils\Price::format( $lineItems['items']['no_show']['total'] ) 
+            : Lib\Utils\Price::format( 0 );
+        $data['extras'] = Lib\Utils\Price::format( $lineItems['total_adjustments'] );
+        $data['total'] = Lib\Utils\Price::format( $lineItems['totals'] );
+
+        return $data;
     }
 }

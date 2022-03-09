@@ -236,6 +236,8 @@ abstract class Reminder
 
             return true;
         } else {
+            print_r($message);
+            exit();
             Utils\Common::logEmail( $to_email, $subject, $message, $headers, $attachments ? $attachments->createFor( $notification ) : array(), $notification->getTypeId() );
             return wp_mail( $to_email, $subject, $message, $headers, $attachments ? $attachments->createFor( $notification ) : array() );
         }

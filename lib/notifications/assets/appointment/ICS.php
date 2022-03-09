@@ -1,11 +1,11 @@
 <?php
-namespace ConnectpxBooking\Lib\Notifications\Assets\Item;
+namespace ConnectpxBooking\Lib\Notifications\Assets\Appointment;
 
 use ConnectpxBooking\Lib;
 
 /**
  * Class ICS
- * @package ConnectpxBooking\Lib\Notifications\Assets\Item
+ * @package ConnectpxBooking\Lib\Notifications\Assets\Appointment
  */
 class ICS
 {

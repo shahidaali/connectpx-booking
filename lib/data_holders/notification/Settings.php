@@ -129,4 +129,25 @@ class Settings
             'offset_bidirectional_hours' => 0,
         );
     }
+
+    /**
+     * @param Service $service
+     * @param string  $status customer appointment status
+     * @param Service $parent if set send staff notification for non simple service.
+     * @return bool
+     */
+    public function allowedServiceWithStatus( Service $service, $status, $parent = null )
+    {
+        if ( in_array( $this->getStatus(), array( 'any', $status ) ) ) {
+            if ( $this->services == 'any' ) {
+                return true;
+            } elseif ( $parent ) {
+                return in_array( $service->getId(), isset( $this->services[ $parent->getType() ][ $parent->getId() ] ) ? $this->services[ $parent->getType() ][ $parent->getId() ] : array() );
+            } else {
+                return array_key_exists( $service->getId(), $this->services[ $service->getType() ] );
+            }
+        }
+
+        return false;
+    }
 }

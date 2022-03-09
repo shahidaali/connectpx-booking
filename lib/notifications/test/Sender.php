@@ -41,44 +41,10 @@ abstract class Sender extends Base\Sender
             $notification->loadBy( array( 'id' => $id, 'gateway' => 'email' ) );
 
             switch ( $notification->getType() ) {
-                case Notification::TYPE_CUSTOMER_BIRTHDAY:
-                case Notification::TYPE_VERIFY_EMAIL:
-                    if ( $notification->getToCustomer() ) {
-                        static::_sendEmailTo(
-                            self::RECIPIENT_CLIENT,
-                            $to_email,
-                            $notification,
-                            $codes,
-                            null,
-                            null,
-                            $send_as,
-                            $from
-                        );
-                    }
-                    break;
-                case Notification::TYPE_STAFF_WAITING_LIST:
-                case Notification::TYPE_STAFF_DAY_AGENDA:
-                    if ( $notification->getToStaff() ) {
-                        static::_sendEmailTo(
-                            self::RECIPIENT_STAFF,
-                            $to_email,
-                            $notification,
-                            $codes,
-                            null,
-                            $reply_to,
-                            $send_as,
-                            $from
-                        );
-                    }
-                    break;
-                case Notification::TYPE_NEW_PACKAGE:
-                case Notification::TYPE_PACKAGE_DELETED:
                 case Notification::TYPE_APPOINTMENT_REMINDER:
-                case Notification::TYPE_LAST_CUSTOMER_APPOINTMENT:
                 case Notification::TYPE_NEW_BOOKING:
-                case Notification::TYPE_NEW_BOOKING_RECURRING:
-                case Notification::TYPE_CUSTOMER_APPOINTMENT_STATUS_CHANGED:
-                case Notification::TYPE_CUSTOMER_APPOINTMENT_STATUS_CHANGED_RECURRING:
+                case Notification::TYPE_APPOINTMENT_STATUS_CHANGED:
+                case Notification::TYPE_CUSTOMER_NEW_WP_USER:
                     if ( $notification->getToAdmin() ) {
                         static::_sendEmailTo(
                             self::RECIPIENT_ADMINS,
@@ -103,28 +69,7 @@ abstract class Sender extends Base\Sender
                             $from
                         );
                     }
-                    if ( $notification->getToStaff() ) {
-                        static::_sendEmailTo(
-                            self::RECIPIENT_STAFF,
-                            $to_email,
-                            $notification,
-                            $codes,
-                            $attachments,
-                            $reply_to,
-                            $send_as,
-                            $from
-                        );
-                    }
                     break;
-                default:
-                    Proxy\Shared::send( $to_email,
-                        $notification,
-                        $codes,
-                        $attachments,
-                        $reply_to,
-                        $send_as,
-                        $from
-                    );
             }
         }
     }

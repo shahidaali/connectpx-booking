@@ -2,6 +2,7 @@
 namespace ConnectpxBooking\Lib\Entities;
 
 use ConnectpxBooking\Lib;
+use ConnectpxBooking\Lib\Entities\Appointment;
 use ConnectpxBooking\Lib\DataHolders\Notification\Settings;
 
 /**
@@ -11,7 +12,7 @@ use ConnectpxBooking\Lib\DataHolders\Notification\Settings;
 class Notification extends Lib\Base\Entity
 {
     const TYPE_APPOINTMENT_REMINDER                          = 'appointment_reminder';
-    const TYPE_APPOINTMENT_STATUS_CHANGED           = 'ca_status_changed';
+    const TYPE_APPOINTMENT_STATUS_CHANGED           = 'appointment_status_changed';
     const TYPE_CUSTOMER_NEW_WP_USER                          = 'customer_new_wp_user';
     const TYPE_NEW_BOOKING                                   = 'new_booking';
 
@@ -225,26 +226,24 @@ class Notification extends Lib\Base\Entity
     /**
      * Check whether notification settings match given order item.
      *
-     * @param Item $item
+     * @param Appointment $appointment
      * @return bool
      */
-    public function matchesItemForClient( Item $item )
+    public function matchesAppointmentForClient( Appointment $appointment )
     {
-        return $item->isSeries() == in_array( $this->getType(), array( self::TYPE_NEW_BOOKING_RECURRING, self::TYPE_APPOINTMENT_STATUS_CHANGED_RECURRING ) ) &&
-               $this->getSettingsObject()->allowedServiceWithStatus( $item->getService(), $item->getCA()->getStatus() );
+        return $this->getSettingsObject()->allowedServiceWithStatus( $appointment->getService(), $appointment->getStatus() );
     }
 
     /**
      * Check whether notification settings match given order item for staff.
      *
-     * @param Item    $item
+     * @param Appointment    $appointment
      * @param Service $parent
      * @return bool
      */
-    public function matchesItemForStaff( Item $item, $parent )
+    public function matchesAppointmentForAdmin( Appointment $appointment, $parent )
     {
-        return $item->isSeries() == in_array( $this->getType(), array( self::TYPE_NEW_BOOKING_RECURRING, self::TYPE_APPOINTMENT_STATUS_CHANGED_RECURRING ) ) &&
-               $this->getSettingsObject()->allowedServiceWithStatus( $item->getService(), $item->getCA()->getStatus(), $parent );
+        return $this->getSettingsObject()->allowedServiceWithStatus( $appointment->getService(), $appointment->getStatus(), $parent );
     }
 
     /**************************************************************************

@@ -24,6 +24,14 @@ class Notifications extends Lib\Base\Component {
      */
     public static function render()
     {
+        // $wc_order = new \WC_Order( 610 );
+        // Lib\Notifications\Cart\Sender::send( $wc_order );
+        // return;
+        
+        // $appointment = Lib\Entities\Appointment::find( 2 );
+        // Lib\Notifications\Appointment\Sender::send( $appointment );
+        // return;
+
         $tab = self::parameter( 'tab', 'notifications' );
 
         $datatables = Lib\Utils\Tables::getSettings( array( 'email_notifications', 'email_logs' ) );

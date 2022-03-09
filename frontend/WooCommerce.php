@@ -224,7 +224,7 @@ class WooCommerce extends Lib\Base\Ajax
                 $data['appointment_ids'] = $appointment_ids;
 
                 wc_update_order_item_meta( $item_id, 'connectpx_booking', $data );
-                // Lib\Notifications\Cart\Sender::send( $order );
+                // Lib\Notifications\Cart\Sender::send( $wc_order );
             }
         }
     }

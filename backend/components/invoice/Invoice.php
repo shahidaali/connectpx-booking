@@ -23,53 +23,7 @@ class Invoice extends Lib\Base\Component
         // Appointments
         $appointments = [];
         foreach ($invoice->loadAppointments() as $key => $appointment) {
-            $pickup_details = $appointment->getPickupDetail() ? json_decode($appointment->getPickupDetail(), true) : [];
-            $destination_details = $appointment->getDestinationDetail() ? json_decode($appointment->getDestinationDetail(), true) : [];
-            $subService = $appointment->getSubService();
-            $payment_details = !empty($appointment->getPaymentDetails()) ? json_decode($appointment->getPaymentDetails(), true) : null;
-            $payment_adjustments = $payment_details && isset($payment_details['adjustments']) ? $payment_details['adjustments'] : [];
-            $lineItems = $subService->paymentLineItems(
-                $appointment->getDistance(),
-                $appointment->getWaitingTime(),
-                $appointment->getIsAfterHours(),
-                $appointment->getIsNoShow(),
-                $payment_adjustments
-            );
-            $milesToCharge = $subService->getMilesToCharge( $appointment->getDistance() );
-            $perMilePrice = $subService->getRatePerMile();
-
-            $row['id'] = $appointment->getId();
-            $row['date'] = Lib\Utils\DateTime::formatDate($appointment->getPickupDateTime(), 'm/d/Y');
-            $row['patient'] = $pickup_details['patient_name'] ?? 'N/A';
-            $row['pickup_time'] = Lib\Utils\DateTime::formatTime($appointment->getPickupDateTime());
-            $row['clinic'] = $destination_details['hospital'] ?? 'N/A';
-            $row['address'] = $destination_details['address']['address'] ?? 'N/A';
-            // $row['address'] = 'N/A';
-            $row['city'] = sprintf("%s, %s", $destination_details['address']['city'], $destination_details['address']['state']);
-            $row['zip'] = $destination_details['address']['postcode'] ?: ($customer ? $customer->getPostcode() : 'N/A');
-            $row['trip_type'] = $subService->isRoundTrip() ? 'RT' : 'O';
-            $row['status'] = Lib\Entities\Appointment::statusToString($appointment->getStatus());
-            $row['flat_rate'] = isset($lineItems['items']['flat_rate']) 
-                ? Lib\Utils\Price::format( $lineItems['items']['flat_rate']['total'] ) 
-                : Lib\Utils\Price::format( 0 );
-            $row['mileage'] = $milesToCharge;
-            $row['mileage_fee'] = Lib\Utils\Price::format( $perMilePrice );
-            $row['total_mileage_fee'] = isset($lineItems['items']['milage']) 
-                ? Lib\Utils\Price::format( $lineItems['items']['milage']['total'] ) 
-                : Lib\Utils\Price::format( 0 );
-            $row['after_hours_fee'] = isset($lineItems['items']['after_hours']) 
-                ? Lib\Utils\Price::format( $lineItems['items']['after_hours']['total'] ) 
-                : Lib\Utils\Price::format( 0 );
-            $row['waiting_fee'] = isset($lineItems['items']['waiting_time']) 
-                ? Lib\Utils\Price::format( $lineItems['items']['waiting_time']['total'] ) 
-                : Lib\Utils\Price::format( 0 );
-            $row['no_show_fee'] = isset($lineItems['items']['no_show']) 
-                ? Lib\Utils\Price::format( $lineItems['items']['no_show']['total'] ) 
-                : Lib\Utils\Price::format( 0 );
-            $row['extras'] = Lib\Utils\Price::format( $lineItems['total_adjustments'] );
-            $row['total'] = Lib\Utils\Price::format( $lineItems['totals'] );
-
-            $appointments[] = $row;
+            $appointments[] = $appointment->getAppointmentData( $customer );
         }
 
         $datatables = Lib\Utils\Tables::getSettings( 'invoice_pdf' );

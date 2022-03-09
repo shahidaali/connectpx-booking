@@ -782,6 +782,32 @@ abstract class Common {
         }
     }
 
+    /**
+     * Disable WP Emoji
+     */
+    public static function disableEmoji()
+    {
+        remove_action( 'wp_head', 'print_emoji_detection_script', 7 );
+        remove_action( 'admin_print_scripts', 'print_emoji_detection_script' );
+        remove_action( 'embed_head', 'print_emoji_detection_script' );
+        remove_action( 'wp_print_styles', 'print_emoji_styles' );
+        remove_action( 'admin_print_styles', 'print_emoji_styles' );
+    }
+
+    /**
+     * @return \WP_Filesystem_Direct
+     */
+    public static function getFilesystem()
+    {
+        // Emulate WP_Filesystem to avoid FS_METHOD and filters overriding "direct" type
+        if ( ! class_exists( 'WP_Filesystem_Direct', false ) ) {
+            require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php';
+            require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-direct.php';
+        }
+
+        return new \WP_Filesystem_Direct( null );
+    }
+
     public static function getWeekDates( $startDateStr, $endDateStr = null ) {
         $startDate = Lib\Slots\DatePoint::fromStr( $startDateStr );
         $endDate = $endDateStr ? Lib\Slots\DatePoint::fromStr( $endDateStr ) : Lib\Slots\DatePoint::now();

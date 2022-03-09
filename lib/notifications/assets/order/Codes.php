@@ -1,12 +1,13 @@
 <?php
 namespace ConnectpxBooking\Lib\Notifications\Assets\Order;
 
-use ConnectpxBooking\Lib\DataHolders\Booking\Item;
-use ConnectpxBooking\Lib\DataHolders\Booking\Order;
 use ConnectpxBooking\Lib\Config;
 use ConnectpxBooking\Lib\Entities;
+use ConnectpxBooking\Lib\Entities\Customer;
 use ConnectpxBooking\Lib\Notifications\Assets\Base;
 use ConnectpxBooking\Lib\Utils;
+use ConnectpxBooking\Lib\Base\Component;
+use ConnectpxBooking\Lib\Notifications\Assets\Customer\Codes as CustomerCodes;
 
 /**
  * Class Codes
@@ -15,58 +16,62 @@ use ConnectpxBooking\Lib\Utils;
 class Codes extends Base\Codes
 {
     // Core
-    public $amount_due;
-    public $amount_paid;
-    public $client_address;
-    public $client_email;
-    public $client_first_name;
-    public $client_last_name;
-    public $client_name;
-    public $client_phone;
-    public $client_note;
-    public $client_timezone;
-    public $client_birthday;
-    public $deposit_value;
-    public $invoice_number;     // payment_id
     public $payment_type;
     public $payment_status;
-    public $total_price;
-    public $total_tax;
-    public $coupon;
-    // Invoices
-    public $invoice_date;
-    public $invoice_due_date;
+    public $amount_due;
+    public $amount_paid;
+    public $amount_total;
+    public $appointments_table;
+    public $service_description;
+    public $service_name;
 
-    /** @var Order */
-    protected $order;
+    /** @var Appointment */
+    protected $appointment;
+    /** @var Appointment */
+    protected $appointments;
+    /** @var Customer */
+    protected $customer;
 
     /**
      * Constructor.
      *
      * @param Order $order
      */
-    public function __construct( Order $order )
+    public function __construct( array $appointments, Customer $customer )
     {
-        $this->order = $order;
+        $first_appointment = $appointments[0];
+        $this->appointment = $first_appointment;
+        $this->appointments = $appointments;
+        $this->customer = $customer;
 
-        $this->client_address = $order->getCustomer()->getAddress();
-        $this->client_email = $order->getCustomer()->getEmail();
-        $this->client_first_name = $order->getCustomer()->getFirstName();
-        $this->client_last_name = $order->getCustomer()->getLastName();
-        $this->client_name = $order->getCustomer()->getFullName();
-        $this->client_phone = $order->getCustomer()->getPhone();
-        $this->client_note = $order->getCustomer()->getNotes();
-        if ( $order->hasPayment() ) {
-            $this->amount_paid = $order->getPayment()->getPaid();
-            $this->amount_due = $order->getPayment()->getTotal() - $order->getPayment()->getPaid();
-            $this->total_price = $order->getPayment()->getTotal();
-            $this->total_tax = $order->getPayment()->getTax();
-            $this->invoice_number = $order->getPayment()->getId();
-            $this->payment_status = $order->getPayment()->getStatus();
-            $this->payment_type = $order->getPayment()->getType();
+        $service = $this->appointment->getService();
+        $this->payment_type = $this->appointment->getPaymentType();
+        $this->payment_status = $this->appointment->getPaymentStatus();
+        
+        $appointments_rows = [];
+
+        $total_amount = 0;
+        $paid_amount = 0;
+
+        foreach ($appointments as $appointment) {
+            $total_amount += $appointment->getTotalAmount();
+            $paid_amount += $appointment->getPaidAmount();
+            $appointments_rows[] = $appointment->getAppointmentData( $customer );
         }
 
-        Proxy\Shared::prepareCodes( $this );
+        $datatables = Utils\Tables::getSettings( 'booking_email' );
+
+        $appointments_data['datatables'] = $datatables['booking_email']; 
+        $appointments_data['appointments'] = $appointments_rows;
+        $appointments_data['total_amount'] = Utils\Price::format( $total_amount ); 
+        $appointments_data['paid_amount'] = Utils\Price::format( $paid_amount ); 
+
+        $this->appointments_table = Component::renderTemplate( 'lib/notifications/cart/templates/appointments_table', $appointments_data, false );
+        $this->amount_total = $total_amount;
+        $this->amount_paid = $paid_amount;
+        $this->amount_due = $total_amount - $paid_amount;
+        $this->service_description           = $service->getDescription();
+        $this->service_name           = $service->getTitle();
     }
 
     /**
@@ -75,41 +80,35 @@ class Codes extends Base\Codes
     protected function getReplaceCodes( $format )
     {
         $replace_codes = parent::getReplaceCodes( $format );
+        $replace_codes += (new CustomerCodes($this->customer))->getReplaceCodes( $format );
 
         // Add replace codes.
         $replace_codes += array(
+            'payment_type' => Entities\Appointment::paymentTypeToString( $this->payment_type ),
+            'payment_status' => Entities\Appointment::paymentStatusToString( $this->payment_status ),
             'amount_due' => Utils\Price::format( $this->amount_due ),
             'amount_paid' => Utils\Price::format( $this->amount_paid ),
-            'client_email' => $this->client_email,
-            'client_address' => $format === 'html' ? nl2br( $this->client_address ) : $this->client_address,
-            'client_name' => $this->client_name,
-            'client_first_name' => $this->client_first_name,
-            'client_last_name' => $this->client_last_name,
-            'client_phone' => $this->client_phone,
-            'client_timezone' => $this->client_timezone,
-            'client_note' => $this->client_note,
-            'payment_type' => Entities\Payment::typeToString( $this->payment_type ),
-            'payment_status' => Entities\Payment::statusToString( $this->payment_status ),
-            'total_price' => Utils\Price::format( $this->total_price ),
-            'total_tax' => Utils\Price::format( $this->total_tax ),
-            'total_price_no_tax' => Utils\Price::format( $this->total_price - $this->total_tax )
+            'amount_total' => Utils\Price::format( $this->amount_total ),
+            'service_description' => $this->service_description,
+            'service_name' => $this->service_name,
+            'appointments_table' => $this->appointments_table,
         );
 
-        return Proxy\Shared::prepareReplaceCodes( $replace_codes, $this, $format );
+        return $replace_codes;
     }
 
     /**
      * Apply client time zone to given datetime string in WP time zone.
      *
      * @param string $datetime
-     * @param Item $item
+     * @param Appointment $ppointment
      * @return mixed
      */
-    public function applyItemTz( $datetime, Item $item )
+    public function applyAppointmentTz( $datetime, Appointment $ppointment )
     {
         if ( $datetime != '' ) {
-            $time_zone = $item->getCA()->getTimeZone();
-            $time_zone_offset = $item->getCA()->getTimeZoneOffset();
+            $time_zone = $ppointment->getTimeZone();
+            $time_zone_offset = $ppointment->getTimeZoneOffset();
 
             if ( $time_zone !== null ) {
                 $datetime = date_create( $datetime . ' ' . Config::getWPTimeZone() );

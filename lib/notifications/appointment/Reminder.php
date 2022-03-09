@@ -1,5 +1,5 @@
 <?php
-namespace ConnectpxBooking\Lib\Notifications\Booking;
+namespace ConnectpxBooking\Lib\Notifications\Appointment;
 
 use ConnectpxBooking\Lib\Entities\Notification;
 use ConnectpxBooking\Lib\Notifications\Assets\Item\Attachments;
@@ -9,7 +9,7 @@ use ConnectpxBooking\Lib\Notifications\WPML;
 
 /**
  * Class Reminder
- * @package ConnectpxBooking\Lib\Notifications\Booking
+ * @package ConnectpxBooking\Lib\Notifications\Appointment
  */
 abstract class Reminder extends Base\Reminder
 {
