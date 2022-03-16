@@ -51,6 +51,19 @@ class Validator
     }
 
     /**
+     * Validate cart.
+     *
+     * @param array $cart
+     * @param int $form_id
+     */
+    public function validatePrivateCustomerFields( $customer, $field_name, $field_value )
+    {
+        if( ! $customer->isContractCustomer() ) {
+            $this->validateRequired( $field_name, $field_value, true );
+        }
+    }
+
+    /**
      * @param string $field_name
      * @param string $value
      * @param bool $required

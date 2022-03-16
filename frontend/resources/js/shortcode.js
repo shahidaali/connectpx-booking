@@ -139,14 +139,15 @@
                 var $prev_step = $('.cbf-button-prev', $container),
                     $pickupTime = $('.cbf-pickup-time', $container),
                     $returnPickupTime = $('.cbf-return-pickup-time', $container),
+                    $returnPickupTimeCbx = $('#cbf-return-pickup-time-cbx', $container),
                     $next_step = $('.cbf-button-next', $container),
+                    $errors = $('.cbf-js-time-error', $container),
                     pickupTime = null,
-                    returnPickupTime = null;
+                    returnPickupTime = null,
+                    isRoundTrip = response.is_round_trip,
+                    returnPickupMinTime = response.date_min || false;
 
-                if( $returnPickupTime.length > 0 ) {
-                    $returnPickupTime.attr('disabled', true);
-                }
-
+ 
                 $pickupTime.pickatime({
                       formatSubmit: 'HH:i',
                       interval: 5,
@@ -161,62 +162,70 @@
                       },
                       onSet: function onSet(e) {
                         pickupTime = this.get('select', 'HH:i');
-                        if( $returnPickupTime.length > 0 ) {
-                            $returnPickupTime.attr('disabled', false);
-                            var returnPickupMinTime = pickupTime.split(":");
-                            // returnPickupMinTime[0] = parseInt(returnPickupMinTime[0]) + 1;
+                        returnPickupMinTime = pickupTime.split(":");
 
-                            if( $returnPickupTime.pickatime !== undefined ) {
-                                $returnPickupTime.pickatime({
-                                      formatSubmit: 'HH:i',
-                                      interval: 5,
-                                      min: returnPickupMinTime,
-                                      max: response.date_max || false,
-                                      clear: false,
-                                      close: true,
-                                      today: false,
-                                      closeOnSelect: true,
-                                      klass: {
-                                        picker: 'picker picker--time'
-                                      },
-                                      onSet: function onSet(e) {
-                                        returnPickupTime = this.get('select', 'HH:i');
-                                        $next_step.show();
-
-                                        connectpxBookingAjax({
-                                            type: 'POST',
-                                            data: {
-                                                action: 'connectpx_booking_session_save',
-                                                csrf_token: ConnectpxBookingL10n.csrf_token,
-                                                slots: JSON.stringify([[response.selected_date, pickupTime, returnPickupTime]]),
-                                            },
-                                            success: function success(response) {
-                                              
-                                            }
-                                        });
-                                      }
-                                });
-                            }
-
-                            $returnPickupTime.pickatime('picker').set('min', returnPickupMinTime);
-                            $returnPickupTime.pickatime('picker').set('select', returnPickupMinTime);
+                        if( isRoundTrip ) {
+                            changeReturnPickupField();
                         } else {
-                            connectpxBookingAjax({
-                                type: 'POST',
-                                data: {
-                                    action: 'connectpx_booking_session_save',
-                                    csrf_token: ConnectpxBookingL10n.csrf_token,
-                                    slots: JSON.stringify([[response.selected_date, pickupTime, null]])
-                                },
-                                success: function success(response) {
-                                    
-                                }
-                            });
-
-                            $next_step.show();
+                            if( pickupTime ) {
+                                saveTimeStep();
+                            }
                         }
                       }
                 });
+
+                if( isRoundTrip ) {
+                    $returnPickupTime.pickatime({
+                          formatSubmit: 'HH:i',
+                          interval: 5,
+                          min: returnPickupMinTime,
+                          max: response.date_max || false,
+                          clear: false,
+                          close: true,
+                          today: false,
+                          closeOnSelect: true,
+                          klass: {
+                            picker: 'picker picker--time'
+                          },
+                          onSet: function onSet(e) {
+                            returnPickupTime = this.get('select', 'HH:i');
+                            saveTimeStep();
+                          }
+                    });
+
+                    $returnPickupTime.attr('disabled', true);
+
+                    $returnPickupTimeCbx.change(function(){
+                        changeReturnPickupField();
+                    });
+                }
+
+                function changeReturnPickupField() {
+                    returnPickupTime = null;
+                    $returnPickupTime.pickatime('picker').set('min', returnPickupMinTime);
+                    $returnPickupTime.pickatime('picker').set('select', null);
+                    $returnPickupTime.attr('disabled', $returnPickupTimeCbx.prop('checked'));
+                }
+
+                function saveTimeStep() {
+                    if( isRoundTrip && $returnPickupTimeCbx.prop('checked') || ! returnPickupTime ) {
+                        returnPickupTime = null;
+                    }
+
+                    connectpxBookingAjax({
+                        type: 'POST',
+                        data: {
+                            action: 'connectpx_booking_session_save',
+                            csrf_token: ConnectpxBookingL10n.csrf_token,
+                            slots: JSON.stringify([[response.selected_date, pickupTime, returnPickupTime]])
+                        },
+                        success: function success(response) {
+                            
+                        }
+                    });
+
+                    $next_step.show();
+                }
                 
               }
             }
@@ -586,7 +595,7 @@
                         }
                       });
                       var current_date = repeat$1.date_from.clone();
-
+                      
                       do {
                         if (repeat$1.isDateMatchesSelections(current_date)) {
                           number_of_times++;
@@ -642,6 +651,7 @@
                         picker: 'picker picker--date'
                     },
                   });
+                  $date_until.pickadate('picker').set('select', bound_date.min);
 
                   var open_repeat_onchange = $repeat_enabled.on('change', function () {
                     $repeat_container.toggle($(this).prop('checked'));
@@ -1209,9 +1219,9 @@
                             };
 
                             if( is_round_trip ) {
-                                return get_miles( meters * 2 ) + " miles / " + get_miles( meters ) + " miles one side";
+                                return get_miles( meters * 2 ) + " miles Roundtrip";
                             } else {
-                                return get_miles( meters ) + " miles";
+                                return get_miles( meters ) + " miles Oneway";
                             }
                         }
 
@@ -1221,9 +1231,9 @@
                             };
 
                             if( is_round_trip ) {
-                                return formated_time( seconds * 2 ) + " / " + formated_time( seconds ) + " one side";
+                                return formated_time( seconds * 2 ) + " Roundtrip";
                             } else {
-                                return formated_time( seconds );
+                                return formated_time( seconds ) + " Oneway";
                             }
                         }
 

@@ -68,7 +68,7 @@ $lineItems = $subService->paymentLineItems(
             <th></th>
             <th style="font-weight: normal;">
             	<div class="form-group">
-               		<label for="connectpx_booking-adjustment-miles"><?php echo __('Miles (One Sided)', 'connectpx_booking') ?></label> 
+               		<label for="connectpx_booking-adjustment-miles"><?php echo __('Miles (Oneway)', 'connectpx_booking') ?></label> 
                		<input class="form-control" type="number" step="1" id="connectpx_booking-adjustment-miles" value="<?php echo $appointment->getDistance(); ?>">
                	</div>
                	<div class="form-group">

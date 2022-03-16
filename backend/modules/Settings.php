@@ -28,6 +28,7 @@ class Settings extends Lib\Base\Component {
         $slot_length_options = self::getSlotLengthOptions();
         $min_time_requirements = self::getMinimumTimeRequirement();
         $wc_products = self::getWcProducts();
+        $wp_pages = self::getWpPages();
         $appointment_statuses = [
             Lib\Entities\Appointment::STATUS_PENDING => __("Pending", 'connectpx_booking'),
             Lib\Entities\Appointment::STATUS_APPROVED => __("Approved", 'connectpx_booking'),
@@ -42,6 +43,7 @@ class Settings extends Lib\Base\Component {
             'slot_length_options', 
             'min_time_requirements',
             'wc_products',
+            'wp_pages',
             'appointment_statuses',
             'ntf_processing_intervals',
         ) );
@@ -178,6 +180,24 @@ class Settings extends Lib\Base\Component {
         $options = array( 0 => __( 'Select Product', 'connectpx_booking' ) );
         foreach ( $products as $product ) {
             $options[$product->ID] = $product->post_title;
+        }
+
+        return $options;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public static function getWpPages()
+    {
+        global $wpdb;
+
+        $query = 'SELECT ID, post_title FROM ' . $wpdb->posts . ' WHERE post_type = \'page\' AND post_status = \'publish\' ORDER BY post_title';
+        $pages = $wpdb->get_results( $query );
+
+        $options = array( 0 => __( 'Select Page', 'connectpx_booking' ) );
+        foreach ( $pages as $page ) {
+            $options[$page->ID] = $page->post_title;
         }
 
         return $options;

@@ -23,7 +23,7 @@
             <div><strong><?php echo __('Name', 'connectpx_booking') ?>: </strong> <?php echo $userData->getFullName(); ?></div>
             <div><strong><?php echo __('Phone', 'connectpx_booking') ?>: </strong> <?php echo $userData->getPhone(); ?></div>
             <div><strong><?php echo __('Email', 'connectpx_booking') ?>: </strong> <?php echo $userData->getEmail(); ?></div>
-            <div><strong><?php echo __('Address', 'connectpx_booking') ?>: </strong> <?php echo $userData->getAddress(); ?></div>
+            <div><strong><?php echo __('Address', 'connectpx_booking') ?>: </strong> <?php echo $userData->getFormatedAddress(); ?></div>
         <?php else: ?>
         <div class="cbf-box cbf-table">
             <div class="cbf-form-group">
@@ -59,7 +59,7 @@
        </div>
     </div>
     <?php endif; ?>
-    <?php if(!$userData->isContractCustomer()): ?>
+    <?php if($show_address): ?>
         <div class="cbf-box" style="margin-top: 20px;">
           <h4><?php echo __('Billing Address', 'connectpx_booking'); ?></h4>
           <!-- <div class="cbf-checkbox-group" style="line-height: 28px;">
@@ -252,7 +252,7 @@
          <label class="cbf-square cbf-checkbox" style="width:28px; float:left; margin-left: 0; margin-right: 5px;" for="cbf-terms">
             <i class="cbf-icon-sm"></i>
          </label>
-         <label for="cbf-terms"><?php echo __('I agree to the terms of service', 'connectpx_booking') ?></label>
+         <label for="cbf-terms"><?php echo __(sprintf('I agree to the <a href="%s" target="_blank">terms of service</a>', $terms_page), 'connectpx_booking') ?></label>
       </div>
       <div class="cbf-js-terms-error cbf-label-error"></div>
    </div>

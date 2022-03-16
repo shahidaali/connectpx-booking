@@ -36,9 +36,9 @@ class Notifications extends Lib\Base\Component {
         // Lib\Notifications\Customer\Sender::send( $customer, 'shahid', 'abc123' );
         // return;
         
-        $invoice = Lib\Entities\Invoice::find( 2 );
-        Lib\Notifications\Invoice\Sender::send( $invoice );
-        return;
+        // $invoice = Lib\Entities\Invoice::find( 2 );
+        // Lib\Notifications\Invoice\Sender::send( $invoice );
+        // return;
 
         $tab = self::parameter( 'tab', 'notifications' );
 

@@ -115,6 +115,17 @@ use ConnectpxBooking\Lib\Utils;
 						<th scope="row"><?php _e('Calendar Format', 'connectpx_booking'); ?></th>
 						<td><textarea name="connectpx_booking[calendar_format]" rows="3" cols="52"><?php echo Utils\Common::getOption('calendar_format', ''); ?></textarea></td>
 					</tr>
+					<tr>
+						<th scope="row"><?php _e('Terms page', 'connectpx_booking'); ?></th>
+						<td>
+							<select name="connectpx_booking[terms_page_id]">
+								<?php 
+								echo Utils\Form::selectOptions($wp_pages, 
+								Utils\Common::getOption('terms_page_id', 0)); 
+								?>
+							</select>
+						</td>
+					</tr>
 				</tbody>
 			</table>
 		</div>

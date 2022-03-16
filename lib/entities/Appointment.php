@@ -21,9 +21,8 @@ class Appointment extends Lib\Base\Entity
     const PAYMENT_PENDING    = 'pending';
     const PAYMENT_REJECTED   = 'rejected';
 
-    const PAYMENT_TYPE_LOCAL        = 'local';
-    const PAYMENT_TYPE_FREE         = 'free';
-    const PAYMENT_TYPE_WOOCOMMERCE  = 'woocommerce';
+    const PAYMENT_TYPE_LOCAL  = 'cod';
+    const PAYMENT_TYPE_SQUARE  = 'square_credit_card';
 
     /** @var int */
     protected $service_id;
@@ -919,6 +918,8 @@ class Appointment extends Lib\Base\Entity
      */
     public function getScheduleInfo()
     {
+        $subService = $this->getSubService();
+
         // Determine display time zone
         $display_tz = Lib\Utils\Common::getCurrentUserTimeZone();
         $wp_tz = Lib\Config::getWPTimeZone();
@@ -938,10 +939,10 @@ class Appointment extends Lib\Base\Entity
             ]
         ];
 
-        if( $returnDatetime ) {
+        if( $subService->isRoundTrip() ) {
             $items[] = [
                 'label' => __('Return Pickup Time', 'connectpx_booking'),
-                'value' => DateTime::formatDateTime( $returnDatetime ),
+                'value' => $returnDatetime ? DateTime::formatDateTime( $returnDatetime ) : __('Not sure', 'connectpx_booking'),
             ];
         }
 
@@ -1125,9 +1126,8 @@ class Appointment extends Lib\Base\Entity
     public static function paymentTypeToString( $type )
     {
         switch ( $type ) {
-            case self::PAYMENT_TYPE_LOCAL:        return __( 'Local', 'connectpx_booking' );
-            case self::PAYMENT_TYPE_FREE:         return __( 'Free', 'connectpx_booking' );
-            case self::PAYMENT_TYPE_WOOCOMMERCE:  return 'WooCommerce';
+            case self::PAYMENT_TYPE_LOCAL:       return 'Local';
+            case self::PAYMENT_TYPE_SQUARE:       return 'Credit Card';
             default:                      return '';
         }
     }

@@ -329,16 +329,18 @@ class UserBookingData
                     $validator->validateTime( $field_name, $field_value, false );
                     break;
                 case 'pickup_patient_name':
-                case 'pickup_room_no':
-                case 'pickup_contact_person':
+                //case 'pickup_room_no':
+                //case 'pickup_contact_person':
+                    $validator->validateRequired( $field_name, $field_value, true );
+                    break;
                 case 'pickup_contact_no':
-                    $validator->validateRequired( $field_name, $field_value, true );
+                    $validator->validatePrivateCustomerFields( $this->getCustomer(), $field_name, $field_value );
                     break;
-                case 'destination_hospital':
-                case 'destination_contact_no':
-                case 'destination_room_no':
-                    $validator->validateRequired( $field_name, $field_value, true );
-                    break;
+                // case 'destination_hospital':
+                // case 'destination_contact_no':
+                // case 'destination_room_no':
+                //     $validator->validateRequired( $field_name, $field_value, true );
+                //     break;
                 case 'pickup_address':
                 case 'destination_address':
                     $validator->validateRouteAddress( $field_name, $field_value, true );
@@ -367,15 +369,15 @@ class UserBookingData
                     case 'email':
                         $validator->validateEmail( $field_name, $data );
                         break;
-                    case 'country':
-                    case 'state':
-                    case 'postcode':
-                    case 'city':
-                    case 'street':
-                    case 'street_number':
-                    case 'additional_address':
-                        $validator->validateAddress( $field_name, $field_value, true );
-                        break;
+                    // case 'country':
+                    // case 'state':
+                    // case 'postcode':
+                    // case 'city':
+                    // case 'street':
+                    // case 'street_number':
+                    // case 'additional_address':
+                    //     $validator->validateAddress( $field_name, $field_value, true );
+                    //     break;
                     case 'phone':
                         $validator->validatePhone( $field_name, $field_value, true );
                         break;

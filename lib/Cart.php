@@ -170,6 +170,7 @@ class Cart
                 0,
                 $isOffTimeService 
             );
+            $paid_amount = $customer->isContractCustomer() ? 0 : $itemPrice['totals'];
 
             /*
              * Get appointment with the same params.
@@ -194,11 +195,11 @@ class Cart
                 ->setTimeZoneOffset( $time_zone_offset )
                 ->setStatus( Config::getDefaultAppointmentStatus() )
                 ->setNotes( $this->userData->getNotes() )
-                ->setPaymentStatus( Appointment::PAYMENT_COMPLETED )
-                ->setPaymentType( Appointment::PAYMENT_TYPE_WOOCOMMERCE )
+                ->setPaymentStatus( Appointment::PAYMENT_PENDING )
+                ->setPaymentType( $wc_order->get_payment_method() )
                 ->setPaymentDate( current_time( 'mysql' ) )
                 ->setTotalAmount( $itemPrice['totals'] )
-                ->setPaidAmount( $itemPrice['totals'] )
+                ->setPaidAmount( $paid_amount )
                 ->setCreatedAt( current_time( 'mysql' ) )
                 ->save();
 

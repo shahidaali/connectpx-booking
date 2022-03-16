@@ -7,7 +7,7 @@ use ConnectpxBooking\Lib;
  * Class Controller
  * @package ConnectpxBooking\Frontend\Modules\WooCommerce
  */
-class WooCommerce extends Lib\Base\Ajax
+class WooCommerce extends MyAccountPages
 {
     /**
      * Event data structure.
@@ -18,6 +18,8 @@ class WooCommerce extends Lib\Base\Ajax
      *  add key 'wc_checkout' with values 'billing_country', 'billing_address_1', 'billing_address_2', 'billing_city', 'billing_state', 'billing_postcode', 'billing_first_name', 'billing_last_name', 'billing_email', 'billing_phone'
      */
     const VERSION = '1.1';
+    const CONTRACT_CUSTOMER_PAYMENT_METHOD = 'cod';
+    const PRIVATE_CUSTOMER_PAYMENT_METHOD = 'square_credit_card';
 
     protected static $checkout_info = array();
 
@@ -47,20 +49,12 @@ class WooCommerce extends Lib\Base\Ajax
         add_filter( 'woocommerce_cart_item_price', array( $self, 'getCartItemPrice' ), 10, 3 );
         // add_filter( 'woocommerce_calculate_item_totals_taxes', array( $self, 'calculateItemTotalsTaxes' ), 99, 3 );
 
-        add_action( 'template_redirect', array( __CLASS__, 'skipWoocommercePages' ) );
-        add_action( 'woocommerce_checkout_billing', array( __CLASS__, 'checkoutDetails' ) );
-        add_filter( 'woocommerce_checkout_fields', array( __CLASS__, 'removeCheckoutFields' ) );
-        add_filter( 'woocommerce_add_cart_item_data', array( __CLASS__, 'removeExistingCartItems' ), 12, 3 );
-        add_filter( 'woocommerce_locate_template', array( __CLASS__, 'overrideWcTemplates' ), 1, 3 );
-        add_filter( 'woocommerce_account_menu_items', array( __CLASS__, 'myAccountLinks' ), 12, 1 );
-        add_filter( 'woocommerce_get_endpoint_url', array( __CLASS__, 'myAccountEndpointUrl' ), 12, 4 );
-        add_action( 'init', array( __CLASS__, 'myAccountEndpointsRewrite' ) );
-        add_action( 'wp', array( __CLASS__, 'downloadInvoice' ) );
-        add_action( 'woocommerce_account_bookings_endpoint', array( __CLASS__, 'myAccountBookingContent' ) );
-        add_action( 'woocommerce_account_invoices_endpoint', array( __CLASS__, 'myAccountInvoicesContent' ) );
-        add_action( 'woocommerce_account_customer-account_endpoint', array( __CLASS__, 'myAccountCustomerAccountContent' ) );
-
-        add_action( 'wp_enqueue_scripts', array(__CLASS__, 'enqueueScripts'), 12 );
+        add_action( 'template_redirect', array( $self, 'skipWoocommercePages' ) );
+        add_action( 'woocommerce_checkout_billing', array( $self, 'checkoutDetails' ) );
+        add_filter( 'woocommerce_checkout_fields', array( $self, 'removeCheckoutFields' ) );
+        add_filter( 'woocommerce_add_cart_item_data', array( $self, 'removeExistingCartItems' ), 12, 3 );
+        add_filter( 'woocommerce_available_payment_gateways', array( $self, 'availablePaymentGateways' ), 12, 1 );
+        add_filter( 'woocommerce_order_button_text', array( $self, 'orderButtonText' ), 12, 1 );
         parent::init();
     }
 
@@ -156,6 +150,8 @@ class WooCommerce extends Lib\Base\Ajax
      */
     public static function checkoutValue( $null, $field_name )
     {
+        $dummy_fields = [];
+
         if ( empty( self::$checkout_info ) ) {
             foreach ( WC()->cart->get_cart() as $wc_key => $wc_item ) {
                 if ( array_key_exists( 'connectpx_booking', $wc_item ) ) {
@@ -335,6 +331,8 @@ class WooCommerce extends Lib\Base\Ajax
             $cart_items = $userData->cart->getItems();
             $distanceMiles = Lib\Utils\Common::getDistanceInMiles( $userData->getRouteDistance() );
             $subService = $userData->getSubService();
+
+            $count = 0;
             foreach ( $cart_items as $cart_item ) {
                 $service = $cart_item->getService();
                 $slot = $cart_item->getSlot();
@@ -357,6 +355,7 @@ class WooCommerce extends Lib\Base\Ajax
                 foreach ($lineItems['items'] as $lineItem) {
                     $lineItemsHtml .= $lineItem['qty'] > 1 ? sprintf("%s: %d &times; %s <br>", $lineItem['label'], $lineItem['qty'], Lib\Utils\Price::format($lineItem['unit_price'])) : sprintf("%s: %s <br>", $lineItem['label'], Lib\Utils\Price::format( $lineItem['total']));
                 }
+                $lineItemsHtml .= sprintf("<b>Subtotal:</b> %s <br>", Lib\Utils\Price::format( $lineItems['totals']));
 
                 $codes = array(
                     'amount_to_pay' => Lib\Utils\Price::format( $cart_info->getPayNow() ),
@@ -375,11 +374,12 @@ class WooCommerce extends Lib\Base\Ajax
                     'line_items' => $lineItemsHtml,
                 );
                 $info[] = Lib\Utils\Codes::replace(Lib\Utils\Common::getOption('wc_cart_item_data', ''), $codes, false );
+                $count++;
             }
 
             $other_data[] = array(
-                'name' => Lib\Utils\Common::getOption('wc_cart_item_title', 'Booking'),
-                'value' => implode( PHP_EOL . PHP_EOL, $info ),
+                'name' => sprintf("<b>%s (%d):</b>", Lib\Utils\Common::getOption('wc_cart_item_title', 'Bookings'), $count),
+                'value' => implode( PHP_EOL, $info ),
             );
         }
 
@@ -472,17 +472,17 @@ class WooCommerce extends Lib\Base\Ajax
     }
 
     public static function removeCheckoutFields( $fields ) {
-        unset($fields['billing']['billing_first_name']);
-        unset($fields['billing']['billing_last_name']);
-        unset($fields['billing']['billing_email']);
-        unset($fields['billing']['billing_company']);
-        unset($fields['billing']['billing_address_1']);
-        unset($fields['billing']['billing_address_2']);
-        unset($fields['billing']['billing_city']);
-        unset($fields['billing']['billing_postcode']);
-        unset($fields['billing']['billing_country']);
-        unset($fields['billing']['billing_state']);
-        unset($fields['billing']['billing_phone']);
+        // unset($fields['billing']['billing_first_name']);
+        // unset($fields['billing']['billing_last_name']);
+        // unset($fields['billing']['billing_email']);
+        // unset($fields['billing']['billing_company']);
+        // unset($fields['billing']['billing_address_1']);
+        // unset($fields['billing']['billing_address_2']);
+        // unset($fields['billing']['billing_city']);
+        // unset($fields['billing']['billing_postcode']);
+        // unset($fields['billing']['billing_country']);
+        // unset($fields['billing']['billing_state']);
+        // unset($fields['billing']['billing_phone']);
 
         // add_filter( 'woocommerce_enable_order_notes_field', '__return_false' );
         return $fields;
@@ -496,368 +496,33 @@ class WooCommerce extends Lib\Base\Ajax
         return $cart_item_data;
     }
 
-    public static function overrideWcTemplates( $template, $template_name, $template_path ) {
+    public static function availablePaymentGateways( $available_gateways ) {
         global $woocommerce;
-        $_template = $template;
+        if ( is_admin() ) return;
 
-        if ( ! $template_path ) 
-            $template_path = $woocommerce->template_url;
-
-        $plugin_path  = untrailingslashit( plugin_dir_path( __FILE__ ) )  . '/templates/woocommerce/';
-
-        if( file_exists( $plugin_path . $template_name ) )
-            $template = $plugin_path . $template_name;
-
-        // Look within passed path within the theme - this is priority
-        if( ! $template ) {
-            $template = locate_template(
-                array(
-                    $template_path . $template_name,
-                    $template_name
-                )
-            );
-        }
-
-        if ( ! $template ) 
-            $template = $_template;
-
-        return $template;
-    }
-
-    public static function myAccountLinks( $menu_links ) {
-        // we will hook "anyuniquetext123" later
-        $new = array( 
-            'bookings' => __('Bookings', 'connectpx_booking'), 
-            'invoices' => __('Invoices', 'connectpx_booking'), 
-            'customer-account' => __('Customer Account', 'connectpx_booking') 
-        );
-
-        // or in case you need 2 links
-        // $new = array( 'link1' => 'Link 1', 'link2' => 'Link 2' );
-
-        // array_slice() is good when you want to add an element between the other ones
-        $menu_links = array_slice( $menu_links, 0, 1, true ) 
-        + $new 
-        + array_slice( $menu_links, 1, NULL, true );
-
-
-        return $menu_links;
-    }
-
-    public static function myAccountEndpointsRewrite() {
-        add_rewrite_endpoint( 'bookings', EP_PAGES );
-        add_rewrite_endpoint( 'invoices', EP_PAGES );
-        add_rewrite_endpoint( 'customer-account', EP_PAGES );
-    }
-
-    public static function myAccountEndpointUrl( $url, $endpoint, $value, $permalink ) {
-        return $url;
-    }
-
-    public static function myAccountBookingContent() {
-
-        // Disable caching.
-        Lib\Utils\Common::noCache();
-
-        $customer = new Lib\Entities\Customer();
-        if ( is_user_logged_in() && $customer->loadBy( array( 'wp_user_id' => get_current_user_id() ) ) ) {
-            $titles = array(
-                'service' => __('Service', 'connectpx_booking'),
-                'date' => __( 'Date', 'connectpx_booking' ),
-                'time' => __( 'Time', 'connectpx_booking' ),
-                'total_amount' => __( 'Payment', 'connectpx_booking' ),
-                'cancel' => __( 'Cancel', 'connectpx_booking' ),
-                'reschedule' => __( 'Reschedule', 'connectpx_booking' ),
-                'status' => __( 'Status', 'connectpx_booking' ),
-            );
-
-            $customer_address = array(
-                'country' => $customer->getCountry(),
-                'state' => $customer->getState(),
-                'postcode' => $customer->getPostcode(),
-                'city' => $customer->getCity(),
-                'street' => $customer->getStreet(),
-                'street_number' => $customer->getStreetNumber(),
-                'additional_address' => $customer->getAdditionalAddress(),
-            );
-
-            $appointment_columns = [
-                'filters',
-                'date',
-                'timezone',
-                'service',
-                'total_amount',
-                'status',
-                'cancel',
-                'reason'
-            ];
-            $filters = in_array( 'filters', $appointment_columns );
-            $show_reason = in_array( 'reason', $appointment_columns );
-            foreach ( $appointment_columns as $pos => $column ) {
-                if ( ! array_key_exists( $column, $titles ) ) {
-                    unset( $appointment_columns[ $pos ] );
-                }
+        $is_contract_customer = false;
+        if ( get_current_user_id() ) {
+            $customer = new Lib\Entities\Customer();
+            if ( $customer->loadBy( array( 'wp_user_id' => get_current_user_id() ) ) ) {
+                $is_contract_customer = $customer->isContractCustomer();
             }
-            $services = Lib\Entities\Service::query( 's' )
-                ->select( 's.id, s.title' )
-                ->fetchArray();
-
-            self::renderTemplate( 'frontend/templates/customer-bookings', array(
-                'appointment_columns' => $appointment_columns,
-                'filters' => $filters,
-                'show_reason' => $show_reason,
-                'customer' => $customer,
-                'customer_address' => $customer_address,
-                'titles' => $titles,
-                'services' => $services,
-            ));
-        } else {
-            self::renderTemplate( 'frontend/templates/permission', array());
         }
-    }
 
-    public static function downloadInvoice() {
-        global $wp;
-
-        if (is_user_logged_in() && is_account_page() && isset($wp->query_vars['invoices']) && !empty($_GET['download_invoice'])) {
-            $invoice = Lib\Entities\Invoice::find($_GET['download_invoice']);
-            $invoice->downloadInvoice();
-            exit();
-        }
-    }
-
-    public static function myAccountInvoicesContent() {
-
-        // Disable caching.
-        Lib\Utils\Common::noCache();
-
-        $customer = new Lib\Entities\Customer();
-        if ( is_user_logged_in() && $customer->loadBy( array( 'wp_user_id' => get_current_user_id() ) ) ) {
-            $titles = array(
-                'id' => __('No', 'connectpx_booking'),
-                'start_date' => __( 'Start Date', 'connectpx_booking' ),
-                'end_date' => __( 'End Date', 'connectpx_booking' ),
-                'due_date' => __( 'Due Date', 'connectpx_booking' ),
-                'status' => __( 'Status', 'connectpx_booking' ),
-                'total_amount' => __( 'Total Amount', 'connectpx_booking' ),
-                'due_amount' => __( 'Due Amount', 'connectpx_booking' ),
-                'actions' => __( 'Actions', 'connectpx_booking' ),
-            );
-
-            $customer_address = array(
-                'country' => $customer->getCountry(),
-                'state' => $customer->getState(),
-                'postcode' => $customer->getPostcode(),
-                'city' => $customer->getCity(),
-                'street' => $customer->getStreet(),
-                'street_number' => $customer->getStreetNumber(),
-                'additional_address' => $customer->getAdditionalAddress(),
-            );
-
-            $invoice_columns = [
-                'id',
-                'start_date',
-                'end_date',
-                'due_date',
-                'status',
-                'total_amount',
-                'due_amount',
-                'actions',
-            ];
-            self::renderTemplate( 'frontend/templates/customer-invoices', array(
-                'invoice_columns' => $invoice_columns,
-                'filters' => 1,
-                'customer' => $customer,
-                'customer_address' => $customer_address,
-                'titles' => $titles,
-            ));
-        } else {
-            self::renderTemplate( 'frontend/templates/permission', array());
-        }
-    }
-
-    public static function myAccountCustomerAccountContent() {
-
-        // Disable caching.
-        Lib\Utils\Common::noCache();
-
-        $customer = new Lib\Entities\Customer();
-        if ( is_user_logged_in() && $customer->loadBy( array( 'wp_user_id' => get_current_user_id() ) ) ) {
-            $customer_address = array(
-                'country' => [
-                    'label' => __('Country', 'connectpx_booking'),
-                    'value' => $customer->getCountry(),
-                ],
-                'state' => [
-                    'label' => __('State', 'connectpx_booking'),
-                    'value' => $customer->getState(),
-                ],
-                'postcode' => [
-                    'label' => __('Postcode', 'connectpx_booking'),
-                    'value' => $customer->getPostcode(),
-                ],
-                'city' => [
-                    'label' => __('City', 'connectpx_booking'),
-                    'value' => $customer->getCity(),
-                ],
-                'street' => [
-                    'label' => __('Street', 'connectpx_booking'),
-                    'value' => $customer->getStreet(),
-                ],
-                'street_number' => [
-                    'label' => __('Street Number', 'connectpx_booking'),
-                    'value' => $customer->getStreetNumber(),
-                ],
-                'additional_address' => [
-                    'label' => __('Additional Address', 'connectpx_booking'),
-                    'value' => $customer->getAdditionalAddress(),
-                ],
-            );
-
-            self::renderTemplate( 'frontend/templates/customer-account', array(
-                'customer' => $customer,
-                'customer_address' => $customer_address,
-            ));
-        } else {
-            self::renderTemplate( 'frontend/templates/permission', array());
-        }
-    }
-
-    /**
-     * Register the stylesheets for the public-facing side of the site.
-     *
-     * @since    1.0.0
-     */
-    public static function enqueueScripts() {
-        global $wp;
-
-        if (is_user_logged_in() && is_account_page() && isset($wp->query_vars['bookings'])) {
-            $titles = array(
-                'service' => __('Service', 'connectpx_booking'),
-                'date' => __( 'Date', 'connectpx_booking' ),
-                'time' => __( 'Time', 'connectpx_booking' ),
-                'total_amount' => __( 'Payment', 'connectpx_booking' ),
-                'cancel' => __( 'Cancel', 'connectpx_booking' ),
-                'reschedule' => __( 'Reschedule', 'connectpx_booking' ),
-                'status' => __( 'Status', 'connectpx_booking' ),
-            );
-            $appointment_columns = [
-                'filters',
-                'date',
-                'timezone',
-                'service',
-                'total_amount',
-                'status',
-                'cancel',
-                'reason'
-            ];
-            $filters = in_array( 'filters', $appointment_columns );
-            $show_reason = in_array( 'reason', $appointment_columns );
-            foreach ( $appointment_columns as $pos => $column ) {
-                if ( ! array_key_exists( $column, $titles ) ) {
-                    unset( $appointment_columns[ $pos ] );
-                }
+        foreach ( $available_gateways as $key => $gateway ) {
+            if ( $is_contract_customer && $key == self::CONTRACT_CUSTOMER_PAYMENT_METHOD ) {
+                continue;
+            }
+            else if ( ! $is_contract_customer && $key == self::PRIVATE_CUSTOMER_PAYMENT_METHOD ) {
+                continue;
             }
 
-            // Prepare URL for AJAX requests.
-            $ajax_url = admin_url( 'admin-ajax.php' );
-
-            // Support WPML.
-            if ( $sitepress instanceof \SitePress ) {
-                $ajax_url = add_query_arg( array( 'lang' => $sitepress->get_current_language() ), $ajax_url );
-            }
-            
-            wp_enqueue_script('connectpx_booking_customer_bookings');
-            wp_enqueue_style('connectpx_booking_customer_bookings');
-
-            wp_localize_script( 'connectpx_booking_customer_bookings', 'ConnectpxBookingCustomerBookingsL10n', array(
-                'ajax_url' => $ajax_url,
-                'appointment_columns' => $appointment_columns,
-                'filters' => $filters,
-                'zeroRecords' => __( 'No appointments.', 'connectpx_booking' ),
-                'minDate' => 0,
-                'maxDate' => Lib\Config::getMaximumAvailableDaysForBooking(),
-                'datePicker' => Lib\Utils\DateTime::datePickerOptions(),
-                'dateRange' => Lib\Utils\DateTime::dateRangeOptions( array( 'anyTime' => __( 'Any time', 'connectpx_booking' ) ) ),
-                'expired_appointment' => __( 'Expired', 'connectpx_booking' ),
-                'deny_cancel_appointment' => __( 'Not allowed', 'connectpx_booking' ),
-                'cancel' => __( 'Cancel', 'connectpx_booking' ),
-                'payment' => __( 'Payment', 'connectpx_booking' ),
-                'reschedule' => __( 'Reschedule', 'connectpx_booking' ),
-                'noTimeslots' => __( 'There are no time slots for selected date.', 'connectpx_booking' ),
-                'profile_update_success' => __( 'Profile updated successfully.', 'connectpx_booking' ),
-                'processing' => __( 'Processing...', 'connectpx_booking' ),
-                'errors' => array(
-                    'cancel' => __( 'Unfortunately, you\'re not able to cancel the appointment because the required time limit prior to canceling has expired.', 'connectpx_booking' ),
-                    'reschedule' => __( 'The selected time is not available anymore. Please, choose another time slot.', 'connectpx_booking' ),
-                ),
-            ) );
+            unset( $available_gateways[$key] );
         }
 
-        if (is_user_logged_in() && is_account_page() && isset($wp->query_vars['invoices'])) {
-            $titles = array(
-                'id' => __('No', 'connectpx_booking'),
-                'start_date' => __( 'Start Date', 'connectpx_booking' ),
-                'end_date' => __( 'End Date', 'connectpx_booking' ),
-                'due_date' => __( 'Due Date', 'connectpx_booking' ),
-                'status' => __( 'Status', 'connectpx_booking' ),
-                'total_amount' => __( 'Total Amount', 'connectpx_booking' ),
-                'due_amount' => __( 'Due Amount', 'connectpx_booking' ),
-                'actions' => __( 'Actions', 'connectpx_booking' ),
-            );
+        return $available_gateways;
+    }
 
-            $invoice_columns = [
-                'id',
-                'start_date',
-                'end_date',
-                'due_date',
-                'status',
-                'total_amount',
-                'due_amount',
-                'actions',
-            ];
-            $filters = 1;
-
-            // Prepare URL for AJAX requests.
-            $ajax_url = admin_url( 'admin-ajax.php' );
-
-            // Support WPML.
-            if ( $sitepress instanceof \SitePress ) {
-                $ajax_url = add_query_arg( array( 'lang' => $sitepress->get_current_language() ), $ajax_url );
-            }
-            
-            wp_enqueue_script('connectpx_booking_customer_invoices');
-            wp_enqueue_style('connectpx_booking_customer_invoices');
-
-            wp_localize_script( 'connectpx_booking_customer_invoices', 'ConnectpxBookingCustomerInvoicesL10n', array(
-                'ajax_url' => $ajax_url,
-                'invoice_columns' => $invoice_columns,
-                'filters' => $filters,
-                'zeroRecords' => __( 'No invoices.', 'connectpx_booking' ),
-                'datePicker' => Lib\Utils\DateTime::datePickerOptions(),
-                'dateRange' => Lib\Utils\DateTime::dateRangeOptions( array( 'anyTime' => __( 'Start any time', 'connectpx_booking' ), 'dueAnyTime' => __( 'Due any time', 'connectpx_booking' ) ) ),
-                'processing' => __( 'Processing...', 'connectpx_booking' ),
-                'errors' => array(
-                ),
-            ) );
-        }
-
-        if (is_user_logged_in() && is_account_page() && isset($wp->query_vars['customer-account'])) {
-            // Prepare URL for AJAX requests.
-            $ajax_url = admin_url( 'admin-ajax.php' );
-
-            // Support WPML.
-            if ( $sitepress instanceof \SitePress ) {
-                $ajax_url = add_query_arg( array( 'lang' => $sitepress->get_current_language() ), $ajax_url );
-            }
-            
-            wp_enqueue_script('connectpx_booking_customer_account');
-            wp_enqueue_style('connectpx_booking_customer_account');
-
-            wp_localize_script( 'connectpx_booking_customer_account', 'ConnectpxBookingCustomerAccountL10n', array(
-                'ajax_url' => $ajax_url,
-                'profile_update_success' => __( 'Profile updated successfully.', 'connectpx_booking' ),
-            ) );
-        }
+    public static function orderButtonText( $button_text ) {
+        return __('Complete Booking', 'connectpx_booking');
     }
 }

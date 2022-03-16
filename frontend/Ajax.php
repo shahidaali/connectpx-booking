@@ -95,6 +95,7 @@ class Ajax extends Lib\Base\Ajax
                 'date_min' => $bounding['date_min'],
                 'selected_date' => $selected_date,
                 'disabled_days' => [],
+                'active_step' => $userData->getActiveStep(),
             );
         } else {
             $response = array( 'success' => false, 'error' => __('Session Error', 'connectpx_booking') );
@@ -119,6 +120,8 @@ class Ajax extends Lib\Base\Ajax
         if ( $loaded ) {
             self::_handleTimeZone( $userData );
 
+            $userData = $userData->setActiveStep( 'date' );
+
             // Render slots by groups (day or month).
             $slots = $userData->getSlots();
             $slots_data = [];
@@ -137,10 +140,14 @@ class Ajax extends Lib\Base\Ajax
                     'date' => $selected_date,
                     'has_slots' => ! empty ( $slots_data ),
                     'userData' => $userData,
+                    'return_pickup_checkbox_text' => __('Not sure', 'connectpx_booking'),
                 ), false ),
                 'date_max' => $bounding['date_max'],
                 'date_min' => $bounding['date_min'],
                 'disabled_days' => [],
+                'time_error' => __('Please select pickup time.', 'connectpx_booking'),
+                'is_round_trip' => $userData->getSubService()->isRoundTrip(),
+                'active_step' => $userData->getActiveStep(),
             );
         } else {
             $response = array( 'success' => false, 'error' => __('Session Error', 'connectpx_booking') );
@@ -208,7 +215,7 @@ class Ajax extends Lib\Base\Ajax
                 'date_max' => $bounding['date_max'],
                 'date_min' => $date_min,
                 'repeated' => $repeat_data ? (int) $userData->getRepeated() : 0,
-                'repeat_data' => $userData->getRepeatData(),
+                'repeat_data' => $repeat_data,
                 'schedule' => $schedule,
                 'short_date_format' => Lib\Utils\DateTime::convertFormat( 'D, M d', Lib\Utils\DateTime::FORMAT_PICKADATE ),
                 'pages_warning_info' => '',
@@ -241,10 +248,16 @@ class Ajax extends Lib\Base\Ajax
             }
 
             // Render main template.
+            $terms_page = "#";
+            if( Lib\Utils\Common::getOption('terms_page_id', 0) ) {
+                $terms_page = get_permalink( Lib\Utils\Common::getOption('terms_page_id', 0) );
+            }
             $html = self::renderTemplate( 'frontend/templates/steps/details', array(
                 'progress_bar' => self::_renderProgressBar($userData),
                 'buttons' => self::_renderButtons($userData),
                 'userData' => $userData,
+                'terms_page' => $terms_page,
+                'show_address' => false,
             ), false );
 
             $response = array(
@@ -339,25 +352,24 @@ class Ajax extends Lib\Base\Ajax
             if ( $session instanceof \WC_Session_Handler && $session->get_session_cookie() === false ) {
                 $session->set_customer_session_cookie( true );
             }
-            $first_name = $userData->getFirstName();
-            $last_name  = $userData->getLastName();
-            $iso = $userData->getAddressIso();
+
+            $pickupDetail = $userData->getPickupDetail();
             $connectpx_booking = $userData->getData();
             $connectpx_booking['items']       = $userData->cart->getItemsData();
             $connectpx_booking['wc_checkout'] = array(
-                'billing_first_name' => $first_name,
-                'billing_last_name'  => $last_name,
+                'billing_first_name' => $userData->getFirstName(),
+                'billing_last_name'  => $userData->getLastName(),
                 'billing_email'      => $userData->getEmail(),
                 'billing_phone'      => $userData->getPhone(),
                 // Billing country on WC checkout is select (select2)
-                'billing_country'    => isset( $iso['country'] ) ? $iso['country'] : null,
-                'billing_state'      => isset( $iso['state'] )   ? $iso['state'] : null,
-                'billing_city'       => $userData->getCity() ?: null,
-                'billing_address_1'  => $userData->getStreet() ?: null,
-                'billing_address_2'  => $userData->getAdditionalAddress() ?: null,
-                'billing_postcode'   => $userData->getPostcode() ?: null,
+                'billing_country'    => 'US',
+                'billing_state'      => 'MI',
+                'billing_city'       => 'Southfield',
+                'billing_address_1'  => '2129 Daylene Drive',
+                'billing_address_2'  => '',
+                'billing_postcode'   => '48075',
             );
-            $product_id = 544;
+            $product_id = Lib\Utils\Common::getOption('wc_product_id', 0);
 
             // Qnt 1 product in $userData exists value with number_of_persons
             WC()->cart->add_to_cart( $product_id, 1, '', array(), compact( 'connectpx_booking' ) );

@@ -184,7 +184,7 @@ abstract class Common {
 		    'service' => [
 		        'title' => __('Service', 'connectpx_booking'),
 		    ],
-		    'time' => [
+		    'date' => [
 		        'title' => __('Date & Time', 'connectpx_booking'),
 		    ],
 		    'repeat' => [
@@ -657,6 +657,9 @@ abstract class Common {
      */
     public static function formatedServiceInfo( $appointment, $service, $subService )
     {        
+        $distance = $subService->isRoundTrip() ? $appointment->getDistance() * 2 : $appointment->getDistance();
+        $estimated_time = $subService->isRoundTrip() ? $appointment->getEstimatedTime() * 2 : $appointment->getEstimatedTime();
+
         $items = [
             [
                 'label' => __('Service', 'connectpx_booking'),
@@ -668,11 +671,11 @@ abstract class Common {
             ],
             [
                 'label' => __('Distance', 'connectpx_booking'),
-                'value' => sprintf("%s miles - one side", $appointment->getDistance()),
+                'value' => sprintf("%s miles - %s", $distance, $subService->isRoundTrip() ? 'Roundtrip' : 'Oneway'),
             ],
             [
                 'label' => __('Estimated Time', 'connectpx_booking'),
-                'value' => sprintf("%s - one side", $appointment->getEstimatedTimeInMins()),
+                'value' => sprintf("%s - %s", Lib\Utils\Common::getTimeInMinutes( $estimated_time ), $subService->isRoundTrip() ? 'Roundtrip' : 'Oneway'),
             ],
         ];
 
