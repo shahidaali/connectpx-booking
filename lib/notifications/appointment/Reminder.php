@@ -2,8 +2,8 @@
 namespace ConnectpxBooking\Lib\Notifications\Appointment;
 
 use ConnectpxBooking\Lib\Entities\Notification;
-use ConnectpxBooking\Lib\Notifications\Assets\Item\Attachments;
-use ConnectpxBooking\Lib\Notifications\Assets\Item\Codes;
+use ConnectpxBooking\Lib\Notifications\Assets\Appointment\Attachments;
+use ConnectpxBooking\Lib\Notifications\Assets\Appointment\Codes;
 use ConnectpxBooking\Lib\Notifications\Base;
 use ConnectpxBooking\Lib\Notifications\WPML;
 
@@ -17,48 +17,33 @@ abstract class Reminder extends Base\Reminder
      * Send booking/appointment notifications.
      *
      * @param Notification $notification
-     * @param Item $item
+     * @param Appointment $appointment
      * @return bool
      */
-    public static function send( Notification $notification, Item $item )
+    public static function send( Notification $notification, Appointment $appointment )
     {
-        $order = Order::createFromItem( $item );
-        $codes = new Codes( $order );
+        $codes = new Codes( $appointment );
         $attachments = new Attachments( $codes );
 
         $result = false;
-
-        if ( $item->getCA()->getLocale() ) {
-            WPML::switchLang( $item->getCA()->getLocale() );
-        } else {
-            WPML::switchToDefaultLang();
-        }
-        $codes->prepareForItem( $item, 'client' );
+        $reply_to = null;
+        
+        $codes->prepareForAppointment( $appointment, 'client' );
 
         // Notify client.
-        if ( static::sendToClient( $order->getCustomer(), $notification, $codes, $attachments ) ) {
+        if ( static::sendToClient( $appointment->getCustomer(), $notification, $codes, $attachments ) ) {
             $result = true;
         }
 
-        WPML::switchToDefaultLang();
-        foreach ( $item->getItems() as $i ) {
-            $attachments->clear();
-            $codes->prepareForItem( $i, 'staff' );
-
-            // Reply to customer.
-            $reply_to = null;
-
-            // Notify admins.
-            if ( static::sendToAdmins( $notification, $codes, $attachments, $reply_to ) ) {
-                $result = true;
-            }
-
-            // Notify customs.
-            if ( static::sendToCustom( $notification, $codes, $attachments, $reply_to ) ) {
-                $result = true;
-            }
+        // Notify admins.
+        if ( static::sendToAdmins( $notification, $codes, $attachments, $reply_to ) ) {
+            $result = true;
         }
-        WPML::restoreLang();
+
+        // Notify customs.
+        if ( static::sendToCustom( $notification, $codes, $attachments, $reply_to ) ) {
+            $result = true;
+        }
 
         $attachments->clear();
 

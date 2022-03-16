@@ -5,7 +5,6 @@ use ConnectpxBooking\Lib;
 <div>
     <table cellpadding="0" cellspacing="0" width="100%">
         <tbody>
-            <!-- Appointments -->
             <tr>
                 <td>
                     <table cellpadding="5" cellspacing="0" width="100%" style="border-collapse: collapse; border: 1px solid #000;" id="invoice-appointments" class="table">
@@ -30,8 +29,6 @@ use ConnectpxBooking\Lib;
                     </table>
                 </td>
             </tr>
-            <!-- # Appointments -->
-            <!-- Totals -->
             <tr>
                 <td>
                     <table cellpadding="0" cellspacing="0" width="100%">
@@ -57,7 +54,6 @@ use ConnectpxBooking\Lib;
                     </table>
                 </td>
             </tr>
-            <!-- # Totals -->
         </tbody>
     </table>
 </div>

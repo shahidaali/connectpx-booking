@@ -12,7 +12,7 @@ use ConnectpxBooking\Lib\Utils;
  * Class Codes
  * @package ConnectpxBooking\Lib\Notifications\Assets\Test
  */
-class Codes extends Assets\Item\Codes
+class Codes extends Assets\Appointment\Codes
 {
     public $cart_info;
     public $new_password;
@@ -61,7 +61,7 @@ class Codes extends Assets\Item\Codes
         $this->new_password             = 'New Password';
         $this->new_username             = 'New User';
         $this->payment_type             = Entities\Appointment::paymentTypeToString( Entities\Appointment::PAYMENT_TYPE_LOCAL );
-        $this->service_info             = 'Service info text';
+        $this->service_description             = 'Service info text';
         $this->service_name             = 'Service Name';
         $this->total_price              = '24';
     }

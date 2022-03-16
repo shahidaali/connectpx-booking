@@ -105,10 +105,15 @@ class Ajax extends Lib\Base\Ajax
                         $invoice = new Invoice();
                     }
 
+                    $due_days = Lib\Utils\Common::getOption('invoices_due_days', 30);
+                    $due_date = $invoice ? Lib\Slots\DatePoint::fromStr( $invoice->getCreatedAt() ) : Lib\Slots\DatePoint::now();
+                    $due_date = $due_date->modify( $due_days * DAY_IN_SECONDS )->format( 'Y-m-d' );
+                    
                     $invoice
                         ->setCustomerId($customer_id)
                         ->setStartDate($startDate)
                         ->setEndDate($endDate)
+                        ->setDueDate( $due_date )
                         ->save();
 
                     $invoice->updateTotals( $appointments );

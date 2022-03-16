@@ -108,6 +108,31 @@ class Frontend {
 			false 
 		);
 		wp_register_style( 
+			'connectpx_booking_customer_invoices', 
+			$front_resources . 'resources/css/customer-invoices.css', 
+			array(
+				'connectpx_booking_bootstrap',
+				'connectpx_booking_main',
+			), 
+			Plugin::version(), 
+			'all' 
+		);
+		wp_register_script( 
+			'connectpx_booking_customer_invoices', 
+			$front_resources . 'resources/js/customer-invoices.js', 
+			array( 
+				'jquery', 
+				'connectpx_booking_global',
+				'connectpx_booking_bootstrap',
+				'connectpx_booking_datatables', 
+				'connectpx_booking_moment', 
+				'connectpx_booking_daterangepicker',
+				'connectpx_booking_select2' 
+			), 
+			Plugin::version(), 
+			false 
+		);
+		wp_register_style( 
 			'connectpx_booking_customer_account', 
 			$front_resources . 'resources/css/customer-account.css', 
 			array(

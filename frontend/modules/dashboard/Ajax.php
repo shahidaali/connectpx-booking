@@ -144,6 +144,87 @@ class Ajax extends Lib\Base\Ajax
         ) );
     }
 
+    /**
+     * Get a list of invoices
+     */
+    public static function getCustomerInvoices()
+    {
+        $columns = self::parameter( 'columns' );
+        $invoice_columns = self::parameter( 'invoice_columns' );
+        $order = self::parameter( 'order', array() );
+        $date_filter = self::parameter( 'date' );
+        $due_date_filter = self::parameter( 'due_date' );
+        $status_filter = self::parameter( 'status' );
+
+        $query = Lib\Entities\Invoice::query( 'i' )
+            ->select( 'i.*' )
+            ->where( 'i.customer_id', self::$customer->getId() )
+            ->groupBy( 'i.id' );
+
+        if ( $date_filter !== null ) {
+            if ( $date_filter == 'any' ) {
+                $query->whereNot( 'i.start_date', null );
+            } elseif ( $date_filter == 'null' ) {
+                $query->where( 'i.start_date', null );
+            } else {
+                list ( $start, $end ) = explode( ' - ', $date_filter, 2 );
+                $end = date( 'Y-m-d', strtotime( $end ) + DAY_IN_SECONDS );
+                $query->whereBetween( 'DATE(i.start_date)', $start, $end );
+            }
+        }
+
+        if ( $due_date_filter !== null ) {
+            if ( $due_date_filter == 'any' ) {
+                $query->whereNot( 'i.due_date', null );
+            } elseif ( $due_date_filter == 'null' ) {
+                $query->where( 'i.due_date', null );
+            } else {
+                list ( $start, $end ) = explode( ' - ', $due_date_filter, 2 );
+                $end = date( 'Y-m-d', strtotime( $end ) + DAY_IN_SECONDS );
+                $query->whereBetween( 'DATE(i.due_date)', $start, $end );
+            }
+        }
+
+        if ( $status_filter != '' ) {
+            $query->where( 'i.status', $status_filter );
+        }
+
+        foreach ( $order as $sort_by ) {
+            $query->sortBy( str_replace( '.', '_', $columns[ $sort_by['column'] ]['data'] ) )
+                ->order( $sort_by['dir'] == 'desc' ? Lib\Query::ORDER_DESCENDING : Lib\Query::ORDER_ASCENDING );
+        }
+
+        $total = $query->count( true );
+        $query->limit( self::parameter( 'length' ) )->offset( self::parameter( 'start' ) );
+
+        $data = array();
+        foreach ( $query->fetchArray() as $row ) {
+            // Invoice status.
+            $invoice = new Lib\Entities\Invoice();
+            $invoice->setFields($row);
+
+            $data[] = array(
+                'id' => $invoice->getId(),
+                'start_date' => Lib\Utils\DateTime::formatDate( $invoice->getStartDate(), 'd/m/Y' ),
+                'end_date' => Lib\Utils\DateTime::formatDate( $invoice->getEndDate(), 'd/m/Y' ),
+                'due_date' => Lib\Utils\DateTime::formatDate( $invoice->getDueDate(), 'd/m/Y' ),
+                'status' => Lib\Entities\Invoice::statusToString( $invoice->getStatus() ),
+                'total_amount' => Lib\Utils\Price::format( $invoice->getTotalAmount() ),
+                'due_amount' => Lib\Utils\Price::format( $invoice->getTotalAmount() - $invoice->getPaidAmount() ),
+                'download_link' => home_url( '/my-account/invoices?download_invoice=' . $invoice->getId() ),
+            );
+        }
+
+        $data = array_values( $data );
+
+        wp_send_json( array(
+            'draw' => (int) self::parameter( 'draw' ),
+            'recordsTotal' => $total,
+            'recordsFiltered' => $total,
+            'data' => $data,
+        ) );
+    }
+
     public static function customerSaveProfile()
     {
         $columns = explode( ',', self::parameter( 'columns' ) );

@@ -43,6 +43,9 @@ class Settings
             case Notification::TYPE_CUSTOMER_NEW_WP_USER:
                 $this->instant = 1;
                 break;
+            case Notification::TYPE_NEW_INVOICE:
+                $this->instant = 1;
+                break;
             case Notification::TYPE_APPOINTMENT_STATUS_CHANGED:
             case Notification::TYPE_NEW_BOOKING:
                 $this->status   = $this->settings['status'];

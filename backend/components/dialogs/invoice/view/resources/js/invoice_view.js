@@ -28,6 +28,7 @@ var ConnectpxBookingInvoiceViewDialog = function(Dialog, $, moment, ConnectpxBoo
                 		$btn_view_appointment = $('a.view-appointment', $dialog),
                 		$btn_update_status = $('.invoice-update-status', $dialog),
                 		$btn_update_status_toggle = $('.invoice-update-status-toggle', $dialog),
+                		$btn_send_notification = $('.btn-send-notification', $dialog),
                 		$btn_update_invoice = $('.btn-update-invoice', $dialog);
 
                 	$btn_view_appointment.click(function (e) {
@@ -84,7 +85,7 @@ var ConnectpxBookingInvoiceViewDialog = function(Dialog, $, moment, ConnectpxBoo
 				                searching: function () { return ConnectpxBookingL10n.searching; }
 				            },
 				            ajax: {
-				                url: ajaxurl,
+				                url: ConnectpxBookingL10nGlobal.ajax_url,
 				                dataType: 'json',
 				                delay: 250,
 				                data: function (params) {
@@ -112,6 +113,24 @@ var ConnectpxBookingInvoiceViewDialog = function(Dialog, $, moment, ConnectpxBoo
 				            type: 'POST',
 				            data: {
 					        	action: "connectpx_booking_update_invoice",
+					            csrf_token: ConnectpxBookingL10nGlobal.csrf_token,
+					            id: invoiceData.invoice_id,
+					        },
+				            dataType: 'json',
+				            success: function (response) {
+				                if (response.success) {
+				                	callback( invoiceData );
+				                }
+				            }
+				        });
+                    });
+
+                    $btn_send_notification.click(function(){
+	                    $.ajax({
+				            url: ConnectpxBookingL10nGlobal.ajax_url,
+				            type: 'POST',
+				            data: {
+					        	action: "connectpx_booking_send_invoice_notification",
 					            csrf_token: ConnectpxBookingL10nGlobal.csrf_token,
 					            id: invoiceData.invoice_id,
 					        },

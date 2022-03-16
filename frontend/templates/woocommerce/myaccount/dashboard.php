@@ -42,11 +42,12 @@ $allowed_html = array(
 <p>
 	<?php
 	/* translators: 1: Orders URL 2: Address URL 3: Account URL. */
-	$dashboard_desc = __( 'From your account dashboard you can view your <a href="%1$s">bookings</a> and <a href="%2$s">edit your password and account details</a>.', 'woocommerce' );
+	$dashboard_desc = __( 'From your account dashboard you can view your <a href="%1$s">bookings</a>, <a href="%2$s">invoices</a> and <a href="%3$s">edit your password and account details</a>.', 'woocommerce' );
 	printf(
 		wp_kses( $dashboard_desc, $allowed_html ),
 		esc_url( wc_get_endpoint_url( 'bookings' ) ),
-		esc_url( wc_get_endpoint_url( 'edit-account' ) )
+		esc_url( wc_get_endpoint_url( 'invoices' ) ),
+		esc_url( wc_get_endpoint_url( 'customer-account' ) )
 	);
 	?>
 </p>

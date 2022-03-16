@@ -13,6 +13,11 @@ use ConnectpxBooking\Lib\Config;
                             data-recipients='["customer","admin","custom"]'
                             data-icon='<?php echo esc_attr( Notification::getIcon( Notification::TYPE_NEW_BOOKING ) ) ?>'
                             data-attach='["ics","invoice"]'><?php echo esc_attr( Notification::getTitle( Notification::TYPE_NEW_BOOKING ) ) ?></option>
+                    <option value="<?php echo Notification::TYPE_NEW_INVOICE ?>"
+                            data-set="instantly"
+                            data-recipients='["customer","admin","custom"]'
+                            data-icon='<?php echo esc_attr( Notification::getIcon( Notification::TYPE_NEW_INVOICE ) ) ?>'
+                            data-attach='["ics","invoice"]'><?php echo esc_attr( Notification::getTitle( Notification::TYPE_NEW_INVOICE ) ) ?></option>
                     <option value="<?php echo Notification::TYPE_APPOINTMENT_STATUS_CHANGED ?>"
                             data-set="instantly"
                             data-recipients='["customer","admin","custom"]'

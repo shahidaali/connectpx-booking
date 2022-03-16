@@ -118,7 +118,7 @@ jQuery(function($) {
         orderable : false,
         width     : 120,
         render    : function (data, type, row, meta) {
-            return '<button type="button" class="btn btn-default" data-action="view"><i class="far fa-fw fa-eye mr-lg-1"></i></button> <a type="button" class="btn btn-default" href="'+ ConnectpxBookingL10n.download_link +'&id=2" target="_blank"><i class="fa fa-fw fa-download mr-lg-1"></i></a>';
+            return '<button type="button" class="btn btn-default" data-action="view"><i class="far fa-fw fa-eye mr-lg-1"></i></button> <a type="button" class="btn btn-default" href="'+ ConnectpxBookingL10n.download_link +'&id='+row.id+'" target="_blank"><i class="fa fa-fw fa-download mr-lg-1"></i></a>';
         }
     });
     columns.push({

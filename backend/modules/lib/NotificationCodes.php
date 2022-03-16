@@ -76,6 +76,15 @@ class NotificationCodes
                 'amount_paid' => array( 'description' => __( 'Paid amount', 'connectpx_booking' )),
                 'amount_due' => array( 'description' => __( 'Due amount', 'connectpx_booking' )),
             ),
+            'invoice' => array(
+                'invoice_number' => array( 'description' => __( 'Invoice no', 'connectpx_booking' ) ),
+                'start_date' => array( 'description' => __( 'Invoice start date', 'connectpx_booking' ) ),
+                'end_date' => array( 'description' => __( 'Invoice end date', 'connectpx_booking' ) ),
+                'due_date' => array( 'description' => __( 'Invoice due date', 'connectpx_booking' ) ),
+                'total_amount' => array( 'description' => __( 'Total amount', 'connectpx_booking' )),
+                'paid_amount' => array( 'description' => __( 'Paid amount', 'connectpx_booking' )),
+                'invoice_status' => array( 'description' => __( 'Invoice status', 'connectpx_booking' )),
+            ),
             'service' => array(
                 'service_description' => array( 'description' => __( 'Info of service', 'connectpx_booking' ), 'if' => true ),
                 'service_name' => array( 'description' => __( 'Name of service', 'connectpx_booking' ) ),
@@ -181,6 +190,13 @@ class NotificationCodes
                     $this->codes['customer'],
                     $this->codes['payment'],
                     $this->codes['service'],
+                );
+                break;
+            case Notification::TYPE_NEW_INVOICE:
+                $codes = array_merge(
+                    $this->codes['company'],
+                    $this->codes['customer'],
+                    $this->codes['invoice'],
                 );
                 break;
             case Notification::TYPE_CUSTOMER_NEW_WP_USER:

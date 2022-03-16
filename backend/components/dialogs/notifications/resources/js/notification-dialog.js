@@ -98,6 +98,7 @@ jQuery(function ($) {
                     hideServices = false;
                     break;
                 case 'customer_new_wp_user':
+                case 'new_invoice':
                     break;
                 case 'new_booking':
                     hideStatuses = false;

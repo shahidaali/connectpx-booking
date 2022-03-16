@@ -64,6 +64,36 @@ class Ajax extends Lib\Base\Ajax
     /**
      * Save invoice form (for both create and edit).
      */
+    public static function sendInvoiceNotification()
+    {
+        $response = array( 'success' => false );
+        $invoice_id       = (int) self::parameter( 'id', 0 );
+
+        // If no errors then try to save the invoice.
+        if ( ! isset ( $response['errors'] ) ) {
+            // Single invoice.
+            $invoice = new Lib\Entities\Invoice();
+            if ( $invoice->load( $invoice_id ) ) {
+
+                Lib\Notifications\Invoice\Sender::send( $invoice );
+
+                $invoice
+                    ->setNotificationStatus( 1 );
+
+                if ( $invoice->save() !== false ) {
+                    $response['success'] = true;
+                } else {
+                    $response['errors'] = array( 'db' => __( 'Could not save invoice in database.', 'connectpx_booking' ) );
+                }
+            }
+            
+        }
+
+        wp_send_json( $response );
+    }
+    /**
+     * Save invoice form (for both create and edit).
+     */
     public static function updateInvoiceStatus()
     {
         $response = array( 'success' => false );

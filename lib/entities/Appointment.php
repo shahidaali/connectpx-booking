@@ -173,7 +173,7 @@ class Appointment extends Lib\Base\Entity
         $this->setStatus( self::STATUS_CANCELLED );
         $this->save();
 
-        // Lib\Notifications\Booking\Sender::send( $item, array( 'cancellation_reason' => $reason ) );
+        Lib\Notifications\Appointment\Sender::send( $this, array( 'cancellation_reason' => $reason ) );
     }
 
     /**

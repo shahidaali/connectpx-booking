@@ -58,7 +58,7 @@ abstract class Routine
 
             if ( $appointments_list ) {
                 foreach ( $appointments_list as $appointment ) {
-                    if ( Booking\Reminder::send( $notification, $appointment ) ) {
+                    if ( Appointment\Reminder::send( $notification, $appointment ) ) {
                         self::wasSent( $notification, $appointment->getId() );
                     }
                 }

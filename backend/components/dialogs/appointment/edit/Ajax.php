@@ -136,6 +136,7 @@ class Ajax extends Lib\Base\Ajax
 
                     $modified = $appointment->getModified();
                     if ( $appointment->save() !== false ) {
+                        Lib\Notifications\Appointment\Sender::send( $appointment );
                         $response['success'] = true;
                     } else {
                         $response['errors'] = array( 'db' => __( 'Could not save appointment in database.', 'connectpx_booking' ) );

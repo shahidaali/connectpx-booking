@@ -55,7 +55,9 @@ class WooCommerce extends Lib\Base\Ajax
         add_filter( 'woocommerce_account_menu_items', array( __CLASS__, 'myAccountLinks' ), 12, 1 );
         add_filter( 'woocommerce_get_endpoint_url', array( __CLASS__, 'myAccountEndpointUrl' ), 12, 4 );
         add_action( 'init', array( __CLASS__, 'myAccountEndpointsRewrite' ) );
+        add_action( 'wp', array( __CLASS__, 'downloadInvoice' ) );
         add_action( 'woocommerce_account_bookings_endpoint', array( __CLASS__, 'myAccountBookingContent' ) );
+        add_action( 'woocommerce_account_invoices_endpoint', array( __CLASS__, 'myAccountInvoicesContent' ) );
         add_action( 'woocommerce_account_customer-account_endpoint', array( __CLASS__, 'myAccountCustomerAccountContent' ) );
 
         add_action( 'wp_enqueue_scripts', array(__CLASS__, 'enqueueScripts'), 12 );
@@ -224,7 +226,7 @@ class WooCommerce extends Lib\Base\Ajax
                 $data['appointment_ids'] = $appointment_ids;
 
                 wc_update_order_item_meta( $item_id, 'connectpx_booking', $data );
-                // Lib\Notifications\Cart\Sender::send( $wc_order );
+                Lib\Notifications\Cart\Sender::send( $wc_order );
             }
         }
     }
@@ -524,7 +526,11 @@ class WooCommerce extends Lib\Base\Ajax
 
     public static function myAccountLinks( $menu_links ) {
         // we will hook "anyuniquetext123" later
-        $new = array( 'bookings' => __('Bookings', 'connectpx_booking'), 'customer-account' => __('Customer Account', 'connectpx_booking') );
+        $new = array( 
+            'bookings' => __('Bookings', 'connectpx_booking'), 
+            'invoices' => __('Invoices', 'connectpx_booking'), 
+            'customer-account' => __('Customer Account', 'connectpx_booking') 
+        );
 
         // or in case you need 2 links
         // $new = array( 'link1' => 'Link 1', 'link2' => 'Link 2' );
@@ -540,6 +546,7 @@ class WooCommerce extends Lib\Base\Ajax
 
     public static function myAccountEndpointsRewrite() {
         add_rewrite_endpoint( 'bookings', EP_PAGES );
+        add_rewrite_endpoint( 'invoices', EP_PAGES );
         add_rewrite_endpoint( 'customer-account', EP_PAGES );
     }
 
@@ -548,8 +555,6 @@ class WooCommerce extends Lib\Base\Ajax
     }
 
     public static function myAccountBookingContent() {
-
-        global $sitepress;
 
         // Disable caching.
         Lib\Utils\Common::noCache();
@@ -611,9 +616,67 @@ class WooCommerce extends Lib\Base\Ajax
         }
     }
 
-    public static function myAccountCustomerAccountContent() {
+    public static function downloadInvoice() {
+        global $wp;
 
-        global $sitepress;
+        if (is_user_logged_in() && is_account_page() && isset($wp->query_vars['invoices']) && !empty($_GET['download_invoice'])) {
+            $invoice = Lib\Entities\Invoice::find($_GET['download_invoice']);
+            $invoice->downloadInvoice();
+            exit();
+        }
+    }
+
+    public static function myAccountInvoicesContent() {
+
+        // Disable caching.
+        Lib\Utils\Common::noCache();
+
+        $customer = new Lib\Entities\Customer();
+        if ( is_user_logged_in() && $customer->loadBy( array( 'wp_user_id' => get_current_user_id() ) ) ) {
+            $titles = array(
+                'id' => __('No', 'connectpx_booking'),
+                'start_date' => __( 'Start Date', 'connectpx_booking' ),
+                'end_date' => __( 'End Date', 'connectpx_booking' ),
+                'due_date' => __( 'Due Date', 'connectpx_booking' ),
+                'status' => __( 'Status', 'connectpx_booking' ),
+                'total_amount' => __( 'Total Amount', 'connectpx_booking' ),
+                'due_amount' => __( 'Due Amount', 'connectpx_booking' ),
+                'actions' => __( 'Actions', 'connectpx_booking' ),
+            );
+
+            $customer_address = array(
+                'country' => $customer->getCountry(),
+                'state' => $customer->getState(),
+                'postcode' => $customer->getPostcode(),
+                'city' => $customer->getCity(),
+                'street' => $customer->getStreet(),
+                'street_number' => $customer->getStreetNumber(),
+                'additional_address' => $customer->getAdditionalAddress(),
+            );
+
+            $invoice_columns = [
+                'id',
+                'start_date',
+                'end_date',
+                'due_date',
+                'status',
+                'total_amount',
+                'due_amount',
+                'actions',
+            ];
+            self::renderTemplate( 'frontend/templates/customer-invoices', array(
+                'invoice_columns' => $invoice_columns,
+                'filters' => 1,
+                'customer' => $customer,
+                'customer_address' => $customer_address,
+                'titles' => $titles,
+            ));
+        } else {
+            self::renderTemplate( 'frontend/templates/permission', array());
+        }
+    }
+
+    public static function myAccountCustomerAccountContent() {
 
         // Disable caching.
         Lib\Utils\Common::noCache();
@@ -727,6 +790,54 @@ class WooCommerce extends Lib\Base\Ajax
                 'errors' => array(
                     'cancel' => __( 'Unfortunately, you\'re not able to cancel the appointment because the required time limit prior to canceling has expired.', 'connectpx_booking' ),
                     'reschedule' => __( 'The selected time is not available anymore. Please, choose another time slot.', 'connectpx_booking' ),
+                ),
+            ) );
+        }
+
+        if (is_user_logged_in() && is_account_page() && isset($wp->query_vars['invoices'])) {
+            $titles = array(
+                'id' => __('No', 'connectpx_booking'),
+                'start_date' => __( 'Start Date', 'connectpx_booking' ),
+                'end_date' => __( 'End Date', 'connectpx_booking' ),
+                'due_date' => __( 'Due Date', 'connectpx_booking' ),
+                'status' => __( 'Status', 'connectpx_booking' ),
+                'total_amount' => __( 'Total Amount', 'connectpx_booking' ),
+                'due_amount' => __( 'Due Amount', 'connectpx_booking' ),
+                'actions' => __( 'Actions', 'connectpx_booking' ),
+            );
+
+            $invoice_columns = [
+                'id',
+                'start_date',
+                'end_date',
+                'due_date',
+                'status',
+                'total_amount',
+                'due_amount',
+                'actions',
+            ];
+            $filters = 1;
+
+            // Prepare URL for AJAX requests.
+            $ajax_url = admin_url( 'admin-ajax.php' );
+
+            // Support WPML.
+            if ( $sitepress instanceof \SitePress ) {
+                $ajax_url = add_query_arg( array( 'lang' => $sitepress->get_current_language() ), $ajax_url );
+            }
+            
+            wp_enqueue_script('connectpx_booking_customer_invoices');
+            wp_enqueue_style('connectpx_booking_customer_invoices');
+
+            wp_localize_script( 'connectpx_booking_customer_invoices', 'ConnectpxBookingCustomerInvoicesL10n', array(
+                'ajax_url' => $ajax_url,
+                'invoice_columns' => $invoice_columns,
+                'filters' => $filters,
+                'zeroRecords' => __( 'No invoices.', 'connectpx_booking' ),
+                'datePicker' => Lib\Utils\DateTime::datePickerOptions(),
+                'dateRange' => Lib\Utils\DateTime::dateRangeOptions( array( 'anyTime' => __( 'Start any time', 'connectpx_booking' ), 'dueAnyTime' => __( 'Due any time', 'connectpx_booking' ) ) ),
+                'processing' => __( 'Processing...', 'connectpx_booking' ),
+                'errors' => array(
                 ),
             ) );
         }

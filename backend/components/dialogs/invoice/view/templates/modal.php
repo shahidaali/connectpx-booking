@@ -16,6 +16,7 @@ use ConnectpxBooking\Lib;
                <ul class="list-unstyled pl-0 connectpx_booking-hide-empty mr-3">
                   <li class="row mb-1">
                      <?php if(Common::isCurrentUserAdmin()): ?>
+                        <div class="ml-auto"><?php echo __('Notification Status:', 'connectpx_booking') ?> <?php echo $invoice->getNotificationStatus() ? sprintf('<span class="text-success">%s</span>', __('Sent', 'connectpx_booking')) : sprintf('<span class="text-danger">%s</span>', __('Not sent', 'connectpx_booking')) ?></div>
                         <div class="ml-auto">
                            <div class="dropdown d-inline-block">
                               <button type="button" class="btn btn-default px-2 py-1 dropdown-toggle invoice-update-status-toggle" data-toggle="dropdown" data-original-title="" title=""><span class="<?php echo Lib\Entities\Invoice::statusToIcon( $invoice->getStatus() ) ?>"></span></button> 
@@ -27,7 +28,6 @@ use ConnectpxBooking\Lib;
                            </div>
                         </div>
                      <?php endif; ?>
-
                   </li>
                </ul>
             </div>
@@ -38,7 +38,10 @@ use ConnectpxBooking\Lib;
          <div class="modal-footer">
             <div slot="footer">  
                <?php if(Common::isCurrentUserAdmin()): ?>
-               	<button type="button" class="btn ladda-button btn-success btn-update-invoice" data-spinner-size="40" data-style="zoom-in" classname="btn-success"><span class="ladda-label"><?php echo __('Update', 'connectpx_booking') ?></span><span class="ladda-spinner"></span></button> 
+                  <button type="button" class="btn ladda-button btn-info btn-send-notification" data-spinner-size="40" data-style="zoom-in" classname="btn-success"><span class="ladda-label"><?php echo __('Send Notification', 'connectpx_booking') ?></span><span class="ladda-spinner"></span></button> 
+               <?php endif; ?>
+               <?php if(Common::isCurrentUserAdmin()): ?>
+                  <button type="button" class="btn ladda-button btn-success btn-update-invoice" data-spinner-size="40" data-style="zoom-in" classname="btn-success"><span class="ladda-label"><?php echo __('Update', 'connectpx_booking') ?></span><span class="ladda-spinner"></span></button> 
                <?php endif; ?>
             	<button type="button" class="btn ladda-button btn-default" data-spinner-size="40" data-style="zoom-in" data-dismiss="connectpx_booking-modal"><span class="ladda-label"><?php echo __('Cancel', 'connectpx_booking') ?></span><span class="ladda-spinner"></span></button>
             </div>

@@ -31,6 +31,8 @@ class Invoice extends Lib\Base\Entity
     /** @var string */
     protected $due_date;
     /** @var string */
+    protected $notification_status;
+    /** @var string */
     protected $created_at;
     /** @var string */
     protected $updated_at;
@@ -47,6 +49,7 @@ class Invoice extends Lib\Base\Entity
         'status'          => array( 'format' => '%s' ),
         'details'            => array( 'format' => '%s' ),
         'due_date'            => array( 'format' => '%s' ),
+        'notification_status'            => array( 'format' => '%d' ),
         'created_at'               => array( 'format' => '%s' ),
         'updated_at'               => array( 'format' => '%s' ),
     );
@@ -180,6 +183,29 @@ class Invoice extends Lib\Base\Entity
     }
 
     /**
+     * Gets due_date
+     *
+     * @return float
+     */
+    public function getDueDate()
+    {
+        return $this->due_date;
+    }
+
+    /**
+     * Sets due_date
+     *
+     * @param float $due_date
+     * @return $this
+     */
+    public function setDueDate( $due_date )
+    {
+        $this->due_date = $due_date;
+
+        return $this;
+    }
+
+    /**
      * Gets total
      *
      * @return float
@@ -244,6 +270,29 @@ class Invoice extends Lib\Base\Entity
     public function setStatus( $status )
     {
         $this->status = $status;
+
+        return $this;
+    }
+
+    /**
+     * Gets notification_status
+     *
+     * @return string
+     */
+    public function getNotificationStatus()
+    {
+        return $this->notification_status;
+    }
+
+    /**
+     * Sets notification_status
+     *
+     * @param string $notification_status
+     * @return $this
+     */
+    public function setNotificationStatus( $notification_status )
+    {
+        $this->notification_status = $notification_status;
 
         return $this;
     }

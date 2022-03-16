@@ -57,6 +57,9 @@ class Plugin {
 		}
 
 		Frontend\Frontend::run();
+
+		// Register and schedule routines.
+        Routines::init();
 	}
 
 	/**

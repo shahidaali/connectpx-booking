@@ -132,6 +132,10 @@ class Customers extends Lib\Base\Component {
             // Create wordpress user
             if( $wp_user == 'create_new' ) {
                 $customer = Utils\Common::createWPUserByCustomer($customer, $password);
+
+                if( $wp_user = $customer->getWpUser() ) {
+                    Lib\Notifications\Customer\Sender::send( $customer, $customer->getCustomerEmail(), $password );
+                }
             }
 
             // Update wp password

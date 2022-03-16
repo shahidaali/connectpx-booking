@@ -97,3 +97,6 @@ tbody.payment-detail-table td {
 #connectpx_booking_tbs table#invoice-appointments tr td {
     padding: 2px;
 }
+#connectpx_booking_tbs .select2-container.select2-container--open {
+    z-index: 99999 !important;
+}
