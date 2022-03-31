@@ -3,6 +3,7 @@ namespace ConnectpxBooking\Lib\Entities;
 
 use ConnectpxBooking\Lib;
 use ConnectpxBooking\Lib\Utils\DateTime;
+use ConnectpxBooking\Frontend\WooCommerce;
 
 /**
  * Class Appointment
@@ -19,7 +20,7 @@ class Appointment extends Lib\Base\Entity
 
     const PAYMENT_COMPLETED  = 'completed';
     const PAYMENT_PENDING    = 'pending';
-    const PAYMENT_REJECTED   = 'rejected';
+    const PAYMENT_REFUNDED    = 'refunded';
 
     const PAYMENT_TYPE_LOCAL  = 'cod';
     const PAYMENT_TYPE_SQUARE  = 'square_credit_card';
@@ -30,6 +31,8 @@ class Appointment extends Lib\Base\Entity
     protected $customer_id;
     /** @var string */
     protected $wc_order_id;
+    /** @var string */
+    protected $schedule_id;
     /** @var string */
     protected $sub_service_key;
     /** @var string */
@@ -60,6 +63,8 @@ class Appointment extends Lib\Base\Entity
     protected $pickup_address;
     /** @var string */
     protected $status;
+    /** @var string */
+    protected $cancellation_reason;
     /** @var  string Y-m-d H:i:s */
     protected $status_changed_at;
     /** @var string */
@@ -74,6 +79,8 @@ class Appointment extends Lib\Base\Entity
     protected $payment_date;
     /** @var string */
     protected $payment_details;
+    /** @var decimal */
+    protected $refunded_amount = 0;
     /** @var string */
     protected $created_at;
     /** @var string */
@@ -91,8 +98,9 @@ class Appointment extends Lib\Base\Entity
         'waiting_time'          => array( 'format' => '%d' ),
         'notes'            => array( 'format' => '%s' ),
         'admin_notes'            => array( 'format' => '%s' ),
-        'customer_id'          => array( 'format' => '%s' ),
-        'wc_order_id'        => array( 'format' => '%s' ),
+        'customer_id'          => array( 'format' => '%d', 'reference' => array( 'entity' => 'Customer' ) ),
+        'wc_order_id'        => array( 'format' => '%d' ),
+        'schedule_id'        => array( 'format' => '%d', 'reference' => array( 'entity' => 'Schedule' ) ),
         'sub_service_key'         => array( 'format' => '%s' ),
         'sub_service_data' => array( 'format' => '%s' ),
         'is_after_hours'  => array( 'format' => '%s' ),
@@ -101,6 +109,7 @@ class Appointment extends Lib\Base\Entity
         'pickup_detail'        => array( 'format' => '%s' ),
         'destination_detail'        => array( 'format' => '%s' ),
         'status'      => array( 'format' => '%s' ),
+        'cancellation_reason'      => array( 'format' => '%s' ),
         'status_changed_at'        => array( 'format' => '%s' ),
         'total_amount'             => array( 'format' => '%s' ),
         'paid_amount'             => array( 'format' => '%s' ),
@@ -108,6 +117,7 @@ class Appointment extends Lib\Base\Entity
         'payment_type'             => array( 'format' => '%s' ),
         'payment_date'             => array( 'format' => '%s' ),
         'payment_details'             => array( 'format' => '%s' ),
+        'refunded_amount'             => array( 'format' => '%s' ),
         'created_at'               => array( 'format' => '%s' ),
         'updated_at'               => array( 'format' => '%s' ),
     );
@@ -145,23 +155,62 @@ class Appointment extends Lib\Base\Entity
      */
     public function cancelAllowed()
     {
-        $allow_cancel = true;
-        $appointment = new Lib\Entities\Appointment();
-        $minimum_time_prior_cancel = (int) Lib\Config::getMinimumTimePriorCancel( $appointment->getServiceId() );
-        if ( $minimum_time_prior_cancel > 0
-             && $appointment->load( $this->getId() )
-             && $appointment->getPickupDateTime() !== null
-        ) {
-            $allow_cancel_time = strtotime( $appointment->getPickupDateTime() ) - $minimum_time_prior_cancel;
-            if ( current_time( 'timestamp' ) > $allow_cancel_time ) {
-                $allow_cancel = false;
+        $allow_cancel_time = current_time( 'timestamp' ) + (int) Lib\Config::getMinimumTimePriorCancel( $this->getServiceId() );
+        $allow_cancel = 'blank';
+        if ( ! in_array( $this->getStatus(), array(
+            self::STATUS_NOSHOW,
+            self::STATUS_CANCELLED,
+            self::STATUS_REJECTED,
+            self::STATUS_DONE,
+        ) ) ) {
+            if ( in_array( $this->getStatus(), array(
+                    self::STATUS_APPROVED,
+                    self::STATUS_PENDING,
+                )  ) && $this->getPickupDateTime() === null ) {
+                $allow_cancel = 'allow';
+            } else {
+                if ( $this->getPickupDateTime() > current_time( 'mysql' ) ) {
+                    if ( $allow_cancel_time < strtotime( $this->getPickupDateTime() ) ) {
+                        $allow_cancel = 'allow';
+                    } else {
+                        $allow_cancel = 'deny';
+                    }
+                } else {
+                    $allow_cancel = 'expired';
+                }
             }
-        }
-        if ( $this->getStatus() == Lib\Entities\Appointment::STATUS_DONE ) {
-            $allow_cancel = false;
         }
 
         return $allow_cancel;
+    }
+
+    /**
+     * Check if cancel allowed
+     *
+     * @return bool
+     */
+    public function rescheduleAllowed()
+    {
+        $allow_cancel_time = current_time( 'timestamp' ) + (int) Lib\Config::getMinimumTimePriorCancel( $this->getServiceId() );
+
+        $allow_reschedule = 'blank';
+        if ( ! in_array( $this->getStatus(), array(
+                self::STATUS_NOSHOW,
+                self::STATUS_CANCELLED,
+                self::STATUS_REJECTED,
+                self::STATUS_DONE,
+            ) ) && $this->getPickupDateTime() !== null ) {
+            if ( $this->getPickupDateTime() > current_time( 'mysql' ) ) {
+                if ( $allow_cancel_time < strtotime( $this->getPickupDateTime() )  ) {
+                    $allow_reschedule = 'allow';
+                } else {
+                    $allow_reschedule = 'deny';
+                }
+            } else {
+                $allow_reschedule = 'expired';
+            }
+        }
+        return $allow_reschedule;
     }
 
     /**
@@ -170,9 +219,64 @@ class Appointment extends Lib\Base\Entity
     public function cancel( $reason = '' )
     {
         $this->setStatus( self::STATUS_CANCELLED );
+        $this->setCancellationReason( $reason );
         $this->save();
 
         Lib\Notifications\Appointment\Sender::send( $this, array( 'cancellation_reason' => $reason ) );
+    }
+
+    /**
+     * @param string $reason
+     */
+    public function noshow( $reason = '' )
+    {
+        $this->setStatus( self::STATUS_NOSHOW );
+        $this->setCancellationReason( $reason );
+        $this->save();
+
+        Lib\Notifications\Appointment\Sender::send( $this, array( 'cancellation_reason' => $reason ) );
+    }
+
+    /**
+     * @param string $reason
+     */
+    public function isRefundAble()
+    {
+        if( 
+            $this->getPaymentType() == self::PAYMENT_TYPE_SQUARE && 
+            $this->getWcOrderId() && 
+            $this->getPaidAmount() &&
+            ! $this->isRefunded()
+        ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @param string $reason
+     */
+    public function refund( $reason = '' )
+    {
+        if( ! $this->isRefundAble() ) {
+            return false;
+        }
+
+        $order_id = $this->getWcOrderId();
+        $refund_amount = $this->getPaidAmount();
+
+        $response = WooCommerce::refundAppointments( $order_id, $refund_amount );
+
+        if( $response && $response['success'] ) {
+            $this
+                ->setPaidAmount( 0 )
+                ->setRefundedAmount( $refund_amount )
+                ->setPaymentStatus( self::PAYMENT_REFUNDED )
+                ->save();
+        }
+
+        return $response ?: $response;
     }
 
     /**
@@ -247,6 +351,29 @@ class Appointment extends Lib\Base\Entity
     public function setServiceId( $service_id )
     {
         $this->service_id = $service_id;
+
+        return $this;
+    }
+
+    /**
+     * Gets schedule_id
+     *
+     * @return int
+     */
+    public function getScheduleId()
+    {
+        return $this->schedule_id;
+    }
+
+    /**
+     * Sets schedule_id
+     *
+     * @param int $schedule_id
+     * @return $this
+     */
+    public function setScheduleId( $schedule_id )
+    {
+        $this->schedule_id = $schedule_id;
 
         return $this;
     }
@@ -693,6 +820,29 @@ class Appointment extends Lib\Base\Entity
     }
 
     /**
+     * Gets cancellation_reason
+     *
+     * @return string
+     */
+    public function getCancellationReason()
+    {
+        return $this->cancellation_reason;
+    }
+
+    /**
+     * Sets cancellation_reason
+     *
+     * @param string $cancellation_reason
+     * @return $this
+     */
+    public function setCancellationReason( $cancellation_reason )
+    {
+        $this->cancellation_reason = $cancellation_reason;
+
+        return $this;
+    }
+
+    /**
      * Gets status_changed_at
      *
      * @return string
@@ -863,6 +1013,39 @@ class Appointment extends Lib\Base\Entity
     {
         $payment_details = !empty($this->payment_details) ? json_decode($this->payment_details, true) : [];
         return isset($payment_details['adjustments']) ? $payment_details['adjustments'] : [];
+    }
+
+    /**
+     * Gets is_refunded
+     *
+     * @return string
+     */
+    public function isRefunded()
+    {
+        return ( $this->getPaymentStatus() == self::PAYMENT_REFUNDED );
+    }
+
+    /**
+     * Gets refunded_amount
+     *
+     * @return string
+     */
+    public function getRefundedAmount()
+    {
+        return $this->refunded_amount;
+    }
+
+    /**
+     * Sets refunded_amount
+     *
+     * @param string $refunded_amount
+     * @return $this
+     */
+    public function setRefundedAmount( $refunded_amount )
+    {
+        $this->refunded_amount = $refunded_amount;
+
+        return $this;
     }
 
     /**
@@ -1143,7 +1326,7 @@ class Appointment extends Lib\Base\Entity
             $statuses = array(
                 self::PAYMENT_COMPLETED,
                 self::PAYMENT_PENDING,
-                self::PAYMENT_REJECTED,
+                self::PAYMENT_REFUNDED,
             );
             self::putInCache( __FUNCTION__, $statuses );
         }
@@ -1160,9 +1343,9 @@ class Appointment extends Lib\Base\Entity
     public static function paymentStatusToString( $status )
     {
         switch ( $status ) {
-            case self::PAYMENT_COMPLETED:  return __( 'Completed', 'connectpx_booking' );
-            case self::PAYMENT_PENDING:    return __( 'Pending',   'connectpx_booking' );
-            case self::PAYMENT_REJECTED:   return __( 'Rejected',  'connectpx_booking' );
+            case self::PAYMENT_COMPLETED:  return __( 'Paid', 'connectpx_booking' );
+            case self::PAYMENT_PENDING:    return __( 'Unpaid',   'connectpx_booking' );
+            case self::PAYMENT_REFUNDED:    return __( 'Refunded',   'connectpx_booking' );
             default:                      return '';
         }
     }
@@ -1172,7 +1355,7 @@ class Appointment extends Lib\Base\Entity
         switch ( $status ) {
             case self::PAYMENT_PENDING:    return 'far fa-clock';
             case self::PAYMENT_COMPLETED:   return 'fas fa-check';
-            case self::PAYMENT_REJECTED:   return 'fas fa-ban';
+            case self::PAYMENT_REFUNDED:   return 'fas fa-arrow-left';
             default: return '';
         }
     }
@@ -1266,7 +1449,7 @@ class Appointment extends Lib\Base\Entity
         $data['city'] = sprintf("%s, %s", $destination_details['address']['city'], $destination_details['address']['state']);
         $data['zip'] = $destination_details['address']['postcode'] ?: ($customer ? $customer->getPostcode() : 'N/A');
         $data['trip_type'] = $subService->isRoundTrip() ? 'RT' : 'O';
-        $data['status'] = Lib\Entities\Appointment::statusToString($this->getStatus());
+        $data['status'] = self::statusToString($this->getStatus());
         $data['flat_rate'] = isset($lineItems['items']['flat_rate']) 
             ? Lib\Utils\Price::format( $lineItems['items']['flat_rate']['total'] ) 
             : Lib\Utils\Price::format( 0 );

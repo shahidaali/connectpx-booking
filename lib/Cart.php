@@ -178,6 +178,9 @@ class Cart
              * otherwise create appointment and connect customer to new appointment
              */
             $appointment = new Appointment();
+
+            $payment_status = Appointment::PAYMENT_TYPE_SQUARE ? Appointment::PAYMENT_COMPLETED : Appointment::PAYMENT_PENDING;
+
             $appointment
                 ->setServiceId( $service->getId() )
                 ->setWcOrderId( $wc_order->get_id() )
@@ -195,7 +198,7 @@ class Cart
                 ->setTimeZoneOffset( $time_zone_offset )
                 ->setStatus( Config::getDefaultAppointmentStatus() )
                 ->setNotes( $this->userData->getNotes() )
-                ->setPaymentStatus( Appointment::PAYMENT_PENDING )
+                ->setPaymentStatus( $payment_status )
                 ->setPaymentType( $wc_order->get_payment_method() )
                 ->setPaymentDate( current_time( 'mysql' ) )
                 ->setTotalAmount( $itemPrice['totals'] )

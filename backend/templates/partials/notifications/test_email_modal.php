@@ -15,7 +15,7 @@ use ConnectpxBooking\Backend\Components\Controls\Inputs;
                         <div class="col-md-12">
                             <div class="form-group">
                                 <label for="connectpx_booking_test_to_email"><?php esc_html_e( 'To email', 'connectpx_booking' ) ?></label>
-                                <input id="connectpx_booking_test_to_email" class="form-control" type="text" name="to_email" value="admin@connectpx_booking.local.com"/>
+                                <input id="connectpx_booking_test_to_email" class="form-control" type="text" name="to_email" value="<?php echo get_bloginfo('admin_email'); ?>"/>
                             </div>
                         </div>
                     </div>

@@ -46,6 +46,7 @@ class Invoice extends Lib\Base\Component
         $data['invoice']['id'] = $invoice->getId(); 
         $data['invoice']['created_date'] = Lib\Utils\DateTime::formatDate( $invoice->getCreatedAt(), 'd-M-y' ); 
         $data['invoice']['total'] = Lib\Utils\Price::format( $invoice->getTotalAmount() ); 
+        $data['invoice']['due_amount'] = Lib\Utils\Price::format( $invoice->getTotalAmount() - $invoice->getPaidAmount() ); 
         // __pre($data);
         // exit();
         $content = self::renderTemplate( 'backend/components/invoice/templates/invoice', $data, false );

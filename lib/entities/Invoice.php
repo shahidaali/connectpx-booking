@@ -12,7 +12,6 @@ class Invoice extends Lib\Base\Entity
 {
     const STATUS_COMPLETED  = 'completed';
     const STATUS_PENDING    = 'pending';
-    const STATUS_REJECTED   = 'rejected';
 
     /** @var int */
     protected $customer_id;
@@ -65,7 +64,6 @@ class Invoice extends Lib\Base\Entity
             $statuses = array(
                 self::STATUS_COMPLETED,
                 self::STATUS_PENDING,
-                self::STATUS_REJECTED,
             );
             self::putInCache( __FUNCTION__, $statuses );
         }
@@ -82,9 +80,8 @@ class Invoice extends Lib\Base\Entity
     public static function statusToString( $status )
     {
         switch ( $status ) {
-            case self::STATUS_COMPLETED:  return __( 'Completed', 'connectpx_booking' );
-            case self::STATUS_PENDING:    return __( 'Pending',   'connectpx_booking' );
-            case self::STATUS_REJECTED:   return __( 'Rejected',  'connectpx_booking' );
+            case self::STATUS_COMPLETED:  return __( 'Paid', 'connectpx_booking' );
+            case self::STATUS_PENDING:    return __( 'Unpaid',   'connectpx_booking' );
             default:                      return '';
         }
     }
@@ -94,7 +91,6 @@ class Invoice extends Lib\Base\Entity
         switch ( $status ) {
             case self::STATUS_PENDING:    return 'far fa-clock';
             case self::STATUS_COMPLETED:   return 'fas fa-check';
-            case self::STATUS_REJECTED:   return 'fas fa-ban';
             default: return '';
         }
     }
@@ -406,7 +402,8 @@ class Invoice extends Lib\Base\Entity
             ->select( 'a.*' )
             ->innerJoin( 'Appointment', 'a', 'ia.appointment_id = a.id' )
             ->where('ia.invoice_id', $this->getId())
-            ->order('DESC')
+            ->sortBy('a.pickup_datetime')
+            ->order('ASC')
             ->fetchArray();
     }
 
@@ -420,12 +417,14 @@ class Invoice extends Lib\Base\Entity
         $appointments = [];
 
         foreach ($this->getAppointments() as $key => $row) {
-            $appointments[] = new Lib\Entities\Appointment( $row );
+            $appointment = new Lib\Entities\Appointment();
+            $appointment->setFields( $row, true );
+
+            $appointments[] = $appointment;
         }
 
         return $appointments;
     }
-
 
     /**
      * @inheritDoc
@@ -442,23 +441,26 @@ class Invoice extends Lib\Base\Entity
         }
 
         if( !empty( $appointments ) ) {
-            foreach ($appointments as $key => $appointment) {
-                $a_ids[] = $appointment['id'];
-                $total_amount += $appointment['total_amount'];
-                $paid_amount += $appointment['paid_amount'];
+            foreach ($appointments as $key => $appointment_fields) {
+                $appointment = new Lib\Entities\Appointment();
+                $appointment->setFields( $appointment_fields, true );
+
+                $a_ids[] = $appointment->getId();
+                $total_amount += $appointment->getTotalAmount();
+                $paid_amount += $appointment->getPaidAmount();
 
                 $invoiceAppointment = new Lib\Entities\InvoiceAppointment();
                 $invoiceAppointment->loadBy([
-                    'invoice_id' => $this->id,
-                    'appointment_id' => $appointment['id'],
+                    'invoice_id' => $this->getId(),
+                    'appointment_id' => $appointment->getId(),
                 ]);
 
                 if( $invoiceAppointment->isLoaded() ) {
                     $invoiceAppointment->setId( $invoiceAppointment->getId() );
                 } else {
                     $invoiceAppointment->setFields([
-                        'invoice_id' => $this->id,
-                        'appointment_id' => $appointment['id'],
+                        'invoice_id' => $this->getId(),
+                        'appointment_id' => $appointment->getId(),
                     ]);
                 }
 
@@ -476,6 +478,26 @@ class Invoice extends Lib\Base\Entity
             ->setTotalAmount($total_amount)
             ->setPaidAmount($paid_amount)
             ->save();
+
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function updatePaidAmount()
+    {
+        $this
+            ->setStatus( self::STATUS_COMPLETED )
+            ->setPaidAmount( $this->getTotalAmount() )
+            ->save();
+
+        foreach ($this->loadAppointments() as $appointment) {
+            $appointment
+                ->setPaidAmount( $appointment->getTotalAmount() )
+                ->setStatus( Lib\Entities\Appointment::STATUS_DONE )
+                ->save();
+        }
 
         return $this;
     }

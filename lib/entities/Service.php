@@ -13,6 +13,8 @@ class Service extends Lib\Base\Entity
     protected $title;
     /** @var  string */
     protected $description;
+    /** @var  string */
+    protected $enabled;
     /** @var  int */
     /** @var  string */
     protected $sub_services = '[]';
@@ -23,6 +25,7 @@ class Service extends Lib\Base\Entity
         'id'                           => array( 'format' => '%d' ),
         'title'                        => array( 'format' => '%s' ),
         'description'                  => array( 'format' => '%s' ),
+        'enabled'                      => array( 'format' => '%s' ),
         'sub_services'                 => array( 'format' => '%s' ),
     );
 
@@ -271,6 +274,39 @@ class Service extends Lib\Base\Entity
         $this->description = $description;
 
         return $this;
+    }
+
+    /**
+     * Gets enabled
+     *
+     * @return string
+     */
+    public function getEnabled()
+    {
+        return $this->enabled;
+    }
+
+    /**
+     * Sets enabled
+     *
+     * @param string $enabled
+     * @return $this
+     */
+    public function setEnabled( $enabled )
+    {
+        $this->enabled = $enabled;
+
+        return $this;
+    }
+
+    /**
+     * Gets enabled
+     *
+     * @return string
+     */
+    public function isEnabled()
+    {
+        return $this->enabled == 'yes';
     }
 
     /**

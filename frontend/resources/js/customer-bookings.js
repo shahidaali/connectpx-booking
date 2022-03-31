@@ -22,6 +22,7 @@
                 appointments_columns = [],
                 $appointmentDateFilter = $('#connectpx_booking-filter-date'),
                 $serviceFilter = $('#connectpx_booking-filter-service'),
+                $searchQuery = $('#connectpx_booking-search-query'),
                 row;
             console.log(ConnectpxBookingCustomerBookingsL10n);
             Object.keys(ConnectpxBookingCustomerBookingsL10n.appointment_columns).map(function(objectKey) {
@@ -65,7 +66,9 @@
                                     case 'allow' :
                                         return '<button class="btn btn-sm btn-default" data-type="open-modal" data-target="#connectpx_booking-customer-bookings-cancel-dialog">' + ConnectpxBookingCustomerBookingsL10n.cancel + '</button>';
                                     case 'deny':
-                                        return ConnectpxBookingCustomerBookingsL10n.deny_cancel_appointment;
+                                        return '<button class="btn btn-sm btn-default" data-type="open-modal" data-target="#connectpx_booking-customer-bookings-cancel-dialog">' + ConnectpxBookingCustomerBookingsL10n.cancel + '</button>';
+                                    // case 'deny':
+                                    //     return ConnectpxBookingCustomerBookingsL10n.deny_cancel_appointment;
                                 }
                             },
                             responsivePriority: 2,
@@ -90,6 +93,9 @@
                             responsivePriority: 2,
                             orderable         : false
                         });
+                        break;
+                    default:
+                        appointments_columns.push({data: column, render: $.fn.dataTable.render.text()});
                         break;
                 }
             });
@@ -140,6 +146,21 @@
                 appointments_datatable.ajax.reload();
             })
 
+            var timeout = null;
+            $searchQuery.on('keyup', function () {
+                var value = $(this).val();
+                clearTimeout(timeout);
+                timeout = setTimeout(function(){
+                    if ( value.length >= 3 ) {
+                        appointments_datatable.ajax.reload();
+                    }
+                    else if( value == '' ) {
+                        appointments_datatable.ajax.reload();
+                    }
+                }, 500);
+
+            })
+
             $('.connectpx_booking-js-select')
             .val(null)
             .select2({
@@ -176,6 +197,7 @@
                             csrf_token: ConnectpxBookingL10nGlobal.csrf_token,
                             date: $appointmentDateFilter.data('date'),
                             service: $serviceFilter.val(),
+                            search_query: $searchQuery.val(),
                         }, {
                             filter: {}
                         }, d);
@@ -202,8 +224,6 @@
                 if ($cancel_reason.length && $cancel_reason.val() === '') {
                     $cancel_reason_error.show();
                 } else {
-                    var ladda = Ladda.create(this);
-                    ladda.start();
                     $.ajax({
                         url: ConnectpxBookingCustomerBookingsL10n.ajax_url,
                         type: 'POST',
@@ -215,7 +235,6 @@
                         },
                         dataType: 'json',
                         success: function (response) {
-                            ladda.stop();
                             if (response.success) {
                                 $cancel_dialog.connectpx_bookingModal('hide');
                                 appointments_datatable.ajax.reload();
@@ -279,8 +298,6 @@
             });
             $reschedule_save.on('click', function (e) {
                 e.preventDefault();
-                var ladda = Ladda.create(this);
-                ladda.start();
                 $.ajax({
                     url     : ConnectpxBookingCustomerBookingsL10n.ajax_url,
                     type    : 'POST',
@@ -292,7 +309,6 @@
                     },
                     dataType: 'json',
                     success : function (response) {
-                        ladda.stop();
                         if (response.success) {
                             $reschedule_dialog.connectpx_bookingModal('hide');
                             appointments_datatable.ajax.reload();

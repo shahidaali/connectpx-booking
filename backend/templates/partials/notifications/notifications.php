@@ -40,7 +40,7 @@ use ConnectpxBooking\Lib\Config;
 <div class="form-row mb-3">
     <div class="col-auto">
         <?php Inputs::renderCsrf() ?>
-        <?php Buttons::renderDefault( 'connectpx_booking-js-test-email-notifications', null, __( 'Test email notifications', 'connectpx_booking' ), array(), true ) ?>
+        <?php // Buttons::renderDefault( 'connectpx_booking-js-test-email-notifications', null, __( 'Test email notifications', 'connectpx_booking' ), array(), true ) ?>
     </div>
 </div>
 <div class="alert alert-info">
@@ -51,5 +51,5 @@ use ConnectpxBooking\Lib\Config;
         </div>
     </div>
 </div>
-<?php $self::renderTemplate( 'backend/templates/partials/notifications/test_email_modal' ) ?>
+<?php // $self::renderTemplate( 'backend/templates/partials/notifications/test_email_modal' ) ?>
 

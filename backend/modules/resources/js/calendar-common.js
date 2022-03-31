@@ -120,22 +120,53 @@
                 }
 
                 const $buttons = $('<div class="mt-2 d-flex"/>');
-                $buttons.append($('<button class="btn btn-success btn-sm mr-1">').append('<i class="far fa-fw fa-edit">'));
                 $buttons.append(
-                    $('<a class="btn btn-danger btn-sm text-white">').append('<i class="far fa-fw fa-trash-alt">')
-                        .attr('title', obj.options.l10n.delete)
+                    $('<button class="btn btn-success btn-sm mr-1">')
+                        .append('<i class="far fa-fw fa-edit">')
                         .on('click', function (e) {
                             e.stopPropagation();
                             // Localize contains only string values
-                            new ConnectpxBookingConfirmDeletingAppointment({
-                                    action: 'connectpx_booking_delete_appointment',
-                                    appointment_id: arg.event.id,
-                                    csrf_token: ConnectpxBookingL10nGlobal.csrf_token
-                                },
-                                function (response) {calendar.removeEventById(arg.event.id);}
+                            ConnectpxBookingAppointmentDialog.showDialog(
+                                arg.event.id,
+                                null,
+                                null,
+                                function (event) {
+                                    if (event == 'refresh') {
+                                        calendar.refetchEvents();
+                                    } else {
+                                        if (event.start === null) {
+                                            // Task
+                                            calendar.removeEventById(event.id);
+                                        } else {
+                                            if (visible_staff_id == event.resourceId || visible_staff_id == 0) {
+                                                // Update event in calendar.
+                                                calendar.updateEvent(event);
+                                            } else {
+                                                // Switch to the event owner tab.
+                                                jQuery('li > a[data-staff_id=' + event.resourceId + ']').click();
+                                            }
+                                        }
+                                    }
+
+                                }
                             );
                         })
                 );
+                // $buttons.append(
+                //     $('<a class="btn btn-danger btn-sm text-white">').append('<i class="far fa-fw fa-trash-alt">')
+                //         .attr('title', obj.options.l10n.delete)
+                //         .on('click', function (e) {
+                //             e.stopPropagation();
+                //             // Localize contains only string values
+                //             new ConnectpxBookingConfirmDeletingAppointment({
+                //                     action: 'connectpx_booking_delete_appointment',
+                //                     appointment_id: arg.event.id,
+                //                     csrf_token: ConnectpxBookingL10nGlobal.csrf_token
+                //                 },
+                //                 function (response) {calendar.removeEventById(arg.event.id);}
+                //             );
+                //         })
+                // );
 
                 if (arg.view.type !== 'listWeek') {
                     $buttons.addClass('border-top pt-2 justify-content-end');
@@ -164,30 +195,30 @@
                 arg.jsEvent.stopPropagation();
                 var visible_staff_id = 0;
 
-                ConnectpxBookingAppointmentDialog.showDialog(
-                    arg.event.id,
-                    null,
-                    null,
-                    function (event) {
-                        if (event == 'refresh') {
-                            calendar.refetchEvents();
-                        } else {
-                            if (event.start === null) {
-                                // Task
-                                calendar.removeEventById(event.id);
-                            } else {
-                                if (visible_staff_id == event.resourceId || visible_staff_id == 0) {
-                                    // Update event in calendar.
-                                    calendar.updateEvent(event);
-                                } else {
-                                    // Switch to the event owner tab.
-                                    jQuery('li > a[data-staff_id=' + event.resourceId + ']').click();
-                                }
-                            }
-                        }
+                // ConnectpxBookingAppointmentDialog.showDialog(
+                //     arg.event.id,
+                //     null,
+                //     null,
+                //     function (event) {
+                //         if (event == 'refresh') {
+                //             calendar.refetchEvents();
+                //         } else {
+                //             if (event.start === null) {
+                //                 // Task
+                //                 calendar.removeEventById(event.id);
+                //             } else {
+                //                 if (visible_staff_id == event.resourceId || visible_staff_id == 0) {
+                //                     // Update event in calendar.
+                //                     calendar.updateEvent(event);
+                //                 } else {
+                //                     // Switch to the event owner tab.
+                //                     jQuery('li > a[data-staff_id=' + event.resourceId + ']').click();
+                //                 }
+                //             }
+                //         }
 
-                    }
-                );
+                //     }
+                // );
             },
             dateClick: function (arg) {
                 let staff_id, visible_staff_id;

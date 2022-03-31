@@ -19,6 +19,7 @@ class Service extends Lib\Base\Form
             'title',
             'description',
             'sub_services',
+            'enabled',
         );
 
         $this->setFields( $fields );

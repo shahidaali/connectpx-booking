@@ -16,8 +16,6 @@
 
             $save_btn.on('click', function (e) {
                 e.preventDefault();
-                var ladda = Ladda.create(this);
-                ladda.start();
                 $('.is-invalid', $profile_content).removeClass('is-invalid');
                 $('.form-group .connectpx_booking-js-error').remove();
                 var phone_number = $phone_field.val();
@@ -47,7 +45,6 @@
                                 scrollTop: $profile_content.find('.is-invalid').first().offset().top - 100
                             }, 1000);
                         }
-                        ladda.stop();
                     }
                 });
             });

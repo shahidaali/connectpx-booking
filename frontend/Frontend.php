@@ -2,6 +2,7 @@
 namespace ConnectpxBooking\Frontend;
 
 use ConnectpxBooking\Frontend\Modules;
+use ConnectpxBooking\Lib;
 use ConnectpxBooking\Lib\Plugin;
 use ConnectpxBooking\Lib\Utils;
 
@@ -40,6 +41,7 @@ class Frontend {
 		// add_shortcode( 'connectpx_booking', array(__CLASS__, 'Shortcode') );
 		add_action( 'wp_ajax_connectpx_booking_ajax', array(__CLASS__, 'Ajax') );
 		add_action( 'wp_ajax_nopriv_connectpx_booking_ajax', array(__CLASS__, 'Ajax') );
+		add_filter( 'wp_authenticate_user', array(__CLASS__, 'CheckBlockedUser') );
 
 	}
 
@@ -383,6 +385,27 @@ class Frontend {
 		header('Content-Type: application/json');
 		echo json_encode($json_data);
 		exit();
+	}
+
+	/**
+	 * Register the stylesheets for the public-facing side of the site.
+	 *
+	 * @since    1.0.0
+	 */
+	public static function CheckBlockedUser( $user ) {
+		if( is_wp_error( $user ) ){
+            return $user;
+        }
+
+        $customer = new Lib\Entities\Customer();
+
+        if( is_object( $user ) && isset( $user->ID ) && $customer->loadBy( array( 'wp_user_id' => $user->ID ) ) && ! $customer->isEnabled() ){
+            $error_message = Utils\Common::getOption('customer_account_disabled_message');
+            return new \WP_Error( 'disabled', ( $error_message ) ? $error_message : __( 'Your account is disabled!', 'connectpx_booking' ) );
+        }
+        else{
+            return $user;
+        }
 	}
 
 	/**

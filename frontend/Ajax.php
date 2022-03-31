@@ -33,6 +33,12 @@ class Ajax extends Lib\Base\Ajax
         $userData->setServiceId( self::parameter('service_id') );
         $userData = $userData->setActiveStep( 'service' );
 
+        $service = new Lib\Entities\Service();
+        $service_available = false;
+        if( $service->load( self::parameter('service_id') ) && $service->isEnabled() ) {
+            $service_available = true;
+        }
+
         $sub_services = $userData->getCustomerSubServices();
 
         $response = array(
@@ -43,6 +49,8 @@ class Ajax extends Lib\Base\Ajax
                 // 'buttons' => self::_renderButtons($userData),
                 'userData' => $userData,
                 'sub_services' => $sub_services,
+                'service_available' => $service_available,
+                'service_not_available_message' => Lib\Utils\Common::getOption('service_not_available_message'),
             ), false ),
         );
 
@@ -147,7 +155,7 @@ class Ajax extends Lib\Base\Ajax
                 'disabled_days' => [],
                 'time_error' => __('Please select pickup time.', 'connectpx_booking'),
                 'is_round_trip' => $userData->getSubService()->isRoundTrip(),
-                'active_step' => $userData->getActiveStep(),
+                'slot_length' => (int) Lib\Utils\Common::getOption('slot_length', 15),
             );
         } else {
             $response = array( 'success' => false, 'error' => __('Session Error', 'connectpx_booking') );
@@ -252,6 +260,8 @@ class Ajax extends Lib\Base\Ajax
             if( Lib\Utils\Common::getOption('terms_page_id', 0) ) {
                 $terms_page = get_permalink( Lib\Utils\Common::getOption('terms_page_id', 0) );
             }
+            $customer = $userData->getCustomer();
+
             $html = self::renderTemplate( 'frontend/templates/steps/details', array(
                 'progress_bar' => self::_renderProgressBar($userData),
                 'buttons' => self::_renderButtons($userData),
@@ -260,6 +270,10 @@ class Ajax extends Lib\Base\Ajax
                 'show_address' => false,
             ), false );
 
+            $map_default_lat_lngs = [
+                'lat' => (float) Lib\Utils\Common::getOption('google_map_lat', 42.3144255),
+                'lng' => (float) Lib\Utils\Common::getOption('google_map_lng', -83.518173),
+            ];
             $response = array(
                 'success' => true,
                 'html' => $html,
@@ -268,7 +282,13 @@ class Ajax extends Lib\Base\Ajax
                     'enabled' => 1,
                     'cart_url' => wc_get_cart_url(),
                 ),
-                'terms_error' => __('Please accept terms and conditions to proceed.', 'connectpx_booking')
+                'terms_error' => __('Please accept terms and conditions to proceed.', 'connectpx_booking'),
+                'customer_default_lat_lngs' => $customer->getDefaultLatLngs(),
+                // 'customer_default_lat_lngs' => [
+                //     'pickup' => $map_default_lat_lngs,
+                //     'destination' => $map_default_lat_lngs,
+                // ],
+                'map_default_lat_lngs' => $map_default_lat_lngs,
             );
         } else {
             $response = array( 'success' => false, 'error' => __('Session Error', 'connectpx_booking') );

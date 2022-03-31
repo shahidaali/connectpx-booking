@@ -128,19 +128,39 @@ class Customers extends Lib\Base\Component {
         $customer = $form->save();
 
         if( $customer ) {
-
             // Create wordpress user
             if( $wp_user == 'create_new' ) {
                 $customer = Utils\Common::createWPUserByCustomer($customer, $password);
 
                 if( $wp_user = $customer->getWpUser() ) {
-                    Lib\Notifications\Customer\Sender::send( $customer, $customer->getCustomerEmail(), $password );
+                    Lib\Notifications\Customer\Sender::send( $customer, $customer->getEmail(), $password );
                 }
             }
 
             // Update wp password
             if( self::isEdit() && $customer->getWpUserId() && $password ) {
                 wp_set_password( $password, $customer->getWpUserId() ); 
+            }
+
+            // Update account detail
+            if( $customer->getWpUserId() ) {
+                if( self::isEdit() && $password ) {
+                    wp_set_password( $password, $customer->getWpUserId() ); 
+                }
+
+                $user_data = wp_update_user([
+                    'ID' => $customer->getWpUserId(),
+                    'first_name' => $customer->getFirstName(),
+                    'last_name' => $customer->getLastName(),
+                    'nickname' => $customer->getFullName(),
+                    'display_name' => $customer->getFullName(),
+                    'user_email' => $customer->getEmail(),
+                ]);
+
+                if ( is_wp_error( $user_data ) ) {
+                    Utils\Session::set_flash(__( 'Error saving customer account.' ), 'error');
+                    return;
+                }
             }
 
             Utils\Session::set_flash(__( 'Customer saved' ), 'success');
@@ -150,7 +170,7 @@ class Customers extends Lib\Base\Component {
             ]));
             exit;
         } else {
-            Utils\Session::set_flash(__( 'Error saving customer.' ), 'success');
+            Utils\Session::set_flash(__( 'Error saving customer.' ), 'error');
         }
     }
 

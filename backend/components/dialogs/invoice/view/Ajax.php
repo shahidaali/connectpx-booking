@@ -91,6 +91,7 @@ class Ajax extends Lib\Base\Ajax
 
         wp_send_json( $response );
     }
+
     /**
      * Save invoice form (for both create and edit).
      */
@@ -111,11 +112,37 @@ class Ajax extends Lib\Base\Ajax
                         ->setStatus( $invoice_status );
 
                     if ( $invoice->save() !== false ) {
+                        if( $invoice->getStatus() == Lib\Entities\Invoice::STATUS_COMPLETED ) {
+                            $invoice->updatePaidAmount();
+                        }
+
                         $response['success'] = true;
                     } else {
                         $response['errors'] = array( 'db' => __( 'Could not save invoice in database.', 'connectpx_booking' ) );
                     }
                 }
+            }
+            
+        }
+
+        wp_send_json( $response );
+    }
+
+    /**
+     * Save invoice form (for both create and edit).
+     */
+    public static function updateInvoicePaid()
+    {
+        $response = array( 'success' => false );
+        $invoice_id       = (int) self::parameter( 'id', 0 );
+
+        // If no errors then try to save the invoice.
+        if ( ! isset ( $response['errors'] ) ) {
+            // Single invoice.
+            $invoice = new Lib\Entities\Invoice();
+            if ( $invoice->load( $invoice_id ) ) {
+                $invoice->updatePaidAmount();
+                $response['success'] = true;
             }
             
         }

@@ -1,8 +1,10 @@
 <?php 
 use ConnectpxBooking\Lib;
+use ConnectpxBooking\Lib\Utils\Form;
 
 $title = static::isEdit() ? $service->getTitle() : '';
 $description = static::isEdit() ? $service->getDescription() : '';
+$enabled = static::isEdit() ? $service->getEnabled() : '';
 $sub_services = static::isEdit() ? json_decode($service->getSubServices(), true) : [];
 ?>
 <form action="" method="post">
@@ -30,6 +32,20 @@ $sub_services = static::isEdit() ? json_decode($service->getSubServices(), true)
 				<tr>
 					<th scope="row"><?php _e('Description', 'connectpx_booking'); ?></th>
 					<td><textarea name="description" rows="5" cols="52"><?php echo $description; ?></textarea></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php _e('Status', 'connectpx_booking') ?></th>
+					<td>
+						<select name="enabled">
+							<?php 
+							echo Form::selectOptions([
+								'yes' => __('Enabled', 'connectpx_booking'), 
+								'no' => __('Disabled', 'connectpx_booking')
+							], 
+							$enabled); 
+							?>
+						</select>
+					</td>
 				</tr>
 			</tbody>
 		</table>

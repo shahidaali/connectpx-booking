@@ -76,15 +76,10 @@ class Ajax extends Lib\Base\Ajax
     public static function getAppointmentsTableData( $filter = array(), $limits = array(), $columns = array(), $order = array() )
     {
         $query = Lib\Entities\Appointment::query( 'a' )
-            ->select( 'a.id,
-                a.status,
-                a.notes,
+            ->select( 'a.*,
                 a.created_at AS created_date,
-                a.pickup_datetime,
-                a.total_amount,
-                a.payment_status,
-                a.payment_type,
                 CONCAT(c.first_name, " ", c.last_name)  AS customer_full_name,
+                c.first_name AS first_name,
                 c.phone      AS customer_phone,
                 c.email      AS customer_email,
                 c.country    AS customer_country,
@@ -94,6 +89,7 @@ class Ajax extends Lib\Base\Ajax
                 c.street     AS customer_street,
                 c.street_number AS customer_street_number,
                 c.additional_address AS customer_additional_address,
+                c.wp_user_id AS wp_user_id,
                 s.title      AS service_title' 
             )
             ->leftJoin( 'Service', 's', 's.id = a.service_id' )
@@ -133,6 +129,10 @@ class Ajax extends Lib\Base\Ajax
             $query->where( 'a.status', $filter['status'] );
         }
 
+        if ( $filter['search_query'] && $filter['search_query'] != '' ) {
+            $query->whereLike( 'a.pickup_detail', '%' . $filter['search_query'] .'%' );
+        }
+
         foreach ( $order as $sort_by ) {
             $query->sortBy( str_replace( '.', '_', $columns[ $sort_by['column'] ]['data'] ) )
                 ->order( $sort_by['dir'] == 'desc' ? Lib\Query::ORDER_DESCENDING : Lib\Query::ORDER_ASCENDING );
@@ -146,6 +146,8 @@ class Ajax extends Lib\Base\Ajax
 
         $data = array();
         foreach ( $query->fetchArray() as $row ) {
+            $appointment = new Lib\Entities\Appointment($row);
+
             // Appointment status.
             $row['status'] = Lib\Entities\Appointment::statusToString( $row['status'] );
             // Payment title.
@@ -155,24 +157,43 @@ class Ajax extends Lib\Base\Ajax
                 $payment_title = Lib\Utils\Price::format( $row['total_amount'] );
 
                 $payment_raw_title = trim( sprintf(
-                    '%s %s %s',
+                    '%s <br>%s <br>%s',
                     $payment_title,
                     Lib\Entities\Appointment::paymentTypeToString( $row['payment_type'] ),
                     Lib\Entities\Appointment::paymentStatusToString( $row['payment_status'] )
                 ) );
 
                 $payment_title .= sprintf(
-                    ' %s <span%s>%s</span>',
+                    ' <br> %s <br><span%s>%s</span>',
                     Lib\Entities\Appointment::paymentTypeToString( $row['payment_type'] ),
-                    $row['payment_status'] == Lib\Entities\Appointment::PAYMENT_PENDING ? ' class="text-danger"' : '',
+                    $row['payment_status'] == Lib\Entities\Appointment::PAYMENT_PENDING || $row['payment_status'] == Lib\Entities\Appointment::PAYMENT_REFUNDED ? ' class="text-danger"' : ' class="text-success"',
                     Lib\Entities\Appointment::paymentStatusToString( $row['payment_status'] )
                 );
             }
+
+            $pickupInfo = $appointment->getPickupDetail() ? json_decode( $appointment->getPickupDetail(), true ) : [];
+            $destinationInfo = $appointment->getDestinationDetail() ? json_decode( $appointment->getDestinationDetail(), true ) : [];
+
+            $appointment_detail = sprintf(
+                '%s <br> <b>P/u:</b> %s <br> <b>Going:</b> %s',
+                $pickupInfo['patient_name'] ?? 'N/A',
+                $pickupInfo['address']['address'] ?? 'N/A',
+                $destinationInfo['address']['address'] ?? 'N/A',
+            );
+
+            $customer_detail = sprintf(
+                ' %s <br> %s<br><span %s>%s</span>',
+                $row['customer_full_name'],
+                $row['customer_email'],
+                $row['wp_user_id'] ? 'class="text-success"' : 'class="text-danger"',
+                $row['wp_user_id'] ? 'Contract' : 'Private',
+            );
 
             $data[] = array(
                 'id'                => $row['id'],
                 'pickup_datetime'        => $row['pickup_datetime'] === null ? __( 'N/A', 'connectpx_booking' ) : Lib\Utils\DateTime::formatDateTime( $row['pickup_datetime'] ),
                 'customer'          => array(
+                    'first_name' => $row['first_name'],
                     'full_name' => $row['customer_full_name'],
                     'phone' => $row['customer_phone'],
                     'email' => $row['customer_email'],
@@ -191,6 +212,8 @@ class Ajax extends Lib\Base\Ajax
                 ),
                 'status'            => $row['status'],
                 'payment'           => $payment_title,
+                'appointment_detail'           => $appointment_detail,
+                'customer_detail'           => $customer_detail,
                 'payment_raw_title' => $payment_raw_title,
                 'notes'             => $row['notes'],
                 'created_date'      => Lib\Utils\DateTime::formatDateTime( $row['created_date'] ),
@@ -219,8 +242,10 @@ class Ajax extends Lib\Base\Ajax
                 i.total_amount,
                 i.paid_amount,
                 i.status,
-                CONCAT(c.first_name, " ", c.last_name)  AS customer_full_name' 
-            )
+                CONCAT(c.first_name, " ", c.last_name)  AS customer_full_name,
+                c.email as customer_email,
+                c.wp_user_id AS wp_user_id
+            ')
             ->leftJoin( 'Customer', 'c', 'c.id = i.customer_id' );
 
         $total = $query->count();
@@ -266,20 +291,27 @@ class Ajax extends Lib\Base\Ajax
 
         $data = array();
         foreach ( $query->fetchArray() as $row ) {
+            $customer_detail = sprintf(
+                ' %s <br> <span %s>%s</span>',
+                $row['customer_full_name'],
+                $row['wp_user_id'] ? 'class="text-success"' : 'class="text-danger"',
+                $row['wp_user_id'] ? 'Contract' : 'Private',
+            );
 
             $data[] = array(
                 'id'                => $row['id'],
-                'start_date'        => Lib\Utils\DateTime::formatDate( $row['start_date'], 'd/m/Y' ),
-                'end_date'        => Lib\Utils\DateTime::formatDate( $row['end_date'], 'd/m/Y' ),
+                'start_date'        => Lib\Utils\DateTime::formatDate( $row['start_date'], 'm/d/Y' ),
+                'end_date'        => Lib\Utils\DateTime::formatDate( $row['end_date'], 'm/d/Y' ),
                 'customer'          => array(
                     'full_name' => $row['customer_full_name'],
+                    'detail' => $customer_detail,
                 ),
                 'status'            => Lib\Entities\Invoice::statusToString( $row['status'] ),
                 'total_amount'           => Lib\Utils\Price::format( $row['total_amount'] ),
                 'due_amount'           => Lib\Utils\Price::format( $row['total_amount'] - $row['paid_amount'] ),
                 'payment'           => $payment_title,
                 'payment_raw_title' => $payment_raw_title,
-                'created_date'      => Lib\Utils\DateTime::formatDate( $row['created_date'], 'd/m/Y' ),
+                'created_date'      => Lib\Utils\DateTime::formatDate( $row['created_date'], 'm/d/Y' ),
             );
         }
 
@@ -428,7 +460,8 @@ class Ajax extends Lib\Base\Ajax
     {
         $query = Lib\Entities\Appointment::query( 'a' )
             ->whereGt( 'a.pickup_datetime', $start_date->format( 'Y-m-d H:i:s' ) )
-            ->whereLt( 'a.pickup_datetime', $end_date->format( 'Y-m-d H:i:s' ) );
+            ->whereLt( 'a.pickup_datetime', $end_date->format( 'Y-m-d H:i:s' ) )
+            ->whereNotIn( 'a.status', [Lib\Entities\Appointment::STATUS_REJECTED] );
 
         $service_ids = array_filter( explode( ',', self::parameter( 'service_ids' ) ) );
 
@@ -466,16 +499,7 @@ class Ajax extends Lib\Base\Ajax
         $participants = null;
         $coloring_mode = 'status';
         $query
-            ->select( 'a.id, 
-                a.admin_notes, 
-                a.pickup_datetime, 
-                a.return_pickup_datetime,
-                a.status AS status,
-                a.notes AS appointment_notes,
-                a.total_amount, 
-                a.payment_type, 
-                a.payment_status, 
-                a.paid_amount,
+            ->select( 'a.*, 
                 s.title AS service_name, 
                 s.description AS service_description,
                 CONCAT(c.first_name, " ", c.last_name) AS client_name, 
@@ -502,27 +526,29 @@ class Ajax extends Lib\Base\Ajax
         $wp_tz = Lib\Config::getWPTimeZone();
         $convert_tz = $display_tz !== $wp_tz;
 
-        foreach ( $query->fetchArray() as $appointment ) {
-            if ( ! isset ( $appointments[ $appointment['id'] ] ) ) {
+        foreach ( $query->fetchArray() as $row ) {
+            $appointment = new Lib\Entities\Appointment($row);
+
+            if ( ! isset ( $appointments[ $row['id'] ] ) ) {
                 if ( $convert_tz ) {
-                    $appointment['pickup_datetime'] = Lib\Utils\DateTime::convertTimeZone( $appointment['pickup_datetime'], $wp_tz, $display_tz );
-                    $appointment['return_pickup_datetime'] = $appointment['return_pickup_datetime'] ? Lib\Utils\DateTime::convertTimeZone( $appointment['return_pickup_datetime'], $wp_tz, $display_tz ) : null;
+                    $row['pickup_datetime'] = Lib\Utils\DateTime::convertTimeZone( $row['pickup_datetime'], $wp_tz, $display_tz );
+                    $row['return_pickup_datetime'] = $row['return_pickup_datetime'] ? Lib\Utils\DateTime::convertTimeZone( $row['return_pickup_datetime'], $wp_tz, $display_tz ) : null;
                 }
-                $appointments[ $appointment['id'] ] = $appointment;
+                $appointments[ $row['id'] ] = $row;
             }
-            $appointments[ $appointment['id'] ]['customer'] = array(
-                'appointment_notes' => $appointment['appointment_notes'],
-                'client_email' => $appointment['client_email'],
-                'client_first_name' => $appointment['client_first_name'],
-                'client_last_name' => $appointment['client_last_name'],
-                'client_name' => $appointment['client_name'],
-                'client_note' => $appointment['client_note'],
-                'client_phone' => $appointment['client_phone'],
-                'total_amount' => $appointment['total_amount'],
-                'paid_amount' => $appointment['paid_amount'],
-                'payment_status' => Lib\Entities\Appointment::paymentStatusToString( $appointment['payment_status'] ),
-                'payment_type' => Lib\Entities\Appointment::paymentTypeToString( $appointment['payment_type'] ),
-                'status' => $appointment['status'],
+            $appointments[ $row['id'] ]['customer'] = array(
+                'appointment_notes' => $row['notes'],
+                'client_email' => $row['client_email'],
+                'client_first_name' => $row['client_first_name'],
+                'client_last_name' => $row['client_last_name'],
+                'client_name' => $row['client_name'],
+                'client_note' => $row['client_note'],
+                'client_phone' => $row['client_phone'],
+                'total_amount' => $row['total_amount'],
+                'paid_amount' => $row['paid_amount'],
+                'payment_status' => Lib\Entities\Appointment::paymentStatusToString( $row['payment_status'] ),
+                'payment_type' => Lib\Entities\Appointment::paymentTypeToString( $row['payment_type'] ),
+                'status' => $row['status'],
             );
         }
 
@@ -551,30 +577,37 @@ class Ajax extends Lib\Base\Ajax
             );
             $colors['mixed'] = "#8224e3";
         }
-        foreach ( $appointments as $key => $appointment ) {
-            $codes['appointment_date'] = Lib\Utils\DateTime::formatDate( $appointment['pickup_datetime'] );
-            $codes['appointment_time'] = Lib\Utils\DateTime::formatTime( $appointment['pickup_datetime'] );
-            $codes['booking_number'] = $appointment['id'];
-            $codes['admin_notes'] = esc_html( $appointment['admin_notes'] );
-            $codes['service_name'] = $appointment['service_name'] ? esc_html( $appointment['service_name'] ) : __( 'Untitled', 'connectpx_booking' );
-            $codes['service_description'] = esc_html( $appointment['service_description'] );
-            $codes['total_amount'] = Lib\Utils\Price::format( $appointment['total_amount'] );
-            $codes['paid_amount'] = Lib\Utils\Price::format( $appointment['paid_amount'] );
-            $codes['payment_status'] = Lib\Entities\Appointment::paymentStatusToString( $appointment['payment_status'] );
-            $codes['payment_type'] = Lib\Entities\Appointment::paymentTypeToString( $appointment['payment_type'] );
-            $codes['status'] = Lib\Entities\Appointment::statusToString( $appointment['status'] );
-            $codes['client_name'] = $appointment['client_name'];
-            $codes['client_email'] = $appointment['client_email'];
-            $codes['client_phone'] = $appointment['client_phone'];
+        foreach ( $appointments as $key => $row ) {
+            $appointment = new Lib\Entities\Appointment($row);
+            $pickupInfo = $appointment->getPickupDetail() ? json_decode( $appointment->getPickupDetail(), true ) : [];
+            $destinationInfo = $appointment->getDestinationDetail() ? json_decode( $appointment->getDestinationDetail(), true ) : [];
+
+            $codes['appointment_date'] = Lib\Utils\DateTime::formatDate( $row['pickup_datetime'] );
+            $codes['appointment_time'] = Lib\Utils\DateTime::formatTime( $row['pickup_datetime'] );
+            $codes['booking_number'] = $row['id'];
+            $codes['admin_notes'] = esc_html( $row['admin_notes'] );
+            $codes['service_name'] = $row['service_name'] ? esc_html( $row['service_name'] ) : __( 'Untitled', 'connectpx_booking' );
+            $codes['service_description'] = esc_html( $row['service_description'] );
+            $codes['total_amount'] = Lib\Utils\Price::format( $row['total_amount'] );
+            $codes['paid_amount'] = Lib\Utils\Price::format( $row['paid_amount'] );
+            $codes['payment_status'] = Lib\Entities\Appointment::paymentStatusToString( $row['payment_status'] );
+            $codes['payment_type'] = Lib\Entities\Appointment::paymentTypeToString( $row['payment_type'] );
+            $codes['status'] = Lib\Entities\Appointment::statusToString( $row['status'] );
+            $codes['client_name'] = $row['client_name'];
+            $codes['client_email'] = $row['client_email'];
+            $codes['client_phone'] = $row['client_phone'];
+            $codes['patient_name'] = $pickupInfo['patient_name'] ?? 'N/A';
+            $codes['pickup_address'] = $pickupInfo['address']['address'] ?? 'N/A';
+            $codes['destination_address'] = $destinationInfo['address']['address'] ?? 'N/A';
 
             // Customers for popover.
             $popover_customers = '';
-            $overall_status = $appointment['customer']['status'];
+            $overall_status = $row['customer']['status'];
 
             $codes['participants'] = array();
             $event_status = null;
             $status_color = 'secondary';
-            $customer = $appointment['customer'];
+            $customer = $row['customer'];
             if ( isset( $status_codes[ $customer['status'] ] ) ) {
                 $status_color = $status_codes[ $customer['status'] ];
             }
@@ -600,18 +633,18 @@ class Ajax extends Lib\Base\Ajax
             $color = $colors[ $event_status ];
 
             $appointments[ $key ] = array(
-                'id' => $appointment['id'],
-                'start' => $appointment['pickup_datetime'],
-                'end' => $appointment['pickup_datetime'],
-                //'end' => Lib\Slots\DatePoint::fromStr($appointment['pickup_datetime'])->modify("+1 hour")->format("Y-m-d H:i:s"),
+                'id' => $row['id'],
+                'start' => $row['pickup_datetime'],
+                'end' => $row['pickup_datetime'],
+                //'end' => Lib\Slots\DatePoint::fromStr($row['pickup_datetime'])->modify("+1 hour")->format("Y-m-d H:i:s"),
                 'title' => ' ',
                 'color' => $color,
-                'resourceId' => $appointment['id'],
+                'resourceId' => $row['id'],
                 'extendedProps' => array(
                     'tooltip' => Lib\Utils\Codes::replace( $tooltip, $codes, false ),
                     'desc' => Lib\Utils\Codes::replace( $template, $codes, false ),
                     'overall_status' => $overall_status,
-                    'header_text' => $appointment['appointment_time'],
+                    'header_text' => $row['appointment_time'],
                 ),
             );
         }
@@ -693,6 +726,67 @@ class Ajax extends Lib\Base\Ajax
             ->set( 'active', (int) self::parameter( 'active' ) )
             ->where( 'id', self::parameter( 'id' ) )
             ->execute();
+
+        wp_send_json_success();
+    }
+
+    /**
+     * Get email logs.
+     */
+    public static function getEmailLogs()
+    {
+        $range = self::parameter( 'range' );
+
+        $query = Lib\Entities\EmailLog::query( 'e' )
+            ->select( 'e.*' );
+        $total = $query->count();
+
+        // Filters.
+        list ( $start, $end ) = explode( ' - ', $range, 2 );
+        $end = date( 'Y-m-d', strtotime( '+1 day', strtotime( $end ) ) );
+
+        $query->whereBetween( 'e.created_at', $start, $end );
+
+        $query->limit( self::parameter( 'length' ) )->offset( self::parameter( 'start' ) );
+
+        // Order.
+        $order = self::parameter( 'order', array() );
+        $columns = self::parameter( 'columns' );
+
+        foreach ( $order as $sort_by ) {
+            $query->sortBy( '`' . str_replace( '.', '_', $columns[ $sort_by['column'] ]['data'] ) . '`' )
+                ->order( $sort_by['dir'] == 'desc' ? Lib\Query::ORDER_DESCENDING : Lib\Query::ORDER_ASCENDING );
+        }
+
+        $logs = $query->fetchArray();
+
+        $data = array();
+        foreach ( $logs as $record ) {
+            $data[] = array(
+                'id' => $record['id'],
+                'to' => $record['to'],
+                'subject' => $record['subject'],
+                'body' => $record['body'],
+                'headers' => json_decode( $record['headers'] ),
+                'attach' => json_decode( $record['attach'] ),
+                'created_at' => Lib\Utils\DateTime::formatDateTime( $record['created_at'] ),
+            );
+        }
+
+        wp_send_json( array(
+            'draw' => ( int ) self::parameter( 'draw' ),
+            'recordsTotal' => count( $logs ),
+            'recordsFiltered' => $total,
+            'data' => $data,
+        ) );
+    }
+
+    /**
+     * Get email logs.
+     */
+    public static function deleteEmailLogs()
+    {
+        Lib\Entities\EmailLog::query()->delete()->whereIn( 'id', array_map( 'intval', self::parameter( 'data', array() ) ) )->execute();
 
         wp_send_json_success();
     }

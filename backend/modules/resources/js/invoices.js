@@ -94,7 +94,15 @@ jQuery(function($) {
         if (show) {
             switch (column) {
                 case 'customer_full_name':
-                    columns.push({data: 'customer.full_name', render: $.fn.dataTable.render.text()});
+                    columns.push({
+                        data: 'customer.detail',
+                        render: function ( data, type, row, meta ) {
+                            if (row.customer.detail) {
+                                return row.customer.detail;
+                            }
+                            return '';
+                        }
+                    });
                     break;
                 case 'payment':
                     columns.push({

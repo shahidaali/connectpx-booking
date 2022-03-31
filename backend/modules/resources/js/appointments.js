@@ -9,6 +9,7 @@ jQuery(function($) {
         $customerFilter     = $('#connectpx_booking-filter-customer'),
         $serviceFilter      = $('#connectpx_booking-filter-service'),
         $statusFilter       = $('#connectpx_booking-filter-status'),
+        $searchQuery        = $('#connectpx_booking-search-query'),
         $newAppointmentBtn  = $('#connectpx_booking-new-appointment'),
         $printDialog        = $('#connectpx_booking-print-dialog'),
         $printSelectAll     = $('#connectpx_booking-js-print-select-all', $printDialog),
@@ -114,6 +115,28 @@ jQuery(function($) {
                 case 'customer_address':
                     columns.push({data: 'customer.address', render: $.fn.dataTable.render.text()});
                     break;
+                case 'customer_detail':
+                    columns.push({
+                        data: 'customer_detail',
+                        render: function ( data, type, row, meta ) {
+                            if (row.customer_detail) {
+                                return data;
+                            }
+                            return '';
+                        }
+                    });
+                    break;
+                case 'appointment_detail':
+                    columns.push({
+                        data: 'appointment_detail',
+                        render: function ( data, type, row, meta ) {
+                            if (row.appointment_detail) {
+                                return data;
+                            }
+                            return '';
+                        }
+                    });
+                    break;
                 case 'service_title':
                     columns.push({
                         data: 'service.title',
@@ -202,6 +225,7 @@ jQuery(function($) {
                         customer: $customerFilter.val(),
                         service: $serviceFilter.val(),
                         status: $statusFilter.val(),
+                        search_query: $searchQuery.val(),
                     }
                 }, d);
             }
@@ -497,4 +521,18 @@ jQuery(function($) {
     $customerFilter.on('change', function () { dt.ajax.reload(); });
     $serviceFilter.on('change', function () { dt.ajax.reload(); });
     $statusFilter.on('change', function () { dt.ajax.reload(); });
+
+    var timeout = null;
+    $searchQuery.on('keyup', function () {
+        var value = $(this).val();
+        clearTimeout(timeout);
+        timeout = setTimeout(function(){
+            if ( value.length >= 3 ) {
+                dt.ajax.reload();
+            }
+            else if( value == '' ) {
+                dt.ajax.reload();
+            }
+        }, 500);
+    });
 });

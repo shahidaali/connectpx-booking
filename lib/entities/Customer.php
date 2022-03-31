@@ -36,13 +36,21 @@ class Customer extends Lib\Base\Entity
     /** @var string */
     protected $additional_address = '';
     /** @var string */
+    protected $pickup_lat;
+    /** @var string */
+    protected $pickup_lng;
+    /** @var string */
+    protected $destination_lat;
+    /** @var string */
+    protected $destination_lng;
+    /** @var string */
     protected $notes = '';
     /** @var string */
     protected $birthday;
     /** @var  string */
     protected $services = '[]';
     /** @var  string */
-    protected $stripe_account;
+    protected $enabled;
     /** @var string */
     protected $created_at;
 
@@ -62,8 +70,13 @@ class Customer extends Lib\Base\Entity
         'street'             => array( 'format' => '%s' ),
         'street_number'      => array( 'format' => '%s' ),
         'additional_address' => array( 'format' => '%s' ),
+        'pickup_lat' => array( 'format' => '%s' ),
+        'pickup_lng' => array( 'format' => '%s' ),
+        'destination_lat' => array( 'format' => '%s' ),
+        'destination_lng' => array( 'format' => '%s' ),
         'notes'              => array( 'format' => '%s' ),
         'services'           => array( 'format' => '%s' ),
+        'enabled'           => array( 'format' => '%s' ),
         'created_at'         => array( 'format' => '%s' ),
     );
 
@@ -464,6 +477,99 @@ class Customer extends Lib\Base\Entity
     }
 
     /**
+     * @return string
+     */
+    public function getPickupLat()
+    {
+        return (float) $this->pickup_lat;
+    }
+
+    /**
+     * @param string $pickup_lat
+     * @return $this
+     */
+    public function setPickupLat( $pickup_lat )
+    {
+        $this->pickup_lat = $pickup_lat;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPickupLng()
+    {
+        return (float) $this->pickup_lng;
+    }
+
+    /**
+     * @param string $pickup_lng
+     * @return $this
+     */
+    public function setPickupLng( $pickup_lng )
+    {
+        $this->pickup_lng = $pickup_lng;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDestinationLat()
+    {
+        return (float) $this->destination_lat;
+    }
+
+    /**
+     * @param string $destination_lat
+     * @return $this
+     */
+    public function setDestinationLat( $destination_lat )
+    {
+        $this->destination_lat = $destination_lat;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDestinationLng()
+    {
+        return (float) $this->destination_lng;
+    }
+
+    /**
+     * @param string $destination_lng
+     * @return $this
+     */
+    public function setDestinationLng( $destination_lng )
+    {
+        $this->destination_lng = $destination_lng;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDefaultLatLngs()
+    {
+        return [
+            'pickup' => [
+                'lat' => (float) $this->pickup_lat,
+                'lng' => (float) $this->pickup_lng,
+            ],
+            'destination' => [
+                'lat' => (float) $this->destination_lat,
+                'lng' => (float) $this->destination_lng,
+            ],
+        ];
+    }
+
+    /**
      * Gets notes
      *
      * @return string
@@ -507,6 +613,39 @@ class Customer extends Lib\Base\Entity
     public function getServices()
     {
         return $this->services;
+    }
+
+    /**
+     * Gets enabled
+     *
+     * @return string
+     */
+    public function getEnabled()
+    {
+        return $this->enabled;
+    }
+
+    /**
+     * Sets enabled
+     *
+     * @param string $enabled
+     * @return $this
+     */
+    public function setEnabled( $enabled )
+    {
+        $this->enabled = $enabled;
+
+        return $this;
+    }
+
+    /**
+     * Gets enabled
+     *
+     * @return string
+     */
+    public function isEnabled()
+    {
+        return $this->enabled == 'yes';
     }
 
     /**

@@ -134,10 +134,10 @@ abstract class Price
     public static function format( $price )
     {
         $price    = (float) $price;
-        // $currency = get_option( 'connectpx_booking_pmt_currency' );
-        // $format   = get_option( 'connectpx_booking_pmt_price_format' );
-        $currency = "USD";
-        $format   = "{symbol}{sign}{price|2}";
+        $currency = Common::getOption('pmt_currency', 'USD');
+        $format   = Common::getOption('pmt_price_format', '');
+        // $currency = "USD";
+        // $format   = "{symbol}{sign}{price|2}";
         $symbol   = self::$currencies[ $currency ]['symbol'];
 
         if ( preg_match( '/{price\|(\d)}/', $format, $match ) ) {

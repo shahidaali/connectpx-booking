@@ -56,6 +56,13 @@ class WooCommerce extends MyAccountPages
         add_filter( 'woocommerce_available_payment_gateways', array( $self, 'availablePaymentGateways' ), 12, 1 );
         add_filter( 'woocommerce_order_button_text', array( $self, 'orderButtonText' ), 12, 1 );
         parent::init();
+
+        // add_action( 'init', function(){
+        //     $appointment = new Lib\Entities\Appointment();
+        //     $appointment->load(1);
+        //     $response = $appointment->refund();
+        //     dd($response);
+        // });
     }
 
     /**
@@ -472,6 +479,11 @@ class WooCommerce extends MyAccountPages
     }
 
     public static function removeCheckoutFields( $fields ) {
+        if( !empty($fields['billing']) ) {
+            foreach ($fields['billing'] as $key => $field) {
+                $fields['billing'][$key]['default'] = self::checkoutValue(null, $key);
+            }
+        }
         // unset($fields['billing']['billing_first_name']);
         // unset($fields['billing']['billing_last_name']);
         // unset($fields['billing']['billing_email']);
@@ -524,5 +536,115 @@ class WooCommerce extends MyAccountPages
 
     public static function orderButtonText( $button_text ) {
         return __('Complete Booking', 'connectpx_booking');
+    }
+
+    public static function orderReceivedText( $text, $order ) {
+        return esc_html__('Thank you. Your request for ride is received.', 'connectpx_booking');
+    }
+
+    /**
+     * Handle a refund via the edit order screen.
+     *
+     * @throws Exception To return errors.
+     */
+    public static function refundAppointments( $order_id, $refund_amount, $refund_reason = '' ) {
+        $order      = wc_get_order( $order_id );
+        if( $order->get_payment_method() != self::PRIVATE_CUSTOMER_PAYMENT_METHOD ) {
+            return;
+        }
+
+        $response = self::refund_order([
+            'order_id' => $order_id,
+            'refund_amount' => $refund_amount,
+            'refunded_amount' => $order->get_total_refunded(),
+            'refund_reason' => $refund_reason ?: 'Cancelled bookings',
+            'api_refund' => true,
+        ]);
+
+        return $response;
+    }
+
+    /**
+     * Handle a refund via the edit order screen.
+     *
+     * @throws Exception To return errors.
+     */
+    public static function refund_order( $args ) {
+        $order_id               = isset( $args['order_id'] ) ? absint( $args['order_id'] ) : 0;
+        $refund_amount          = isset( $args['refund_amount'] ) ? wc_format_decimal( sanitize_text_field( wp_unslash( $args['refund_amount'] ) ), wc_get_price_decimals() ) : 0;
+        $refunded_amount        = isset( $args['refunded_amount'] ) ? wc_format_decimal( sanitize_text_field( wp_unslash( $args['refunded_amount'] ) ), wc_get_price_decimals() ) : 0;
+        $refund_reason          = isset( $args['refund_reason'] ) ? sanitize_text_field( wp_unslash( $args['refund_reason'] ) ) : '';
+        $line_item_qtys         = isset( $args['line_item_qtys'] ) ? json_decode( sanitize_text_field( wp_unslash( $args['line_item_qtys'] ) ), true ) : array();
+        $line_item_totals       = isset( $args['line_item_totals'] ) ? json_decode( sanitize_text_field( wp_unslash( $args['line_item_totals'] ) ), true ) : array();
+        $line_item_tax_totals   = isset( $args['line_item_tax_totals'] ) ? json_decode( sanitize_text_field( wp_unslash( $args['line_item_tax_totals'] ) ), true ) : array();
+        $api_refund             = isset( $args['api_refund'] ) && true === $args['api_refund'];
+        $restock_refunded_items = isset( $args['restock_refunded_items'] ) && true === $args['restock_refunded_items'];
+        $refund                 = false;
+        $response               = array( 'success' => false );
+
+        try {
+            $order      = wc_get_order( $order_id );
+            $max_refund = wc_format_decimal( $order->get_total() - $order->get_total_refunded(), wc_get_price_decimals() );
+
+            if ( ( ! $refund_amount && ( wc_format_decimal( 0, wc_get_price_decimals() ) !== $refund_amount ) ) || $max_refund < $refund_amount || 0 > $refund_amount ) {
+                throw new \Exception( __( 'Invalid refund amount', 'woocommerce' ) );
+            }
+
+            if ( wc_format_decimal( $order->get_total_refunded(), wc_get_price_decimals() ) !== $refunded_amount ) {
+                throw new \Exception( __( 'Error processing refund. Please try again.', 'woocommerce' ) );
+            }
+
+            // Prepare line items which we are refunding.
+            $line_items = array();
+            $item_ids   = array_unique( array_merge( array_keys( $line_item_qtys ), array_keys( $line_item_totals ) ) );
+
+            foreach ( $item_ids as $item_id ) {
+                $line_items[ $item_id ] = array(
+                    'qty'          => 0,
+                    'refund_total' => 0,
+                    'refund_tax'   => array(),
+                );
+            }
+            foreach ( $line_item_qtys as $item_id => $qty ) {
+                $line_items[ $item_id ]['qty'] = max( $qty, 0 );
+            }
+            foreach ( $line_item_totals as $item_id => $total ) {
+                $line_items[ $item_id ]['refund_total'] = wc_format_decimal( $total );
+            }
+            foreach ( $line_item_tax_totals as $item_id => $tax_totals ) {
+                $line_items[ $item_id ]['refund_tax'] = array_filter( array_map( 'wc_format_decimal', $tax_totals ) );
+            }
+
+            // Create the refund object.
+            $refund = wc_create_refund(
+                array(
+                    'amount'         => $refund_amount,
+                    'reason'         => $refund_reason,
+                    'order_id'       => $order_id,
+                    'line_items'     => $line_items,
+                    'refund_payment' => $api_refund,
+                    'restock_items'  => $restock_refunded_items,
+                )
+            );
+
+            if ( is_wp_error( $refund ) ) {
+                throw new \Exception( $refund->get_error_message() );
+            }
+
+            if ( did_action( 'woocommerce_order_fully_refunded' ) ) {
+                $response['status'] = 'fully_refunded';
+            }
+
+            $response = array( 
+                'success' => true,
+            );
+        } catch ( \Exception $e ) {
+            $response = array( 
+                'success' => false,
+                'error' => $e->getMessage() 
+            );
+        }
+
+        return $response;
     }
 }

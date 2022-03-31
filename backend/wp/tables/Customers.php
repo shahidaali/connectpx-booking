@@ -129,7 +129,11 @@ class Customers extends \WP_List_Table {
 				'id' => $customer->getId(),
 				'wp_user_id' => $customer->getWpUserId(),
 				'is_contract_customer' => $customer->isContractCustomer(),
-				'name' => $customer->getFullName(),
+				'name' => sprintf( '%s <span style="%s">(%s)</span>', 
+					$customer->getFullName(), 
+					$customer->isEnabled() ? 'color: green;' : 'color: red;',
+					$customer->isEnabled() ? __('Enabled', 'connectpx_booking') : __('Disabled', 'connectpx_booking')
+				),
 				// 'sub_services' => json_decode($item['sub_services'], true),
 				'account' => self::_accountDetails($customer->getWpUser()),
 			];

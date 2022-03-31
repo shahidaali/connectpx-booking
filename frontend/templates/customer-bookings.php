@@ -28,6 +28,11 @@ use ConnectpxBooking\Frontend\Components\Dialogs;
                         </select>
                     </div>
                 </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <input type="text" class="form-control" id="connectpx_booking-search-query" placeholder="<?php echo esc_attr( 'Patient name', 'connectpx_booking' ) ?>" />
+                    </div>
+                </div>
             </div>
             <?php endif ?>
             <table class="table table-striped connectpx_booking-appointments-list w-100">

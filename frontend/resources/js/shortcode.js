@@ -150,7 +150,7 @@
  
                 $pickupTime.pickatime({
                       formatSubmit: 'HH:i',
-                      interval: 5,
+                      interval: response.slot_length,
                       min: response.date_min || false,
                       max: response.date_max || false,
                       clear: false,
@@ -177,7 +177,7 @@
                 if( isRoundTrip ) {
                     $returnPickupTime.pickatime({
                           formatSubmit: 'HH:i',
-                          interval: 5,
+                          interval: response.slot_length,
                           min: returnPickupMinTime,
                           max: response.date_max || false,
                           clear: false,
@@ -1017,7 +1017,9 @@
                         })),
                         is_round_trip = response.is_round_trip,
                         terms_error = response.terms_error,
-                        woocommerce = response.woocommerce;
+                        woocommerce = response.woocommerce,
+                        customer_default_lat_lngs = response.customer_default_lat_lngs,
+                        map_default_lat_lngs = response.map_default_lat_lngs;
 
                     function initMap() {
                         pickupAutocomplete = new google.maps.places.Autocomplete($pickup_address_field[0], {
@@ -1034,7 +1036,7 @@
 
                         googleMapInstance = new google.maps.Map($map[0], {
                             zoom: 7,
-                            center: { lat: 42.3144255, lng: -83.518173 },
+                            center: map_default_lat_lngs,
                         });
 
                         directionsRenderer.setMap(googleMapInstance);
@@ -1048,6 +1050,42 @@
                             destinationPlace = this.getPlace();
                             calculateAndDisplayRoute();
                         });
+
+                        setDefaultLocations();
+                        
+                        function setDefaultLocations() {
+                            if( customer_default_lat_lngs.pickup.lat && customer_default_lat_lngs.pickup.lng ) {
+                                const geocoder1 = new google.maps.Geocoder();
+                                geocoder1.geocode({'location': customer_default_lat_lngs.pickup}, function(results, status) {
+                                    if (status === google.maps.GeocoderStatus.OK) {
+                                      if ( results.length > 0 ) {
+                                            var defaultPickupLocation = results[0];
+                                            if( defaultPickupLocation && defaultPickupLocation.formatted_address ) {
+                                                $pickup_address_field.val(defaultPickupLocation.formatted_address);
+                                                $pickup_address_field.change();
+                                                pickupAutocomplete.set("place", defaultPickupLocation);
+                                            }
+                                      }
+                                    }
+                                });
+                            }
+
+                            if( customer_default_lat_lngs.destination.lat && customer_default_lat_lngs.destination.lng ) {
+                                const geocoder1 = new google.maps.Geocoder();
+                                geocoder1.geocode({'location': customer_default_lat_lngs.destination}, function(results, status) {
+                                    if (status === google.maps.GeocoderStatus.OK) {
+                                      if ( results.length > 0 ) {
+                                            var defaultDestinationLocation = results[0];
+                                            if( defaultDestinationLocation && defaultDestinationLocation.formatted_address ) {
+                                                $destination_address_field.val(defaultDestinationLocation.formatted_address);
+                                                $pickup_address_field.change();
+                                                destinationAutocomplete.set("place", defaultDestinationLocation);
+                                            }
+                                      }
+                                    }
+                                });
+                            }
+                        }
 
                         function calculateAndDisplayRoute() {
                             if(!pickupPlace || !destinationPlace) {

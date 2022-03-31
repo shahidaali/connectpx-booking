@@ -30,14 +30,10 @@ class Ajax extends Lib\Base\Ajax
         $client_diff = get_option( 'gmt_offset' ) * MINUTE_IN_SECONDS;
         $date_filter = self::parameter( 'date' );
         $service_filter = self::parameter( 'service' );
+        $search_query = self::parameter( 'search_query', null );
 
         $query = Lib\Entities\Appointment::query( 'a' )
-            ->select( 'a.service_id,
-                    a.id,
-                    a.status,
-                    a.time_zone,
-                    a.time_zone_offset,
-                    a.total_amount,
+            ->select( 'a.*,
                     IF (a.time_zone_offset IS NULL,
                         a.pickup_datetime,
                         DATE_SUB(a.pickup_datetime, INTERVAL ' . $client_diff . ' + a.time_zone_offset MINUTE)
@@ -64,6 +60,10 @@ class Ajax extends Lib\Base\Ajax
             $query->where( 'a.service_id', $service_filter ?: null );
         }
 
+        if ( $search_query ) {
+            $query->whereLike( 'a.pickup_detail', '%' . $search_query .'%' );
+        }
+
         foreach ( $order as $sort_by ) {
             $query->sortBy( str_replace( '.', '_', $columns[ $sort_by['column'] ]['data'] ) )
                 ->order( $sort_by['dir'] == 'desc' ? Lib\Query::ORDER_DESCENDING : Lib\Query::ORDER_ASCENDING );
@@ -74,52 +74,15 @@ class Ajax extends Lib\Base\Ajax
 
         $data = array();
         foreach ( $query->fetchArray() as $row ) {
+            $appointment = new Lib\Entities\Appointment($row);
             // Appointment status.
-            $row['appointment_status_text'] = Lib\Entities\Appointment::statusToString( $row['status'] );
             $service_title = Lib\Entities\Service::find( $row['service_id'] )->getTitle();
-
-            $allow_cancel_time = current_time( 'timestamp' ) + (int) Lib\Config::getMinimumTimePriorCancel( $row['service_id'] );
-
-            $allow_cancel = 'blank';
-            if ( ! in_array( $row['status'], array(
-                Lib\Entities\Appointment::STATUS_CANCELLED,
-                Lib\Entities\Appointment::STATUS_REJECTED,
-                Lib\Entities\Appointment::STATUS_DONE,
-            ) ) ) {
-                if ( in_array( $row['status'], array(
-                        Lib\Entities\Appointment::STATUS_APPROVED,
-                        Lib\Entities\Appointment::STATUS_PENDING,
-                    )  ) && $row['pickup_datetime'] === null ) {
-                    $allow_cancel = 'allow';
-                } else {
-                    if ( $row['pickup_datetime'] > current_time( 'mysql' ) ) {
-                        if ( $allow_cancel_time < strtotime( $row['pickup_datetime'] ) ) {
-                            $allow_cancel = 'allow';
-                        } else {
-                            $allow_cancel = 'deny';
-                        }
-                    } else {
-                        $allow_cancel = 'expired';
-                    }
-                }
-            }
-            $allow_reschedule = 'blank';
-            if ( ! in_array( $row['status'], array(
-                    Lib\Entities\Appointment::STATUS_CANCELLED,
-                    Lib\Entities\Appointment::STATUS_REJECTED,
-                    Lib\Entities\Appointment::STATUS_DONE,
-                ) ) && $row['pickup_datetime'] !== null ) {
-                if ( $row['pickup_datetime'] > current_time( 'mysql' ) ) {
-                    if ( $allow_cancel_time < strtotime( $row['pickup_datetime'] )  ) {
-                        $allow_reschedule = 'allow';
-                    } else {
-                        $allow_reschedule = 'deny';
-                    }
-                } else {
-                    $allow_reschedule = 'expired';
-                }
-            }
+            $allow_cancel = $appointment->cancelAllowed();
+            $allow_reschedule = $appointment->rescheduleAllowed();
             $total_amount = Lib\Utils\Price::format( $row['total_amount'] );
+
+            $pickupInfo = $appointment->getPickupDetail() ? json_decode( $appointment->getPickupDetail(), true ) : [];
+            $destinationInfo = $appointment->getDestinationDetail() ? json_decode( $appointment->getDestinationDetail(), true ) : [];
 
             $data[] = array(
                 'id' => $row['id'],
@@ -127,7 +90,9 @@ class Ajax extends Lib\Base\Ajax
                 'raw_start_date' => $row['pickup_datetime'],
                 'pickup_datetime' => ( ( in_array( 'timezone', $appointment_columns ) && $timezone = Lib\Utils\Common::getCustomerTimezone( $row['time_zone'], $row['time_zone_offset'] ) ) ? sprintf( '%s<br/>(%s)', Lib\Utils\DateTime::formatDateTime( $row['pickup_datetime'] ), $timezone ) : Lib\Utils\DateTime::formatDateTime( $row['pickup_datetime'] ) ),
                 'service_title' => $service_title,
-                'status' => $row['appointment_status_text'],
+                'patient' => $pickupInfo['patient_name'] ?? 'N/A',
+                'destination' => $destinationInfo['address']['address'] ?? 'N/A',
+                'status' => Lib\Entities\Appointment::statusToString( $row['status'] ),
                 'total_amount' => $total_amount,
                 'allow_cancel' => $allow_cancel,
                 'allow_reschedule' => $allow_reschedule,
@@ -205,9 +170,9 @@ class Ajax extends Lib\Base\Ajax
 
             $data[] = array(
                 'id' => $invoice->getId(),
-                'start_date' => Lib\Utils\DateTime::formatDate( $invoice->getStartDate(), 'd/m/Y' ),
-                'end_date' => Lib\Utils\DateTime::formatDate( $invoice->getEndDate(), 'd/m/Y' ),
-                'due_date' => Lib\Utils\DateTime::formatDate( $invoice->getDueDate(), 'd/m/Y' ),
+                'start_date' => Lib\Utils\DateTime::formatDate( $invoice->getStartDate(), 'm/d/Y' ),
+                'end_date' => Lib\Utils\DateTime::formatDate( $invoice->getEndDate(), 'm/d/Y' ),
+                'due_date' => Lib\Utils\DateTime::formatDate( $invoice->getDueDate(), 'm/d/Y' ),
                 'status' => Lib\Entities\Invoice::statusToString( $invoice->getStatus() ),
                 'total_amount' => Lib\Utils\Price::format( $invoice->getTotalAmount() ),
                 'due_amount' => Lib\Utils\Price::format( $invoice->getTotalAmount() - $invoice->getPaidAmount() ),
@@ -280,9 +245,18 @@ class Ajax extends Lib\Base\Ajax
                 wp_set_password( $profile_data['new_password_1'], self::$customer->getWpUserId() );
             }
         }
+        
+        // If email changed
+
+        if( empty( $response['errors'] ) ) {
+            if( self::$customer->getEmail() != $profile_data['email'] && email_exists( $profile_data['email'] ) ) {
+                $response['errors']['email'][] = __( 'This email is already registered.', 'connectpx_booking' );
+            }
+        }
 
         if ( empty( $response['errors'] ) ) {
             // Save profile
+
             self::$customer
                 ->setFirstName( $profile_data['first_name'] )
                 ->setLastName( $profile_data['last_name'] )
@@ -296,6 +270,20 @@ class Ajax extends Lib\Base\Ajax
                 ->setStreetNumber( isset( $profile_data['street_number'] ) ? $profile_data['street_number'] : self::$customer->getStreetNumber() )
                 ->setAdditionalAddress( isset( $profile_data['additional_address'] ) ? $profile_data['additional_address'] : self::$customer->getAdditionalAddress() );
             self::$customer->save();
+
+            $user_data = wp_update_user([
+                'ID' => self::$customer->getWpUserId(),
+                'first_name' => self::$customer->getFirstName(),
+                'last_name' => self::$customer->getLastName(),
+                'nickname' => self::$customer->getFullName(),
+                'display_name' => self::$customer->getFullName(),
+                'user_email' => self::$customer->getEmail(),
+            ]);
+
+            if ( is_wp_error( $user_data ) ) {
+                $response['errors']['account'][] = $user_data->get_error_message();
+                $response['success'] = false;
+            }
         } else {
             $response['success'] = false;
         }

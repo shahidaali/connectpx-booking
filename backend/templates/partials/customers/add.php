@@ -47,6 +47,20 @@ else {
 					</th>
 				</tr>
 				<tr>
+					<th scope="row"><?php _e('Status', 'connectpx_booking') ?></th>
+					<td>
+						<select name="enabled">
+							<?php 
+							echo Form::selectOptions([
+								'yes' => __('Enabled', 'connectpx_booking'), 
+								'no' => __('Disabled', 'connectpx_booking')
+							], 
+							Form::old('enabled', $fields, 'yes')); 
+							?>
+						</select>
+					</td>
+				</tr>
+				<tr>
 					<th scope="row"><?php _e('First Name', 'connectpx_booking'); ?></th>
 					<td><input name="first_name" type="text"  value="<?php echo Form::old('first_name', $fields, ''); ?>" size="50"></td>
 				</tr>
@@ -93,6 +107,32 @@ else {
 				<tr>
 					<th scope="row"><?php _e('Notes', 'connectpx_booking'); ?></th>
 					<td><textarea name="notes" rows="5" cols="52"><?php echo Form::old('notes', $fields, ''); ?></textarea></td>
+				</tr>
+				<tr>
+					<th colspan="2">
+						<h2><?php _e('Default pickup location', 'connectpx_booking'); ?></h2>
+					</th>
+				</tr>
+				<tr>
+					<th scope="row"><?php _e('Pickup Lat', 'connectpx_booking'); ?></th>
+					<td><input name="pickup_lat" type="text"  value="<?php echo Form::old('pickup_lat', $fields, ''); ?>" size="50"></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php _e('Pickup Lng', 'connectpx_booking'); ?></th>
+					<td><input name="pickup_lng" type="text"  value="<?php echo Form::old('pickup_lng', $fields, ''); ?>" size="50"></td>
+				</tr>
+				<tr>
+					<th colspan="2">
+						<h2><?php _e('Default destination location', 'connectpx_booking'); ?></h2>
+					</th>
+				</tr>
+				<tr>
+					<th scope="row"><?php _e('Destination Lat', 'connectpx_booking'); ?></th>
+					<td><input name="destination_lat" type="text"  value="<?php echo Form::old('destination_lat', $fields, ''); ?>" size="50"></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php _e('Destination Lng', 'connectpx_booking'); ?></th>
+					<td><input name="destination_lng" type="text"  value="<?php echo Form::old('destination_lng', $fields, ''); ?>" size="50"></td>
 				</tr>
 				<tr>
 					<th colspan="2">

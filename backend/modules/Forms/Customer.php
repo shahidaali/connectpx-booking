@@ -28,8 +28,13 @@ class Customer extends Lib\Base\Form
             'street',
             'street_number',
             'additional_address',
+            'pickup_lat',
+            'pickup_lng',
+            'destination_lat',
+            'destination_lng',
             'notes',
             'services',
+            'enabled'
         ) );
     }
 

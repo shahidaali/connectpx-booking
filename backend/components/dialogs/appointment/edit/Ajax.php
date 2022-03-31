@@ -77,6 +77,8 @@ class Ajax extends Lib\Base\Ajax
             );
 
             $service_info = $appointment->getServiceInfo();
+            $pickup_info = $appointment->getPickupInfo();
+            $destination_info = $appointment->getDestinationInfo();
             $response['data']['id']              = (int) $info['id'];
             $response['data']['status']              = $info['status'];
             $response['data']['timezone']              = Lib\Utils\Common::getCustomerTimezone( $info['time_zone'], $info['time_zone_offset'] );
@@ -84,11 +86,11 @@ class Ajax extends Lib\Base\Ajax
             $response['data']['notes']           = $info['notes'];
             $response['data']['admin_notes']           = $info['admin_notes'];
             $response['data']['schedule_info']           = $appointment->getScheduleInfo();
-            $response['data']['pickup_info']           = $appointment->getPickupInfo();
-            $response['data']['destination_info']           = $appointment->getDestinationInfo();
+            $response['data']['pickup_info']           = $pickup_info;
+            $response['data']['destination_info']           = $destination_info;
             $response['data']['service_info']           = $service_info;
             $response['data']['map_link']           = $appointment->getMapLink();
-            $response['data']['payment_info'] = self::renderTemplate( 'backend/components/dialogs/appointment/edit/templates/payment', compact( 'payment_statuses', 'service_info', 'appointment' ), false );
+            $response['data']['payment_info'] = self::renderTemplate( 'backend/components/dialogs/appointment/edit/templates/payment', compact( 'payment_statuses', 'service_info', 'pickup_info', 'destination_info', 'appointment' ), false );
 
             $response['data']['html'] = self::renderTemplate( 'backend/components/dialogs/appointment/edit/templates/modal', compact( 'appointment', 'statuses', 'active_tab' ), false );
         }
@@ -136,6 +138,12 @@ class Ajax extends Lib\Base\Ajax
 
                     $modified = $appointment->getModified();
                     if ( $appointment->save() !== false ) {
+                        
+                        // Refund payment for cancelled appointments
+                        if( in_array( $appointment->getStatus(), [ Appointment::STATUS_CANCELLED, Appointment::STATUS_REJECTED ] ) ) {
+                            $appointment->refund();
+                        }
+
                         Lib\Notifications\Appointment\Sender::send( $appointment );
                         $response['success'] = true;
                     } else {

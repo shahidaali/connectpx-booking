@@ -58,6 +58,15 @@ class Notifications extends Lib\Base\Component {
             'datatables' => $datatables,
         ) );
 
+        wp_localize_script( 'connectpx_booking_notifications', 'ConnectpxBookingEmailLogsL10n', array(
+            'datatables' => $datatables,
+            'datePicker' => Lib\Utils\DateTime::datePickerOptions(),
+            'dateRange' => Lib\Utils\DateTime::dateRangeOptions( array( 'lastMonth' => __( 'Last month', 'connectpx_booking' ), ) ),
+            'details' => __( 'Details', 'connectpx_booking' ),
+            'zeroRecords' => __( 'No records for selected period.', 'connectpx_booking' ),
+            'processing' => __( 'Processing...', 'connectpx_booking' ),
+        ) );
+
         wp_enqueue_script('connectpx_booking_notifications');
         
         self::renderTemplate( 'backend/templates/notifications', compact( 'tab', 'datatables' ) );

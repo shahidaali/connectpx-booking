@@ -96,10 +96,12 @@ class MyAccountPages extends Lib\Base\Ajax
         $customer = new Lib\Entities\Customer();
         if ( is_user_logged_in() && $customer->loadBy( array( 'wp_user_id' => get_current_user_id() ) ) ) {
             $titles = array(
-                'service' => __('Service', 'connectpx_booking'),
+                'id' => __('No.', 'connectpx_booking'),
+                'patient' => __('Patient Name', 'connectpx_booking'),
+                'destination' => __('Destination Address', 'connectpx_booking'),
                 'date' => __( 'Date', 'connectpx_booking' ),
                 'time' => __( 'Time', 'connectpx_booking' ),
-                'total_amount' => __( 'Payment', 'connectpx_booking' ),
+                'total_amount' => __( 'Detail', 'connectpx_booking' ),
                 'cancel' => __( 'Cancel', 'connectpx_booking' ),
                 'reschedule' => __( 'Reschedule', 'connectpx_booking' ),
                 'status' => __( 'Status', 'connectpx_booking' ),
@@ -117,9 +119,11 @@ class MyAccountPages extends Lib\Base\Ajax
 
             $appointment_columns = [
                 'filters',
+                'id',
                 'date',
                 'timezone',
-                'service',
+                'patient',
+                'destination',
                 'total_amount',
                 'status',
                 'cancel',
@@ -267,19 +271,23 @@ class MyAccountPages extends Lib\Base\Ajax
 
         if (is_user_logged_in() && is_account_page() && isset($wp->query_vars['bookings'])) {
             $titles = array(
-                'service' => __('Service', 'connectpx_booking'),
+                'id' => __('No.', 'connectpx_booking'),
+                'patient' => __('Patient Name', 'connectpx_booking'),
+                'destination' => __('Destination Address', 'connectpx_booking'),
                 'date' => __( 'Date', 'connectpx_booking' ),
                 'time' => __( 'Time', 'connectpx_booking' ),
-                'total_amount' => __( 'Payment', 'connectpx_booking' ),
+                'total_amount' => __( 'Detail', 'connectpx_booking' ),
                 'cancel' => __( 'Cancel', 'connectpx_booking' ),
                 'reschedule' => __( 'Reschedule', 'connectpx_booking' ),
                 'status' => __( 'Status', 'connectpx_booking' ),
             );
             $appointment_columns = [
                 'filters',
+                'id',
                 'date',
                 'timezone',
-                'service',
+                'patient',
+                'destination',
                 'total_amount',
                 'status',
                 'cancel',
@@ -316,7 +324,7 @@ class MyAccountPages extends Lib\Base\Ajax
                 'expired_appointment' => __( 'Expired', 'connectpx_booking' ),
                 'deny_cancel_appointment' => __( 'Not allowed', 'connectpx_booking' ),
                 'cancel' => __( 'Cancel', 'connectpx_booking' ),
-                'payment' => __( 'Payment', 'connectpx_booking' ),
+                'payment' => __( 'Detail', 'connectpx_booking' ),
                 'reschedule' => __( 'Reschedule', 'connectpx_booking' ),
                 'noTimeslots' => __( 'There are no time slots for selected date.', 'connectpx_booking' ),
                 'profile_update_success' => __( 'Profile updated successfully.', 'connectpx_booking' ),

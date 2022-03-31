@@ -29,6 +29,7 @@ var ConnectpxBookingInvoiceViewDialog = function(Dialog, $, moment, ConnectpxBoo
                 		$btn_update_status = $('.invoice-update-status', $dialog),
                 		$btn_update_status_toggle = $('.invoice-update-status-toggle', $dialog),
                 		$btn_send_notification = $('.btn-send-notification', $dialog),
+                		$btn_update_paid = $('.btn-update-paid', $dialog),
                 		$btn_update_invoice = $('.btn-update-invoice', $dialog);
 
                 	$btn_view_appointment.click(function (e) {
@@ -108,6 +109,7 @@ var ConnectpxBookingInvoiceViewDialog = function(Dialog, $, moment, ConnectpxBoo
                     });
 
                     $btn_update_invoice.click(function(){
+                    	$dialog.find('.modal-dialog').addClass('loading');
 	                    $.ajax({
 				            url: ConnectpxBookingL10nGlobal.ajax_url,
 				            type: 'POST',
@@ -118,14 +120,36 @@ var ConnectpxBookingInvoiceViewDialog = function(Dialog, $, moment, ConnectpxBoo
 					        },
 				            dataType: 'json',
 				            success: function (response) {
+				            	$dialog.find('.modal-dialog').removeClass('loading');
 				                if (response.success) {
-				                	callback( invoiceData );
+				                	$modal.connectpx_bookingModal('hide');
+				                }
+				            }
+				        });
+                    });
+
+                    $btn_update_paid.click(function(){
+                    	$dialog.find('.modal-dialog').addClass('loading');
+	                    $.ajax({
+				            url: ConnectpxBookingL10nGlobal.ajax_url,
+				            type: 'POST',
+				            data: {
+					        	action: "connectpx_booking_update_invoice_paid",
+					            csrf_token: ConnectpxBookingL10nGlobal.csrf_token,
+					            id: invoiceData.invoice_id,
+					        },
+				            dataType: 'json',
+				            success: function (response) {
+				            	$dialog.find('.modal-dialog').removeClass('loading');
+				                if (response.success) {
+				                	$modal.connectpx_bookingModal('hide');
 				                }
 				            }
 				        });
                     });
 
                     $btn_send_notification.click(function(){
+                    	$dialog.find('.modal-dialog').addClass('loading');
 	                    $.ajax({
 				            url: ConnectpxBookingL10nGlobal.ajax_url,
 				            type: 'POST',
@@ -136,6 +160,7 @@ var ConnectpxBookingInvoiceViewDialog = function(Dialog, $, moment, ConnectpxBoo
 					        },
 				            dataType: 'json',
 				            success: function (response) {
+				            	$dialog.find('.modal-dialog').removeClass('loading');
 				                if (response.success) {
 				                	callback( invoiceData );
 				                }
@@ -148,6 +173,7 @@ var ConnectpxBookingInvoiceViewDialog = function(Dialog, $, moment, ConnectpxBoo
                     	$btn_update_status_toggle.find('span').remove();
                     	$btn_update_status_toggle.append( $(this).find('span').clone() );
 
+                    	$dialog.find('.modal-dialog').addClass('loading');
 	                    $.ajax({
 				            url: ConnectpxBookingL10nGlobal.ajax_url,
 				            type: 'POST',
@@ -159,6 +185,7 @@ var ConnectpxBookingInvoiceViewDialog = function(Dialog, $, moment, ConnectpxBoo
 					        },
 				            dataType: 'json',
 				            success: function (response) {
+				            	$dialog.find('.modal-dialog').removeClass('loading');
 				                if (response.success) {
 				                	$modal.connectpx_bookingModal('hide');
 				                	// if( callback !== undefined ) {

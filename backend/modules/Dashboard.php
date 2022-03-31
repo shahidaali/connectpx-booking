@@ -21,6 +21,14 @@ class Dashboard extends Lib\Base\Component {
      */
     public static function render()
     {
+        wp_enqueue_script( 'connectpx_booking_dashboard' );
+        wp_enqueue_style( 'connectpx_booking_appointments_dashboard' );
+
+        wp_localize_script( 'connectpx_booking_dashboard', 'ConnectpxBookingL10n', array(
+            'datePicker' => Lib\Utils\DateTime::datePickerOptions(),
+            'dateRange' => Lib\Utils\DateTime::dateRangeOptions( array( 'lastMonth' => __( 'Last month', 'connectpx_booking' ), ) ),
+        ) );
+
         self::renderTemplate( 'backend/templates/dashboard' );
     }
 	

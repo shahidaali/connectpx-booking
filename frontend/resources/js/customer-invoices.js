@@ -24,7 +24,7 @@
                             data: 'actions',
                             responsivePriority: 3,
                             render: function ( data, type, row, meta ) {
-                                return '<button type="button" class="btn btn-sm btn-default" data-action="show-invoice" data-id="' + row.id + '"><i class="far fa-fw fa-eye mr-lg-1"></i></button> <a type="button" class="btn btn-default" href="'+row.download_link+'" target="_blank"><i class="fa fa-download mr-lg-1"></i></a>';
+                                return '<button type="button" class="btn btn-sm btn-default" data-action="show-invoice" data-id="' + row.id + '"><i class="far fa-fw fa-eye"></i></button> <a type="button" class="btn btn-sm btn-default" href="'+row.download_link+'" target="_blank"><i class="fa fa-download"></i></a>';
 
                                 return data;
                             }

@@ -409,7 +409,7 @@ class SubService
             $milesToCharge = $this->getMilesToCharge( $miles );
             $perMilePrice = $this->getRatePerMile();
             
-            if( $milesToCharge && $perMilePrice ) {
+            if( $milesToCharge ) {
                 $milesTotal = ( $milesToCharge * $perMilePrice );
                 $totals += $milesTotal;
 
@@ -424,7 +424,7 @@ class SubService
             $waitingTimeToCharge = $this->getWaitingTimeToCharge( $waiting_time );
             $perMinPrice = $this->getRatePerWaitingTime();
             
-            if( $waitingTimeToCharge && $perMinPrice ) {
+            if( $waitingTimeToCharge ) {
                 $waitingTimeTotal = ( $waitingTimeToCharge * $perMinPrice );
                 $totals += $waitingTimeTotal;
 

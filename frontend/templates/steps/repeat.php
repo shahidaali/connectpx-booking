@@ -161,7 +161,7 @@ print_r($schedule);
                     <div class="cbf-schedule-time cbf-js-schedule-all-day-time" style="display: none;"></div>
                     <div class="cbf-rounds-group">
                        <button class="cbf-round" data-action="save" title="Save" style="display: none"><i class="cbf-icon-sm cbf-icon-check"></i></button>
-                       <button class="cbf-round" data-action="edit" title="Edit"><i class="cbf-icon-sm cbf-icon-edit"></i></button>
+                       <!-- <button class="cbf-round" data-action="edit" title="Edit"><i class="cbf-icon-sm cbf-icon-edit"></i></button> -->
                        <button class="cbf-round" data-action="drop" title="Remove"><i class="cbf-icon-sm cbf-icon-drop"></i></button>
                     </div>
                     <div class="cbf-hidden-info">

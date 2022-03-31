@@ -50,13 +50,18 @@ use ConnectpxBooking\Backend\Components\Dialogs;
                         </select>
                     </div>
                 </div>
-                <div class="col-md-1">
+                <div class="col-md-2">
                     <div class="form-group">
                         <select class="form-control connectpx_booking-js-select" id="connectpx_booking-filter-status" data-placeholder="<?php esc_attr_e( 'Status', 'connectpx_booking' ) ?>">
                             <?php foreach ( Appointment::getStatuses() as $status ): ?>
                                 <option value="<?php echo esc_attr( $status ) ?>"><?php echo esc_html( Appointment::statusToString( $status ) ) ?></option>
                             <?php endforeach ?>
                         </select>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <input type="text" class="form-control" id="connectpx_booking-search-query" placeholder="<?php echo esc_attr( 'Patient name', 'connectpx_booking' ) ?>" />
                     </div>
                 </div>
             </div>

@@ -3,6 +3,7 @@ namespace ConnectpxBooking\Lib\Utils;
 
 use ConnectpxBooking\Lib;
 use ConnectpxBooking\Lib\Entities\Customer;
+use ConnectpxBooking\Frontend\WooCommerce;
 
 /**
  * The core plugin class.
@@ -104,26 +105,29 @@ abstract class Common {
      */
     public static function getAdminEmails()
     {
-        global $wpdb;
+        // global $wpdb;
 
-        // Add to filter capability manage_options or manage_bookly
-        $meta_query = array(
-            'relation' => 'OR',
-            array( 'key' => $wpdb->prefix . 'capabilities', 'compare' => 'LIKE', 'value' => '"manage_options"', ),
-            array( 'key' => $wpdb->prefix . 'capabilities', 'compare' => 'LIKE', 'value' => '"manage_bookly"', ),
-        );
-        $roles = new \WP_Roles();
-        // Find roles with capabilities manage_options or manage_bookly
-        foreach ( $roles->role_objects as $role ) {
-            if ( $role->has_cap( 'manage_options' ) || $role->has_cap( 'manage_connectpx_booking' ) ) {
-                $meta_query[] = array( 'key' => $wpdb->prefix . 'capabilities', 'compare' => 'LIKE', 'value' => '"' . $role->name . '"', );
-            }
-        }
+        // // Add to filter capability manage_options or manage_bookly
+        // $meta_query = array(
+        //     'relation' => 'OR',
+        //     array( 'key' => $wpdb->prefix . 'capabilities', 'compare' => 'LIKE', 'value' => '"manage_options"', ),
+        //     array( 'key' => $wpdb->prefix . 'capabilities', 'compare' => 'LIKE', 'value' => '"manage_bookly"', ),
+        // );
+        // $roles = new \WP_Roles();
+        // // Find roles with capabilities manage_options or manage_bookly
+        // foreach ( $roles->role_objects as $role ) {
+        //     if ( $role->has_cap( 'manage_options' ) || $role->has_cap( 'manage_connectpx_booking' ) ) {
+        //         $meta_query[] = array( 'key' => $wpdb->prefix . 'capabilities', 'compare' => 'LIKE', 'value' => '"' . $role->name . '"', );
+        //     }
+        // }
 
-        return array_map(
-            function ( $a ) { return $a->data->user_email; },
-            get_users( compact( 'meta_query' ) )
-        );
+        // return array_map(
+        //     function ( $a ) { return $a->data->user_email; },
+        //     get_users( compact( 'meta_query' ) )
+        // );
+
+        $admin_emails = self::getOption('admin_emails', '');
+        return array_map('trim', explode(',', $admin_emails));
     }
 
     /**
@@ -923,5 +927,57 @@ abstract class Common {
             '{company_website}' => self::getOption('company_website', ''),
         ];
         return $codes;
+    }
+
+    /**
+     * Escape params for admin.php?page
+     *
+     * @param $page_slug
+     * @param array $params
+     * @return string
+     */
+    public static function escAdminUrl( $page_slug, $params = array() )
+    {
+        $path = 'admin.php?page=' . $page_slug;
+        if ( ( $query = build_query( $params ) ) != '' ) {
+            $path .= '&' . $query;
+        }
+
+        return admin_url( $path );
+    }
+
+    /**
+     * Escape params for admin.php?page
+     *
+     * @param $page_slug
+     * @param array $params
+     * @return string
+     */
+    public static function processRefund( array $appointment_ids )
+    {
+        $response = ['success' => false, 'error' => ''];
+
+        $rows = Lib\Entities\Appointment::query( 'a' )
+            ->select( 'a.*' )
+            ->whereIn('a.id', $appointment_ids)
+            ->order('DESC')
+            ->fetchArray();
+
+        $refund_amount = 0;
+        $order_id = 0;
+
+        foreach ($rows as $key => $row) {
+            $appointment = new Lib\Entities\Appointment($row);
+            $order_id = $appointment->getWcOrderId();
+            if( $appointment->getPaidAmount() ) {
+                $refund_amount += $appointment->getPaidAmount();
+            }
+        }   
+
+        if( $order_id && $refund_amount ) {
+            $response = WooCommerce::refundAppointments($order_id, $refund_amount);
+        }
+
+        return $response;
     }
 }

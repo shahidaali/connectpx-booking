@@ -29,10 +29,12 @@ class Ajax extends Lib\Base\Ajax
 
         $appointment = Lib\Entities\Appointment::find( $id );
         if ( $appointment->getCustomerId() == self::$customer->getId() ) {
-            $allow_cancel_time = strtotime( $appointment->getPickupDateTime() ) - (int) Lib\Config::getMinimumTimePriorCancel( $appointment->getServiceId() );
-            if ( $appointment->getPickupDateTime() === null || current_time( 'timestamp' ) <= $allow_cancel_time ) {
+            if ( $appointment->cancelAllowed() == 'allow' ) {
                 $appointment->cancel( self::parameter( 'reason', '' ) );
-
+                wp_send_json_success();
+            }
+            else if ( $appointment->cancelAllowed() == 'deny' ) {
+                $appointment->noshow( self::parameter( 'reason', '' ) );
                 wp_send_json_success();
             }
         }

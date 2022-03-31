@@ -126,6 +126,43 @@ use ConnectpxBooking\Lib\Utils;
 							</select>
 						</td>
 					</tr>
+					<tr>
+						<th scope="row"><?php _e('Payment Currency', 'connectpx_booking'); ?></th>
+						<td>
+							<select name="connectpx_booking[pmt_currency]">
+								<?php 
+								echo Utils\Form::selectOptions(
+									$currencies, 
+									Utils\Common::getOption('pmt_currency', 'USD'),
+									'',
+									false
+								); 
+								?>
+							</select>
+							<div class="connectpx-booking-field-info"><?php echo __('Select default currency.', 'connectpx_booking') ?></div>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php _e('Price format', 'connectpx_booking'); ?></th>
+						<td>
+							<input name="connectpx_booking[pmt_price_format]" type="text"  value="<?php echo Utils\Common::getOption('pmt_price_format', ''); ?>" size="20">
+							<div class="connectpx-booking-field-info"><?php echo __('Set price format.', 'connectpx_booking') ?></div>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php _e('Service not available message', 'connectpx_booking'); ?></th>
+						<td>
+							<textarea name="connectpx_booking[service_not_available_message]" rows="3" cols="52"><?php echo Utils\Common::getOption('service_not_available_message', ''); ?></textarea>
+							<div class="connectpx-booking-field-info"><?php echo __('This message appears when service is disabled e.g when service is not available for any reason.', 'connectpx_booking') ?></div>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php _e('Customer account disabled message', 'connectpx_booking'); ?></th>
+						<td>
+							<textarea name="connectpx_booking[customer_account_disabled_message]" rows="3" cols="52"><?php echo Utils\Common::getOption('customer_account_disabled_message', ''); ?></textarea>
+							<div class="connectpx-booking-field-info"><?php echo __('This message appears when customer tries to login and his account is disabled.', 'connectpx_booking') ?></div>
+						</td>
+					</tr>
 				</tbody>
 			</table>
 		</div>
@@ -262,6 +299,13 @@ use ConnectpxBooking\Lib\Utils;
 						<input name="connectpx_booking[email_sender]" type="text"  value="<?php echo Utils\Common::getOption('email_sender', ''); ?>" size="50"></td>
 					</tr>
 					<tr>
+						<th scope="row"><?php _e('Admin Email', 'connectpx_booking'); ?></th>
+						<td>
+							<input name="connectpx_booking[admin_emails]" type="text"  value="<?php echo Utils\Common::getOption('admin_emails', ''); ?>" size="50">
+							<div class="connectpx-booking-field-info"><?php echo __('Admin notifications are sent to these emails. Enter comma separated emails.', 'connectpx_booking') ?></div>
+						</td>
+					</tr>
+					<tr>
 						<th scope="row"><?php _e('Save Email Logs', 'connectpx_booking'); ?></th>
 						<td>
 							<select name="connectpx_booking[save_email_logs]">
@@ -315,6 +359,21 @@ use ConnectpxBooking\Lib\Utils;
 						<th scope="row"><?php _e('Google API Key', 'connectpx_booking'); ?></th>
 						<td>
 						<input name="connectpx_booking[google_api_key]" type="text"  value="<?php echo Utils\Common::getOption('google_api_key', ''); ?>" size="50"></td>
+					</tr>
+					<tr>
+						<th colspan="2">
+							<h2>Map Default Location</h2>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php _e('Default Lat', 'connectpx_booking'); ?></th>
+						<td>
+						<input name="connectpx_booking[google_map_lat]" type="text"  value="<?php echo Utils\Common::getOption('google_map_lat', ''); ?>" size="50"></td>
+					</tr>
+					<tr>
+						<th scope="row"><?php _e('Default Lng', 'connectpx_booking'); ?></th>
+						<td>
+						<input name="connectpx_booking[google_map_lng]" type="text"  value="<?php echo Utils\Common::getOption('google_map_lng', ''); ?>" size="50"></td>
 					</tr>
 				</tbody>
 			</table>

@@ -20,6 +20,22 @@ $lineItems = $subService->paymentLineItems(
 	<div  class="connectpx_booking-service-info"><?php echo $service_info; ?></div>
 </div>
 <div class="form-group">
+   <table class="table table-bordered">
+      <thead>
+         <tr>
+            <th width="50%"><?php echo __('Pickup Detail', 'connectpx_booking'); ?></th>
+            <th width="50%"><?php echo __('Destination Detail', 'connectpx_booking'); ?></th>
+         </tr>
+      </thead>
+      <tbody>
+         <tr>
+            <td><?php echo $pickup_info; ?></td>
+            <td><?php echo $destination_info; ?></td>
+         </tr>
+      </tbody>
+   </table>
+</div>
+<div class="form-group">
    <h6 class="mb-3 mt-3"><?php echo __('Payment', 'connectpx_booking'); ?></h6>   
    <ul class="list-unstyled pl-0 connectpx_booking-hide-empty mr-3">
       <li class="row mb-1">
@@ -52,8 +68,8 @@ $lineItems = $subService->paymentLineItems(
       <tbody class="payment-detail-table">
   	 	<?php foreach ($lineItems['items'] as $key => $lineItem) { ?>
        	  	<tr>
-       	  		<td><?php echo  $lineItem['qty'] > 1 ? sprintf('%d &times; %s', $lineItem['qty'], $lineItem['label']) : $lineItem['label']; ?></td>
-       	  		<td class="text-right"><?php echo $lineItem['total'] <> 0 ? Price::format( $lineItem['total'] ) : 'Free'; ?></td>
+       	  		<td><?php echo  $lineItem['qty'] > 1 ? sprintf('%d %s &times; %s', $lineItem['qty'], $lineItem['label'], Price::format( $lineItem['unit_price'] )) : $lineItem['label']; ?></td>
+       	  		<td class="text-right"><?php echo $lineItem['total'] <> 0 ? Price::format( $lineItem['total'] ) : Price::format( 0 ); ?></td>
        	  	</tr>
    	  	<?php } ?>
       </tbody>
@@ -75,14 +91,14 @@ $lineItems = $subService->paymentLineItems(
                		<label for="connectpx_booking-adjustment-time"><?php echo __('Waiting Time (Mins.)', 'connectpx_booking') ?></label> 
                		<input class="form-control" type="number" step="1" id="connectpx_booking-adjustment-time" value="<?php echo $appointment->getWaitingTime(); ?>">
                	</div>
-               	<div class="form-group">
+               	<!-- <div class="form-group">
                		<label for="connectpx_booking-adjustment-reason"><?php echo __('Reason', 'connectpx_booking') ?></label> 
                		<textarea class="form-control" id="connectpx_booking-adjustment-reason"></textarea>
                	</div>
                	<div class="form-group">
                		<label for="connectpx_booking-adjustment-amount"><?php echo __('Amount', 'connectpx_booking') ?></label> 
                		<input class="form-control" type="number" step="1" id="connectpx_booking-adjustment-amount">
-               	</div>
+               	</div> -->
                <div class="text-right">
                		<button class="btn btn-default  payment-adjustment-cancel"><?php echo __('Cancel', 'connectpx_booking') ?></button> 
                		<button type="button" class="btn ladda-button btn-success btn-apply-adjustments" data-spinner-size="40" data-style="zoom-in"><span class="ladda-label"><?php echo __('Apply', 'connectpx_booking') ?></span><span class="ladda-spinner"></span></button>
@@ -99,9 +115,15 @@ $lineItems = $subService->paymentLineItems(
             <th><?php echo __('Paid', 'connectpx_booking') ?></th>
             <th class="text-right"><?php echo Price::format( $appointment->getPaidAmount() ); ?></th>
          </tr>
+         <?php if( $appointment->isRefunded() ): ?>
+            <tr style="color: red;">
+               <th><?php echo __('Refunded', 'connectpx_booking') ?></th>
+               <th class="text-right">-<?php echo Price::format( $appointment->getRefundedAmount() ); ?></th>
+            </tr>
+         <?php endif; ?>
          <tr>
             <th><?php echo __('Due', 'connectpx_booking') ?></th>
-            <th class="text-right"><?php echo Price::format( $lineItems['totals'] - $appointment->getPaidAmount() ); ?></th>
+            <th class="text-right"><?php echo in_array($appointment->getStatus(), [Appointment::STATUS_CANCELLED, Appointment::STATUS_REJECTED]) ? Price::format( 0 ) :  Price::format( $lineItems['totals'] - $appointment->getPaidAmount() ); ?></th>
          </tr>
 
          <?php if(Common::isCurrentUserAdmin()): ?>

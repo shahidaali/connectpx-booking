@@ -38,6 +38,21 @@ class Codes extends Assets\Appointment\Codes
             ->setStreet( 'Street' )
             ->setAdditionalAddress( 'Addition address' );
 
+        $customer = new Entities\Appointment();
+        $customer
+            ->setPhone( '12345678' )
+            ->setEmail( 'client@example.com' )
+            ->setNotes( 'Client notes' )
+            ->setFullName( 'Client Name' )
+            ->setFirstName( 'Client First Name' )
+            ->setLastName( 'Client Last Name' )
+            ->setCity( 'City' )
+            ->setCountry( 'Country' )
+            ->setPostcode( 'Post code' )
+            ->setState( 'State' )
+            ->setStreet( 'Street' )
+            ->setAdditionalAddress( 'Addition address' );
+
         parent::__construct( new Order( $customer ) );
 
         $this->item = new Entities\Appointment();

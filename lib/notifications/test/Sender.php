@@ -43,6 +43,7 @@ abstract class Sender extends Base\Sender
             switch ( $notification->getType() ) {
                 case Notification::TYPE_APPOINTMENT_REMINDER:
                 case Notification::TYPE_NEW_BOOKING:
+                case Notification::TYPE_NEW_INVOICE:
                 case Notification::TYPE_APPOINTMENT_STATUS_CHANGED:
                 case Notification::TYPE_CUSTOMER_NEW_WP_USER:
                     if ( $notification->getToAdmin() ) {

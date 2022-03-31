@@ -37,6 +37,8 @@ class Settings extends Lib\Base\Component {
         for ($i=1; $i < 24; $i++) { 
             $ntf_processing_intervals[$i] = $i . " h";
         }
+
+        $currencies = array_keys(Lib\Utils\Price::getCurrencies());
         self::renderTemplate( 'backend/templates/settings', compact(
             'messages', 
             'business_hours', 
@@ -46,6 +48,7 @@ class Settings extends Lib\Base\Component {
             'wp_pages',
             'appointment_statuses',
             'ntf_processing_intervals',
+            'currencies',
         ) );
     }
 

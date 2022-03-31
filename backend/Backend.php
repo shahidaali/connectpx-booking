@@ -26,10 +26,12 @@ class Backend {
 	 */
 	public static function run() {
 		Ajax::init();
+
 		Components\Dialogs\Appointment\Edit\Ajax::init();
 		Components\Dialogs\Invoice\Edit\Ajax::init();
 		Components\Dialogs\Invoice\View\Ajax::init();
 		Components\Dialogs\Notifications\Ajax::init();
+		Components\Dashboard\Appointments\Ajax::init();
 
 		add_action( 'admin_enqueue_scripts', array(__CLASS__, 'enqueueScripts') );
 		add_action( 'admin_menu', array(__CLASS__, 'adminMenu') );
@@ -142,9 +144,18 @@ class Backend {
 			Plugin::version(), 
 			false 
 		);
+
+		// Notifications
 		wp_enqueue_script( 
 			'connectpx_booking_notifications_list', 
 			$admin_resources . 'modules/resources/js/notifications-list.js', 
+			array(), 
+			Plugin::version(), 
+			false 
+		);
+		wp_enqueue_script( 
+			'connectpx_booking_email_logs', 
+			$admin_resources . 'modules/resources/js/email-logs.js', 
 			array(), 
 			Plugin::version(), 
 			false 
@@ -159,7 +170,8 @@ class Backend {
 				'connectpx_booking_moment', 
 				'connectpx_booking_daterangepicker',
 				'connectpx_booking_select2',
-				'connectpx_booking_notifications_list'
+				'connectpx_booking_notifications_list',
+				'connectpx_booking_email_logs'
 			), 
 			Plugin::version(), 
 			false 
@@ -221,6 +233,75 @@ class Backend {
 			array( 'connectpx_booking_admin' ), 
 			Plugin::version(), 
 			'all' 
+		);
+
+		// Dashboard assets
+		wp_register_script( 
+			'connectpx_booking_chart', 
+			$admin_resources . 'components/dashboard/appointments/resources/js/chart.min.js', 
+			array(), 
+			Plugin::version(), 
+			false 
+		);
+		wp_register_script( 
+			'connectpx_booking_appointments_dashboard', 
+			$admin_resources . 'components/dashboard/appointments/resources/js/appointments-dashboard.js', 
+			array( 
+				'jquery', 
+				'connectpx_booking_global',
+				'connectpx_booking_datatables', 
+				'connectpx_booking_moment', 
+				'connectpx_booking_daterangepicker',
+				'connectpx_booking_select2',
+				'connectpx_booking_dropdown',
+				'connectpx_booking_chart',
+			), 
+			Plugin::version(), 
+			false 
+		);
+		wp_enqueue_style( 
+			'connectpx_booking_appointments_dashboard', 
+			$admin_resources . 'components/dashboard/appointments/resources/css/appointments-dashboard.css', 
+			array( 
+				'connectpx_booking_bootstrap',
+				'connectpx_booking_admin', 
+				'connectpx_booking_fa' 
+			), 
+			Plugin::version(), 
+			'all' 
+		);
+
+		wp_register_script( 
+			'connectpx_booking_appointments_dashboard', 
+			$admin_resources . 'components/dashboard/appointments/resources/js/appointments-dashboard.js', 
+			array( 
+				'jquery', 
+				'connectpx_booking_global',
+				'connectpx_booking_datatables', 
+				'connectpx_booking_moment', 
+				'connectpx_booking_daterangepicker',
+				'connectpx_booking_select2',
+				'connectpx_booking_dropdown',
+				'connectpx_booking_chart',
+			), 
+			Plugin::version(), 
+			false 
+		);
+		wp_register_script( 
+			'connectpx_booking_dashboard', 
+			$admin_resources . 'modules/resources/js/dashboard.js', 
+			array( 
+				'jquery', 
+				'connectpx_booking_global',
+				'connectpx_booking_datatables', 
+				'connectpx_booking_moment', 
+				'connectpx_booking_daterangepicker',
+				'connectpx_booking_select2',
+				'connectpx_booking_dropdown',
+				'connectpx_booking_appointments_dashboard'
+			), 
+			Plugin::version(), 
+			false 
 		);
 	}
 

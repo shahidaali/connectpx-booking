@@ -56,7 +56,7 @@ use ConnectpxBooking\Backend\Components\Controls;
                         </select>
                     </div>
                 </div>
-                <div class="col-md-1">
+                <div class="col-md-2">
                     <div class="form-group">
                         <select class="form-control connectpx_booking-js-select" id="connectpx_booking-filter-status" data-placeholder="<?php esc_attr_e( 'Status', 'connectpx_booking' ) ?>">
                             <?php foreach ( Invoice::getStatuses() as $status ): ?>

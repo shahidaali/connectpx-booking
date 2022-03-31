@@ -54,7 +54,7 @@ var ConnectpxBookingAppointmentDialog = function(Dialog, $, moment, ConnectpxBoo
 
                     $modal.connectpx_bookingModal('show');
                     $modal.on('hidden.bs.modal', function(){
-                    	if( callback !== undefined ) {
+                    	if( callback !== undefined && typeof callback === 'function' ) {
 	                		callback(appointmentData);
 	                	}
                     });
@@ -64,6 +64,7 @@ var ConnectpxBookingAppointmentDialog = function(Dialog, $, moment, ConnectpxBoo
                     	$btn_update_status_toggle.find('span').remove();
                     	$btn_update_status_toggle.append( $(this).find('span').clone() );
 
+                    	$dialog.find('.modal-dialog').addClass('loading');
 	                    $.ajax({
 				            url: ConnectpxBookingL10nGlobal.ajax_url,
 				            type: 'POST',
@@ -75,9 +76,10 @@ var ConnectpxBookingAppointmentDialog = function(Dialog, $, moment, ConnectpxBoo
 					        },
 				            dataType: 'json',
 				            success: function (response) {
+				            	$dialog.find('.modal-dialog').removeClass('loading');
 				                if (response.success) {
 				                	$modal.connectpx_bookingModal('hide');
-				                	if( callback !== undefined ) {
+				                	if( callback !== undefined && typeof callback === 'function' ) {
 				                		callback( appointmentData );
 				                	}
 				                }
@@ -86,6 +88,7 @@ var ConnectpxBookingAppointmentDialog = function(Dialog, $, moment, ConnectpxBoo
                     });
 
                     $btn_save.click(function(){
+                    	$dialog.find('.modal-dialog').addClass('loading');
 	                    $.ajax({
 				            url: ConnectpxBookingL10nGlobal.ajax_url,
 				            type: 'POST',
@@ -97,9 +100,10 @@ var ConnectpxBookingAppointmentDialog = function(Dialog, $, moment, ConnectpxBoo
 					        },
 				            dataType: 'json',
 				            success: function (response) {
+				            	$dialog.find('.modal-dialog').removeClass('loading');
 				                if (response.success) {
 				                	$modal.connectpx_bookingModal('hide');
-				                	if( callback !== undefined ) {
+				                	if( callback !== undefined && typeof callback === 'function' ) {
 				                		callback( appointmentData );
 				                	}
 				                }
@@ -124,6 +128,7 @@ var ConnectpxBookingAppointmentDialog = function(Dialog, $, moment, ConnectpxBoo
                     	$btn_update_payment_status_toggle.find('span').remove();
                     	$btn_update_payment_status_toggle.append( $(this).find('span').clone() );
 
+                    	$dialog.find('.modal-dialog').addClass('loading');
 	                    $.ajax({
 				            url: ConnectpxBookingL10nGlobal.ajax_url,
 				            type: 'POST',
@@ -135,7 +140,9 @@ var ConnectpxBookingAppointmentDialog = function(Dialog, $, moment, ConnectpxBoo
 					        },
 				            dataType: 'json',
 				            success: function (response) {
+				            	$dialog.find('.modal-dialog').removeClass('loading');
 				                if (response.success) {
+				                	$modal.connectpx_bookingModal('hide');
 				                	Dialog.loadAppointment({
 										id: data.id,
 										tab: 'payment'
@@ -156,6 +163,7 @@ var ConnectpxBookingAppointmentDialog = function(Dialog, $, moment, ConnectpxBoo
                 	});
 
                     $btn_apply_adjustments.click(function(){
+                    	$dialog.find('.modal-dialog').addClass('loading');
 	                    $.ajax({
 				            url: ConnectpxBookingL10nGlobal.ajax_url,
 				            type: 'POST',
@@ -170,7 +178,9 @@ var ConnectpxBookingAppointmentDialog = function(Dialog, $, moment, ConnectpxBoo
 					        },
 				            dataType: 'json',
 				            success: function (response) {
+				            	$dialog.find('.modal-dialog').removeClass('loading');
 				                if (response.success) {
+				                	$modal.connectpx_bookingModal('hide');
 				                	Dialog.loadAppointment({
 										id: data.id,
 										tab: 'payment',

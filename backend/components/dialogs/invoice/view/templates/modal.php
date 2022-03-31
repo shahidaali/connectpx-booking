@@ -36,12 +36,15 @@ use ConnectpxBooking\Lib;
             </div>
          </div>
          <div class="modal-footer">
-            <div slot="footer">  
+            <div slot="footer"> 
+               <?php if(Common::isCurrentUserAdmin()): ?>
+                  <button type="button" class="btn ladda-button btn-warning btn-update-paid" data-spinner-size="40" data-style="zoom-in" classname="btn-success"><span class="ladda-label"><?php echo __('Mark Paid', 'connectpx_booking') ?></span><span class="ladda-spinner"></span></button> 
+               <?php endif; ?>
                <?php if(Common::isCurrentUserAdmin()): ?>
                   <button type="button" class="btn ladda-button btn-info btn-send-notification" data-spinner-size="40" data-style="zoom-in" classname="btn-success"><span class="ladda-label"><?php echo __('Send Notification', 'connectpx_booking') ?></span><span class="ladda-spinner"></span></button> 
                <?php endif; ?>
                <?php if(Common::isCurrentUserAdmin()): ?>
-                  <button type="button" class="btn ladda-button btn-success btn-update-invoice" data-spinner-size="40" data-style="zoom-in" classname="btn-success"><span class="ladda-label"><?php echo __('Update', 'connectpx_booking') ?></span><span class="ladda-spinner"></span></button> 
+                  <button type="button" class="btn ladda-button btn-success btn-update-invoice" data-spinner-size="40" data-style="zoom-in" classname="btn-success"><span class="ladda-label"><?php echo __('Recalculate Totals', 'connectpx_booking') ?></span><span class="ladda-spinner"></span></button> 
                <?php endif; ?>
             	<button type="button" class="btn ladda-button btn-default" data-spinner-size="40" data-style="zoom-in" data-dismiss="connectpx_booking-modal"><span class="ladda-label"><?php echo __('Cancel', 'connectpx_booking') ?></span><span class="ladda-spinner"></span></button>
             </div>

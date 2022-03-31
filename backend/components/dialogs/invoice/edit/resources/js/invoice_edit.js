@@ -86,6 +86,7 @@ var ConnectpxBookingInvoiceDialog = function(Dialog, $, moment, ConnectpxBooking
                     $modal.connectpx_bookingModal('show');
 
                     $btn_update.click(function(){
+                    	$modal.find('.modal-dialog').addClass('loading');
 	                    $.ajax({
 				            url: ConnectpxBookingL10nGlobal.ajax_url,
 				            type: 'POST',
@@ -97,6 +98,7 @@ var ConnectpxBookingInvoiceDialog = function(Dialog, $, moment, ConnectpxBooking
 					        },
 				            dataType: 'json',
 				            success: function (response) {
+				            	$modal.find('.modal-dialog').removeClass('loading');
 				                if (response.success) {
 				                	$modal.connectpx_bookingModal('hide');
 				                }
