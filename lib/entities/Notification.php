@@ -12,7 +12,8 @@ use ConnectpxBooking\Lib\DataHolders\Notification\Settings;
 class Notification extends Lib\Base\Entity
 {
     const TYPE_APPOINTMENT_REMINDER                          = 'appointment_reminder';
-    const TYPE_APPOINTMENT_STATUS_CHANGED           = 'appointment_status_changed';
+    const TYPE_APPOINTMENT_STATUS_CHANGED                    = 'appointment_status_changed';
+    const TYPE_SCHEDULE_CANCELLED                            = 'schedule_cancelled';
     const TYPE_CUSTOMER_NEW_WP_USER                          = 'customer_new_wp_user';
     const TYPE_NEW_BOOKING                                   = 'new_booking';
     const TYPE_NEW_INVOICE                                   = 'new_invoice';
@@ -130,6 +131,7 @@ class Notification extends Lib\Base\Entity
             self::TYPE_NEW_BOOKING,
             self::TYPE_NEW_INVOICE,
             self::TYPE_APPOINTMENT_STATUS_CHANGED,
+            self::TYPE_SCHEDULE_CANCELLED,
             self::TYPE_APPOINTMENT_REMINDER,
             self::TYPE_CUSTOMER_NEW_WP_USER
         );
@@ -160,6 +162,7 @@ class Notification extends Lib\Base\Entity
         if ( self::$titles === null ) {
             self::$titles = array(
                 self::TYPE_APPOINTMENT_STATUS_CHANGED => __( 'Notification about customer\'s appointment status change', 'connectpx_booking' ),
+                self::TYPE_SCHEDULE_CANCELLED => __( 'Notification about customer\'s schedule is canceled', 'connectpx_booking' ),
                 self::TYPE_NEW_BOOKING                         => __( 'New booking notification', 'connectpx_booking' ),
                 self::TYPE_NEW_INVOICE                         => __( 'New invoice notification', 'connectpx_booking' ),
                 self::TYPE_APPOINTMENT_REMINDER                => __( 'Appointment reminder', 'connectpx_booking' ),
@@ -182,6 +185,7 @@ class Notification extends Lib\Base\Entity
                 self::TYPE_CUSTOMER_NEW_WP_USER                => 5,
                 self::TYPE_APPOINTMENT_REMINDER                => 19,
                 self::TYPE_APPOINTMENT_STATUS_CHANGED          => 21,
+                self::TYPE_SCHEDULE_CANCELLED                  => 24,
                 self::TYPE_NEW_BOOKING                         => 22,
                 self::TYPE_NEW_INVOICE                         => 23,
             );
@@ -198,6 +202,7 @@ class Notification extends Lib\Base\Entity
                 self::TYPE_NEW_BOOKING                                   => 'far fa-calendar-check',
                 self::TYPE_NEW_INVOICE                                   => 'far fa-file',
                 self::TYPE_APPOINTMENT_STATUS_CHANGED                    => 'fas fa-arrows-alt-h',
+                self::TYPE_SCHEDULE_CANCELLED                            => 'fas fa-arrows-alt-h',
                 self::TYPE_CUSTOMER_NEW_WP_USER                          => 'fas fa-user-plus',
                 self::TYPE_APPOINTMENT_REMINDER                          => 'far fa-bell',
             );

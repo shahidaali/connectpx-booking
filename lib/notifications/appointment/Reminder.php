@@ -2,6 +2,7 @@
 namespace ConnectpxBooking\Lib\Notifications\Appointment;
 
 use ConnectpxBooking\Lib\Entities\Notification;
+use ConnectpxBooking\Lib\Entities\Appointment;
 use ConnectpxBooking\Lib\Notifications\Assets\Appointment\Attachments;
 use ConnectpxBooking\Lib\Notifications\Assets\Appointment\Codes;
 use ConnectpxBooking\Lib\Notifications\Base;
@@ -28,8 +29,6 @@ abstract class Reminder extends Base\Reminder
         $result = false;
         $reply_to = null;
         
-        $codes->prepareForAppointment( $appointment, 'client' );
-
         // Notify client.
         if ( static::sendToClient( $appointment->getCustomer(), $notification, $codes, $attachments ) ) {
             $result = true;

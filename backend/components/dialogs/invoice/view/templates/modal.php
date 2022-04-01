@@ -30,7 +30,7 @@ $pending_count = count($invoice->getPendingAppointments());
                         <div class="ml-auto">
                            <strong class="text-muted"><?php echo __('Status:', 'connectpx_booking') ?> <?php echo __(Invoice::statusToString($invoice->getStatus()), 'connectpx_booking'); ?></strong>
                         </div>
-                     <?php elseif(Common::isCurrentUserAdmin()): ?>
+                     <?php elseif($pending_count <= 0 && Common::isCurrentUserAdmin()): ?>
                         
                         <div class="ml-auto">
                            <div class="dropdown d-inline-block">
@@ -44,6 +44,9 @@ $pending_count = count($invoice->getPendingAppointments());
                         </div>
                      <?php endif; ?>
                   </li>
+               <?php if($pending_count > 0 && Common::isCurrentUserAdmin()): ?>
+                  <p class="text-danger"><em><small>Please update pending appointments to mark this invoice completed.</small></em></p>
+               <?php endif; ?>
                </ul>
             </div>
             <div class="invoice-preview-table table-responsive">

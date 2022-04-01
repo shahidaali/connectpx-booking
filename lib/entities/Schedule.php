@@ -391,9 +391,9 @@ class Schedule extends Lib\Base\Entity
             $appointment->refund();
         }
 
-        // if( $notification ) {
-        //     Lib\Notifications\Schedule\Sender::send( $this, array( 'cancellation_reason' => $reason ) );
-        // }
+        if( $notification ) {
+            Lib\Notifications\Schedule\Sender::send( $this, array( 'cancellation_reason' => $reason ) );
+        }
 
         return $this->save();
     }

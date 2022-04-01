@@ -159,6 +159,7 @@ class Codes extends Base\Codes
             : __( 'no limit', 'bookly' ),
             'status'                  => $this->status,
             'sub_service_name'                  => $this->sub_service_name,
+            'patient_name'                  => $this->appointment_patient,
             'trip_type'                  => $this->trip_type,
             'flat_rate'                  => $this->flat_rate,
             'mileage'                  => $this->mileage,

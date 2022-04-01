@@ -49,6 +49,27 @@ class Invoice extends Lib\Base\Component
         $data['invoice']['due_amount'] = Lib\Utils\Price::format( $invoice->getTotalAmount() - $invoice->getPaidAmount() ); 
         // __pre($data);
         // exit();
+
+        $data['colssize'] = [
+            // 'id' => esc_html__( '#', 'connectpx_booking' ),
+            'date' => 5,
+            'patient' => 8,
+            'pickup_time' => 5,
+            'clinic' => 5,
+            'address' => 20,
+            'city' => 6,
+            'zip' => 4,
+            'trip_type' => 3,
+            'status' => 5,
+            'flat_rate' => 5,
+            'mileage' => 4,
+            'mileage_fee' => 5,
+            'total_mileage_fee' => 5,
+            'after_hours_fee' => 5,
+            'waiting_fee' => 5,
+            'no_show_fee' => 5,
+            'total' => 5,
+        ];
         $content = self::renderTemplate( 'backend/components/invoice/templates/invoice', $data, false );
 
         return $content;

@@ -388,7 +388,7 @@ class WooCommerce extends MyAccountPages
             }
 
             $other_data[] = array(
-                'name' => sprintf("<b>%s (%d):</b>", Lib\Utils\Common::getOption('wc_cart_item_title', 'Bookings'), $count),
+                'name' => sprintf("<b>%s (%d)</b>", Lib\Utils\Common::getOption('wc_cart_item_title', 'Bookings'), $count),
                 'value' => implode( PHP_EOL . PHP_EOL, $info ),
             );
         }
@@ -406,7 +406,8 @@ class WooCommerce extends MyAccountPages
         $data = wc_get_order_item_meta( $item_id, 'connectpx_booking' );
         if ( $data ) {
             $other_data = self::getItemData( array(), array( 'connectpx_booking' => $data ) );
-            echo '<br/>' . $other_data[0]['name'] . '<br/>' . nl2br( $other_data[0]['value'] );
+            $value = nl2br($other_data[0]['value']);
+            echo '<br/>' . $other_data[0]['name'] . ':<br/>' . $value;
         }
     }
 

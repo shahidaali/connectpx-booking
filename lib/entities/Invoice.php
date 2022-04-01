@@ -455,7 +455,7 @@ class Invoice extends Lib\Base\Entity
         $a_ids = [];  
 
         if( empty( $appointments ) ) {
-            $appointments = $this->getAppointments();
+            $appointments = Lib\Utils\Invoice::getInvoiceAppointments( $this->getStartDate(), $this->getEndDate(), $this->getCustomerId() );
         }
 
         if( !empty( $appointments ) ) {
@@ -552,7 +552,7 @@ class Invoice extends Lib\Base\Entity
         include_once Lib\Plugin::pluginDir() . '/lib/TCPDF/tcpdf.php';
 
         $font_name = 'freesans';
-        $font_size = $font_name === 'freesans' ? 5 : 2;
+        $font_size = $font_name === 'freesans' ? 4 : 2;
         $pdf = new \TCPDF();
         $pdf->setImageScale( 2.3 );
         $pdf->setPrintHeader( false );
@@ -560,7 +560,7 @@ class Invoice extends Lib\Base\Entity
         $pdf->AddPage();
         $pdf->SetFont( $font_name, '', $font_size );
         $data = Backend\Components\Invoice\Invoice::render( $this );
-        $pdf->writeHTML( $data );
+        $pdf->writeHTML( $data, true, false, true, false, '' );
 
         return $pdf;
     }

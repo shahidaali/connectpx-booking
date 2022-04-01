@@ -108,6 +108,7 @@ body .ec-month .ec-event-title {
 }
 body #connectpx_booking_tbs .ec .ec-event {
     cursor: default;
+    height: auto !important;
 }
 .loading {
     position: relative;

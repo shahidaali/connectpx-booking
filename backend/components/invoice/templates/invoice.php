@@ -140,13 +140,15 @@ use ConnectpxBooking\Lib;
                         <tbody>
                             <tr>
                                 <?php foreach ($datatables['settings']['columns'] as $name => $show) { ?>
-                                    <td style="vertical-align: middle; background-color: #2e75b5; color: #fff; border-right-width: 0.1px; border-bottom-width: 0.1; text-align: center;" valign="middle" align="center"><?php echo $datatables['titles'][$name]; ?></td>
+                                    <?php $width = isset($colssize[$name]) ? 'width:' . $colssize[$name] . '%;' : ''; ?>
+                                    <td style="vertical-align: middle; background-color: #2e75b5; color: #fff; border-right-width: 0.1px; border-bottom-width: 0.1; text-align: center; <?php echo $width; ?>" valign="middle" align="center"><?php echo $datatables['titles'][$name]; ?></td>
                                 <?php } ?>
                             </tr>
                             <?php foreach ($appointments as $appointment) { ?>
                                 <tr>
                                     <?php foreach ($datatables['settings']['columns'] as $name => $show) { ?>
-                                        <td style="vertical-align: middle; border-right-width: 0.1px; border-bottom-width: 0.1; text-align: center;" valign="middle" align="center">
+                                        <?php $width = isset($colssize[$name]) ? 'width:' . $colssize[$name] . '%;' : ''; ?>
+                                        <td style="vertical-align: middle; border-right-width: 0.1px; border-bottom-width: 0.1; text-align: center; <?php echo $width; ?>" valign="middle" align="center">
                                             <?php
                                                 switch ($name) {
                                                      case 'id':

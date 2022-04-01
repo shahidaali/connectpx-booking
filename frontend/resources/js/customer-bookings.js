@@ -320,7 +320,7 @@
             });
 
             $appointments_table.on('click', '[data-action=show-payment]', function () {
-                ConnectpxBookingAppointmentDialog.showDialog( row.data().id, null, 'payment' );
+                ConnectpxBookingAppointmentDialog.showDialog( row.data().id, null, 'appointment' );
             });
         }
 

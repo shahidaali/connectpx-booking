@@ -24,6 +24,8 @@ class Invoices extends Lib\Base\Component {
      */
     public static function render()
     {
+        // __pre(Lib\Utils\Invoice::getInvoicePeriodOptions());
+        // exit;
         switch ( self::parameter('tab') ){ 
             case 'view':
                 $invoice = Lib\Entities\Invoice::find(self::parameter('id'));

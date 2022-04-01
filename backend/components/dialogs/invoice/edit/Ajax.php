@@ -31,7 +31,7 @@ class Ajax extends Lib\Base\Ajax
     {
 
         $customers = [];
-        foreach (self::_getCustomers() as $key => $customer) {
+        foreach (Lib\Utils\Invoice::getCustomers() as $key => $customer) {
             $name = $customer['full_name'];
             if ( $customer['email'] != '' || $customer['phone'] != '' ) {
                 $customer_type = $customer['wp_user_id'] ? __('Contract', 'connectpx_booking') : __('Private', 'connectpx_booking');
@@ -40,7 +40,7 @@ class Ajax extends Lib\Base\Ajax
             $customers[ $customer['id'] ] = $name;
         }
 
-        $periods_options = Lib\Utils\Common::getInvoicePeriodOptions();
+        $periods_options = Lib\Utils\Invoice::getInvoicePeriodOptions();
 
         $periods = [];
         foreach ( $periods_options as $key => $periods_option ) {
@@ -64,81 +64,8 @@ class Ajax extends Lib\Base\Ajax
         $customer       = self::parameter( 'customer', 'all' );
         $period         = self::parameter( 'period', 'last_week' );
 
-        $customers = [];
-        if( !$customer || $customer == 'all' ) {
-            foreach ( self::_getCustomers() as $key => $customer ) {
-                $customers[] = $customer['id'];
-            }
-        } else {
-            $customers[] = $customer;
-        }
-
-        $periods = Lib\Utils\Common::getInvoicePeriodOptions();
-        $weeks = $periods[$period]['weeks'];
-
-        foreach ( $weeks as $week ) {
-            $startDate = $week['start']->format('Y-m-d');
-            $endDate = $week['end']->format('Y-m-d');
-
-            foreach ( $customers as $customer_id ) {
-                $appointments = Appointment::query( 'a' )
-                    ->select( 'a.*' )
-                    ->whereGte('DATE(a.pickup_datetime)', $startDate)
-                    ->whereLte('DATE(a.pickup_datetime)', $endDate)
-                    ->where('a.customer_id', $customer_id)
-                    ->whereIn('a.status', Appointment::getCompletedStatuses())
-                    ->sortBy('DATE(a.pickup_datetime)')
-                    ->order('DESC')
-                    ->fetchArray();
-
-                if( !empty( $appointments ) ) {
-                    $invoice = Invoice::query( 'i' )
-                        ->select( 'i.*' )
-                        ->where('i.start_date', $startDate)
-                        ->where('i.end_date', $endDate)
-                        ->where('i.customer_id', $customer_id)
-                        ->fetchRow();
-
-                    if( !empty($invoice) ) {
-                        $invoice = new Invoice( $invoice );
-                    } else {
-                        $invoice = new Invoice();
-                    }
-
-                    $due_days = Lib\Utils\Common::getOption('invoices_due_days', 30);
-                    $due_date = $invoice ? Lib\Slots\DatePoint::fromStr( $invoice->getCreatedAt() ) : Lib\Slots\DatePoint::now();
-                    $due_date = $due_date->modify( $due_days * DAY_IN_SECONDS )->format( 'Y-m-d' );
-                    
-                    $invoice
-                        ->setCustomerId($customer_id)
-                        ->setStartDate($startDate)
-                        ->setEndDate($endDate)
-                        ->setDueDate( $due_date )
-                        ->save();
-
-                    $invoice->updateTotals( $appointments );
-                }
-                
-            }
-        }
-        
-
-        $response = array( 
-            'success' => true, 
-            'data' => array() 
-        );
+        $response = Lib\Utils\Invoice::updateInvoices( $period, $customer );
 
         wp_send_json( $response );
-    }
-
-    /**
-     * Get invoice data when editing an invoice.
-     */
-    public static function _getCustomers()
-    {
-        $customers = Customer::query( 'c' )
-            ->select( 'c.*, CONCAT(c.first_name, " ", c.last_name) as full_name' )
-            ->fetchArray();
-        return $customers;
     }
 }

@@ -62,12 +62,18 @@ jQuery(function($) {
                         .html(pickers.appointmentDate.startDate.format(ConnectpxBookingL10n.dateRange.format) + ' - ' + pickers.appointmentDate.endDate.format(ConnectpxBookingL10n.dateRange.format));
                 }
             } else if (params[0] == 'created-date') {
-                pickers.creationDate.startDate = moment(params['1'].substring(0, 10));
-                pickers.creationDate.endDate = moment(params['1'].substring(11));
-                $creationDateFilter
-                    .data('date', pickers.creationDate.startDate.format(pickers.dateFormat) + ' - ' + pickers.creationDate.endDate.format(pickers.dateFormat))
-                    .find('span')
-                    .html(pickers.creationDate.startDate.format(ConnectpxBookingL10n.dateRange.format) + ' - ' + pickers.creationDate.endDate.format(ConnectpxBookingL10n.dateRange.format));
+                if (params['1'] == 'any') {
+                    $creationDateFilter
+                        .data('date', 'any').find('span')
+                        .html(ConnectpxBookingL10n.dateRange.anyTime);
+                } else {
+                    pickers.creationDate.startDate = moment(params['1'].substring(0, 10));
+                    pickers.creationDate.endDate = moment(params['1'].substring(11));
+                    $creationDateFilter
+                        .data('date', pickers.creationDate.startDate.format(pickers.dateFormat) + ' - ' + pickers.creationDate.endDate.format(pickers.dateFormat))
+                        .find('span')
+                        .html(pickers.creationDate.startDate.format(ConnectpxBookingL10n.dateRange.format) + ' - ' + pickers.creationDate.endDate.format(ConnectpxBookingL10n.dateRange.format));
+                }
             } else {
                 $('#connectpx_booking-filter-' + params[0]).val(params[1]);
             }

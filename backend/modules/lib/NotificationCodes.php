@@ -32,6 +32,7 @@ class NotificationCodes
                 'appointment_return_pickup_time' => array( 'description' => __( 'Return pickup time of appointment', 'connectpx_booking' ), 'if' => true ),
                 'appointment_notes' => array( 'description' => __( 'Customer notes for appointment', 'connectpx_booking' ), 'if' => true ),
                 'booking_number' => array( 'description' => __( 'Booking number', 'connectpx_booking' ) ),
+                'patient_name' => array( 'description' => __( 'Name of patient', 'connectpx_booking' ) ),
                 'admin_notes' => array( 'description' => __( 'Admin notes', 'connectpx_booking' ) ),
                 'status' => array( 'description' => __( 'Appointment status', 'connectpx_booking' ) ),
                 'cancellation_time_limit' => array( 'description' => __( 'Time limit to which appointments can be cancelled ', 'connectpx_booking' ) ),
@@ -50,9 +51,12 @@ class NotificationCodes
                 'appointments_table' => array( 'description' => __( 'Detail of booked appointments', 'connectpx_booking' )),
             ),
             'schedule' => array(
+                'schedule_no' => array( 'description' => __( 'Schedule id.' )),
                 'schedule_start_date' => array( 'description' => __( 'Schedule start date.' )),
                 'schedule_end_date' => array( 'description' => __( 'Schedule end date.' )),
                 'schedule_status' => array( 'description' => __( 'Schedule end date.' )),
+                'current_date_time' => array( 'description' => __( 'Current date and time.' )),
+                'cancellation_reason' => array( 'description' => __( 'Cancellation reason.' )),
             ),
             'company' => array(
                 'company_address' => array( 'description' => __( 'Address of company', 'connectpx_booking' ), 'if' => true ),
@@ -184,6 +188,16 @@ class NotificationCodes
                     $this->codes['customer'],
                     $this->codes['customer_timezone'],
                     $this->codes['payment'],
+                    $this->codes['service'],
+                );
+                break;
+            case Notification::TYPE_SCHEDULE_CANCELLED:
+                $codes = array_merge(
+                    $this->codes['appointment'],
+                    $this->codes['schedule'],
+                    $this->codes['company'],
+                    $this->codes['customer'],
+                    $this->codes['customer_timezone'],
                     $this->codes['service'],
                 );
                 break;

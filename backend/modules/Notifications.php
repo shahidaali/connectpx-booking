@@ -24,6 +24,10 @@ class Notifications extends Lib\Base\Component {
      */
     public static function render()
     {
+        // $schedule = Lib\Entities\Schedule::find( 3 );
+        // Lib\Notifications\Schedule\Sender::send( $schedule );
+        // return;
+
         // $wc_order = new \WC_Order( 678 );
         // Lib\Notifications\Cart\Sender::send( $wc_order );
         // return;

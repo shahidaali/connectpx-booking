@@ -101,6 +101,9 @@ var ConnectpxBookingInvoiceDialog = function(Dialog, $, moment, ConnectpxBooking
 				            	$modal.find('.modal-dialog').removeClass('loading');
 				                if (response.success) {
 				                	$modal.connectpx_bookingModal('hide');
+				                	if( callback !== undefined && typeof callback === 'function' ) {
+				                		callback( invoiceData );
+				                	}
 				                }
 				            }
 				        });

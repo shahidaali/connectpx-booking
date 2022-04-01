@@ -34,6 +34,7 @@ var ConnectpxBookingInvoiceViewDialog = function(Dialog, $, moment, ConnectpxBoo
 
                 	$btn_view_appointment.click(function (e) {
 			            e.preventDefault();
+			            $modal.connectpx_bookingModal('hide');
 			            ConnectpxBookingAppointmentDialog.showDialog(
 			                $(this).attr('data-id'),
 			                function (event) {
@@ -103,8 +104,8 @@ var ConnectpxBookingInvoiceViewDialog = function(Dialog, $, moment, ConnectpxBoo
 
                     $modal.connectpx_bookingModal('show');
                     $modal.on('hidden.bs.modal', function(){
-                    	if( callback !== undefined ) {
-	                		callback(invoiceData);
+                    	if( callback !== undefined && typeof callback === 'function' ) {
+	                		callback( invoiceData );
 	                	}
                     });
 
@@ -162,7 +163,9 @@ var ConnectpxBookingInvoiceViewDialog = function(Dialog, $, moment, ConnectpxBoo
 				            success: function (response) {
 				            	$dialog.find('.modal-dialog').removeClass('loading');
 				                if (response.success) {
-				                	callback( invoiceData );
+				                	if( callback !== undefined && typeof callback === 'function' ) {
+				                		callback( invoiceData );
+				                	}
 				                }
 				            }
 				        });
@@ -188,6 +191,9 @@ var ConnectpxBookingInvoiceViewDialog = function(Dialog, $, moment, ConnectpxBoo
 				            	$dialog.find('.modal-dialog').removeClass('loading');
 				                if (response.success) {
 				                	$modal.connectpx_bookingModal('hide');
+				                	if( callback !== undefined && typeof callback === 'function' ) {
+				                		callback( invoiceData );
+				                	}
 				                	// if( callback !== undefined ) {
 				                	// 	callback( invoiceData );
 				                	// }

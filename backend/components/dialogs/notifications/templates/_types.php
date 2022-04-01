@@ -23,6 +23,11 @@ use ConnectpxBooking\Lib\Config;
                             data-recipients='["customer","admin","custom"]'
                             data-icon='<?php echo esc_attr( Notification::getIcon( Notification::TYPE_APPOINTMENT_STATUS_CHANGED ) ) ?>'
                             data-attach='["ics","invoice"]'><?php echo esc_attr( Notification::getTitle( Notification::TYPE_APPOINTMENT_STATUS_CHANGED ) ) ?></option>
+                    <option value="<?php echo Notification::TYPE_SCHEDULE_CANCELLED ?>"
+                            data-set="instantly"
+                            data-recipients='["customer","admin","custom"]'
+                            data-icon='<?php echo esc_attr( Notification::getIcon( Notification::TYPE_SCHEDULE_CANCELLED ) ) ?>'
+                            data-attach='["ics","invoice"]'><?php echo esc_attr( Notification::getTitle( Notification::TYPE_SCHEDULE_CANCELLED ) ) ?></option>
                     <option value="<?php echo Notification::TYPE_CUSTOMER_NEW_WP_USER ?>"
                             data-set="instantly"
                             data-recipients='["customer"]'

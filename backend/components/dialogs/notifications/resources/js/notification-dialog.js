@@ -99,6 +99,7 @@ jQuery(function ($) {
                     break;
                 case 'customer_new_wp_user':
                 case 'new_invoice':
+                case 'schedule_cancelled':
                     break;
                 case 'new_booking':
                     hideStatuses = false;

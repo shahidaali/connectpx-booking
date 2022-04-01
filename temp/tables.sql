@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Mar 31, 2022 at 06:58 AM
+-- Generation Time: Apr 01, 2022 at 11:20 AM
 -- Server version: 5.7.24
 -- PHP Version: 7.3.1
 
@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS `wp_connectpx_booking_appointments` (
   `is_after_hours` tinyint(1) DEFAULT '0',
   `time_zone` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
   `time_zone_offset` int(11) DEFAULT '0',
+  `patient_name` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
   `pickup_detail` text COLLATE utf8mb4_unicode_520_ci,
   `destination_detail` text COLLATE utf8mb4_unicode_520_ci,
   `status` varchar(255) COLLATE utf8mb4_unicode_520_ci DEFAULT 'pending',
@@ -108,7 +109,7 @@ CREATE TABLE IF NOT EXISTS `wp_connectpx_booking_customers` (
 --
 
 INSERT INTO `wp_connectpx_booking_customers` (`id`, `wp_user_id`, `first_name`, `last_name`, `phone`, `email`, `country`, `state`, `postcode`, `city`, `street`, `street_number`, `additional_address`, `pickup_lat`, `pickup_lng`, `destination_lat`, `destination_lng`, `notes`, `services`, `enabled`, `created_at`) VALUES
-(1, NULL, 'Shahid', 'Hussain', '+923324703323', 'shahidhussainaali@gmail.com', 'United States (US)', 'Michigan', '48075', 'Southfield', '2129 Daylene Drive', '', '', NULL, NULL, NULL, NULL, '', '[]', 'yes', '2022-01-28 14:20:29'),
+(1, NULL, 'Shahid', 'Hussain', '+923324703323', 'shahidhussainaali@gmail.com', 'United States (US)', 'Michigan', '54000', 'Lahore', 'Lahore 123', '', '', NULL, NULL, NULL, NULL, '', '[]', 'yes', '2022-01-28 14:20:29'),
 (2, 2, 'Four', 'Season', '0801234567', 'connectpx@gmail.com', 'US', 'Michigan', '123', 'Michigan', 'Michigan', 'Michigan', 'Michigan', '31.49077700', '74.36090320', '31.47148790', '74.45848370', '', '{\"1\":{\"sub_services\":{\"oneway\":{\"enabled\":\"yes\",\"flat_rate\":\"30\",\"min_miles\":\"5\",\"rate_per_mile\":\"10\",\"min_waiting_time\":\"0\",\"rate_per_waiting_time\":\"2\",\"after_hours_fee\":\"30\",\"no_show_fee\":\"30\"},\"roundtrip_regular\":{\"enabled\":\"yes\",\"flat_rate\":\"60\",\"min_miles\":\"0\",\"rate_per_mile\":\"5\",\"min_waiting_time\":\"0\",\"rate_per_waiting_time\":\"0\",\"after_hours_fee\":\"30\",\"no_show_fee\":\"0\"},\"roundtrip_dialysis\":{\"enabled\":\"yes\",\"flat_rate\":\"0\",\"min_miles\":\"0\",\"rate_per_mile\":\"0\",\"min_waiting_time\":\"0\",\"rate_per_waiting_time\":\"0\",\"after_hours_fee\":\"0\",\"no_show_fee\":\"0\"}}}}', 'yes', '2022-02-02 18:44:28'),
 (3, 3, 'Fountain', 'Bleu', '1234567', 'FountainBleu@la-medical-transportation.com', 'US', 'Michigan', '340000', 'Michigan', 'Michigan', 'Michigan', 'Michigan', '31.49077700', '74.36090320', '31.47148790', '74.45848370', '', '{\"1\":{\"sub_services\":{\"oneway\":{\"enabled\":\"yes\",\"flat_rate\":\"0\",\"min_miles\":\"0\",\"rate_per_mile\":\"0\",\"min_waiting_time\":\"0\",\"rate_per_waiting_time\":\"0\",\"after_hours_fee\":\"0\",\"no_show_fee\":\"0\"},\"roundtrip_regular\":{\"enabled\":\"yes\",\"flat_rate\":\"0\",\"min_miles\":\"0\",\"rate_per_mile\":\"0\",\"min_waiting_time\":\"0\",\"rate_per_waiting_time\":\"0\",\"after_hours_fee\":\"0\",\"no_show_fee\":\"0\"},\"roundtrip_dialysis\":{\"enabled\":\"yes\",\"flat_rate\":\"0\",\"min_miles\":\"0\",\"rate_per_mile\":\"0\",\"min_waiting_time\":\"0\",\"rate_per_waiting_time\":\"0\",\"after_hours_fee\":\"0\",\"no_show_fee\":\"0\"}}}}', 'yes', '2022-02-08 06:06:47'),
 (4, 4, 'Heartland of', 'Canton', '+923324703323', 'heartlandofcanton@lamedical.com', 'US', 'Michigan', '49503', 'Michigan', 'House 524-E, Street 1, Madina Colony, Lahore', '123', 'House 524-E, Street 1, Madina Colony, Lahore', '0.00000000', '0.00000000', '0.00000000', '0.00000000', '', '{\"1\":{\"sub_services\":{\"oneway\":{\"enabled\":\"yes\",\"flat_rate\":\"0\",\"min_miles\":\"0\",\"rate_per_mile\":\"0\",\"min_waiting_time\":\"0\",\"rate_per_waiting_time\":\"0\",\"after_hours_fee\":\"0\",\"no_show_fee\":\"0\"},\"roundtrip_regular\":{\"enabled\":\"yes\",\"flat_rate\":\"0\",\"min_miles\":\"0\",\"rate_per_mile\":\"0\",\"min_waiting_time\":\"0\",\"rate_per_waiting_time\":\"0\",\"after_hours_fee\":\"0\",\"no_show_fee\":\"0\"},\"roundtrip_dialysis\":{\"enabled\":\"yes\",\"flat_rate\":\"0\",\"min_miles\":\"0\",\"rate_per_mile\":\"0\",\"min_waiting_time\":\"0\",\"rate_per_waiting_time\":\"0\",\"after_hours_fee\":\"0\",\"no_show_fee\":\"0\"}}}}', 'yes', '2022-03-30 04:05:19');
@@ -170,18 +171,7 @@ CREATE TABLE IF NOT EXISTS `wp_connectpx_booking_invoice_appointments` (
   PRIMARY KEY (`id`),
   KEY `invoice_id` (`invoice_id`),
   KEY `appointment_id` (`appointment_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci;
-
---
--- Dumping data for table `wp_connectpx_booking_invoice_appointments`
---
-
-INSERT INTO `wp_connectpx_booking_invoice_appointments` (`id`, `invoice_id`, `appointment_id`) VALUES
-(1, NULL, 1),
-(2, 1, 1),
-(3, 2, 4),
-(4, 3, 12),
-(5, 1, 2);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci;
 
 -- --------------------------------------------------------
 
@@ -206,7 +196,7 @@ CREATE TABLE IF NOT EXISTS `wp_connectpx_booking_notifications` (
   `attach_invoice` tinyint(1) NOT NULL DEFAULT '0',
   `settings` text COLLATE utf8mb4_unicode_520_ci,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci;
 
 --
 -- Dumping data for table `wp_connectpx_booking_notifications`
@@ -222,12 +212,14 @@ INSERT INTO `wp_connectpx_booking_notifications` (`id`, `gateway`, `type`, `acti
 (7, 'email', 'customer_new_wp_user', 1, 'Notification to customer about their WordPress user login details', 'New customer', 'Hello {client_name},\r\n\r\nAn account was created for you at {site_address}\r\n\r\nYour user details:\r\nuser: {new_username}\r\npassword: {new_password}\r\n\r\nThanks.', 1, 0, 0, '', 0, 0, '{\"status\":\"any\",\"services\":{\"any\":\"any\"},\"offset_hours\":\"2\",\"perform\":\"before\",\"option\":\"2\",\"offset_bidirectional_hours\":\"0\",\"at_hour\":\"9\",\"offset_before_hours\":\"-24\",\"before_at_hour\":\"18\"}'),
 (8, 'email', 'appointment_reminder', 0, 'Evening reminder to customer about next day appointment (requires cron setup)', 'Your appointment at {company_name}', 'Dear {client_name}.\r\n\r\nWe would like to remind you that you have booked {service_name} tomorrow at {appointment_pickup_time}. We are waiting for you at {company_address}.\r\n\r\nThank you for choosing our company.\r\n\r\n{company_name}\r\n{company_phone}\r\n{company_website}', 1, 0, 0, '', 0, 0, '{\"status\":\"any\",\"services\":{\"any\":\"any\"},\"offset_hours\":\"1\",\"perform\":\"before\",\"option\":\"2\",\"offset_bidirectional_hours\":\"-24\",\"at_hour\":\"18\",\"offset_before_hours\":\"-24\",\"before_at_hour\":\"18\"}'),
 (9, 'email', 'appointment_reminder', 0, 'Follow-up message in the same day after appointment (requires cron setup)', 'Your visit to {company_name}', 'Dear {client_name}.\n\nThank you for choosing {company_name}. We hope you were satisfied with your {service_name}.\n\nThank you and we look forward to seeing you again soon.\n\n{company_name}\n{company_phone}\n{company_website}', 1, 0, 0, NULL, 0, 0, '{\"status\":\"any\",\"option\":2,\"services\":{\"any\":\"any\",\"ids\":[]},\"offset_hours\":2,\"perform\":\"before\",\"at_hour\":21,\"before_at_hour\":18,\"offset_before_hours\":-24,\"offset_bidirectional_hours\":0}'),
-(10, 'email', 'new_booking', 1, 'Notification to customer about new booking', 'Your booking information', 'Dear {client_name}.\r\n\r\nThis is a confirmation that you have booked {service_name}.\r\n\r\nBelow is your booking details.\r\n\r\n{appointments_table}\r\n\r\nThank you for choosing our company.\r\n\r\n{company_name}\r\n{company_phone}\r\n{company_website}', 1, 0, 0, '', 0, 0, '{\"status\":\"any\",\"services\":{\"any\":\"any\"},\"offset_hours\":\"2\",\"perform\":\"before\",\"option\":\"2\",\"offset_bidirectional_hours\":\"0\",\"at_hour\":\"9\",\"offset_before_hours\":\"-24\",\"before_at_hour\":\"18\"}'),
-(11, 'email', 'new_booking', 1, 'Notification to admin about new booking', 'New booking information', 'Hello.\r\n\r\nYou have a new booking.\r\n\r\nService: {service_name}\r\nDate: {appointment_pickup_date}\r\nTime: {appointment_pickup_time}\r\nClient name: {client_name}\r\nClient phone: {client_phone}\r\nClient email: {client_email}', 0, 1, 0, '', 0, 0, '{\"status\":\"approved\",\"services\":{\"any\":\"any\"},\"offset_hours\":\"2\",\"perform\":\"before\",\"option\":\"2\",\"offset_bidirectional_hours\":\"0\",\"at_hour\":\"9\",\"offset_before_hours\":\"-24\",\"before_at_hour\":\"18\"}'),
+(10, 'email', 'new_booking', 1, 'Notification to customer about new booking', 'Your booking information', 'Dear {client_name}.\r\n\r\nThis is a confirmation that you have booked {service_name}.\r\n\r\nBelow is your booking details.\r\n\r\n{#if schedule_start_date}Schedule Start Date: {schedule_start_date}{/if}\r\n{#if schedule_end_date}Schedule End Date: {schedule_end_date}{/if}\r\n\r\n{appointments_table}\r\n\r\nThank you for choosing our company.\r\n\r\n{company_name}\r\n{company_phone}\r\n{company_website}', 1, 0, 0, '', 0, 0, '{\"status\":\"any\",\"services\":{\"any\":\"any\"},\"offset_hours\":\"2\",\"perform\":\"before\",\"option\":\"2\",\"offset_bidirectional_hours\":\"0\",\"at_hour\":\"9\",\"offset_before_hours\":\"-24\",\"before_at_hour\":\"18\"}'),
+(11, 'email', 'new_booking', 1, 'Notification to admin about new booking', 'New booking information', 'Hello.\r\n\r\nYou have a new booking.\r\n\r\nService: {service_name}\r\n\r\n{#if schedule_start_date}<strong>Schedule:</strong>{/if}\r\n{#if schedule_start_date}Schedule Start Date: {schedule_start_date}{/if}\r\n{#if schedule_end_date}Schedule End Date: {schedule_end_date}{/if}\r\n\r\n<strong>First Appointment:</strong>\r\nDate: {appointment_pickup_date}\r\nTime: {appointment_pickup_time}\r\n\r\n<strong>Client:</strong>\r\nClient name: {client_name}\r\nClient phone: {client_phone}\r\nClient email: {client_email}', 0, 1, 0, '', 0, 0, '{\"status\":\"approved\",\"services\":{\"any\":\"any\"},\"offset_hours\":\"2\",\"perform\":\"before\",\"option\":\"2\",\"offset_bidirectional_hours\":\"0\",\"at_hour\":\"9\",\"offset_before_hours\":\"-24\",\"before_at_hour\":\"18\"}'),
 (12, 'email', 'appointment_status_changed', 1, 'Notification to customer about no show appointment', 'Booking marked as no show', 'Dear {client_name}.\r\n\r\nYour booking of {service_name} on {appointment_pickup_date} at {appointment_pickup_time} has been marked as no show.\r\n\r\nThank you for choosing our company.\r\n\r\n{company_name}\r\n{company_phone}\r\n{company_website}', 1, 0, 0, '', 0, 0, '{\"status\":\"noshow\",\"services\":{\"any\":\"any\"},\"offset_hours\":\"2\",\"perform\":\"before\",\"option\":\"2\",\"offset_bidirectional_hours\":\"0\",\"at_hour\":\"9\",\"offset_before_hours\":\"-24\",\"before_at_hour\":\"18\"}'),
 (13, 'email', 'appointment_status_changed', 1, 'Notification to admin about no show appointment', 'Booking rejection', 'Hello.\r\n\r\nThe following booking has been marked as no show.\r\n\r\nService: {service_name}\r\nDate: {appointment_pickup_date}\r\nTime: {appointment_pickup_time}\r\nClient name: {client_name}\r\nClient phone: {client_phone}\r\nClient email: {client_email}', 0, 1, 0, '', 0, 0, '{\"status\":\"noshow\",\"services\":{\"any\":\"any\"},\"offset_hours\":\"2\",\"perform\":\"before\",\"option\":\"2\",\"offset_bidirectional_hours\":\"0\",\"at_hour\":\"9\",\"offset_before_hours\":\"-24\",\"before_at_hour\":\"18\"}'),
 (14, 'email', 'new_invoice', 1, 'Notification to customer about new invoice', 'Your weekly invoice', 'Dear {client_name}.\r\n\r\nBelow is your weekly invoice of week {start_date} - {end_date}.\r\n\r\nInvoice No: #{invoice_number}\r\n\r\nPlease pay this invoice before {due_date}.\r\n\r\nThank you for choosing our company.\r\n\r\n{company_name}\r\n{company_phone}\r\n{company_website}', 1, 0, 0, '', 0, 0, '{\"status\":\"any\",\"services\":{\"any\":\"any\"},\"offset_hours\":\"2\",\"perform\":\"before\",\"option\":\"2\",\"offset_bidirectional_hours\":\"0\",\"at_hour\":\"9\",\"offset_before_hours\":\"-24\",\"before_at_hour\":\"18\"}'),
-(15, 'email', 'new_invoice', 1, 'Notification to admin about new invoice', 'New invoice', 'Hello.\r\n\r\nInvoice of {client_name} for week {start_date} - {end_date}.\r\n\r\nInvoice No: #{invoice_number}\r\nClient name: {client_name}\r\nClient phone: {client_phone}\r\nClient email: {client_email}', 0, 1, 0, '', 0, 0, '{\"status\":\"approved\",\"services\":{\"any\":\"any\"},\"offset_hours\":\"2\",\"perform\":\"before\",\"option\":\"2\",\"offset_bidirectional_hours\":\"0\",\"at_hour\":\"9\",\"offset_before_hours\":\"-24\",\"before_at_hour\":\"18\"}');
+(15, 'email', 'new_invoice', 1, 'Notification to admin about new invoice', 'New invoice', 'Hello.\r\n\r\nInvoice of {client_name} for week {start_date} - {end_date}.\r\n\r\nInvoice No: #{invoice_number}\r\nClient name: {client_name}\r\nClient phone: {client_phone}\r\nClient email: {client_email}', 0, 1, 0, '', 0, 0, '{\"status\":\"approved\",\"services\":{\"any\":\"any\"},\"offset_hours\":\"2\",\"perform\":\"before\",\"option\":\"2\",\"offset_bidirectional_hours\":\"0\",\"at_hour\":\"9\",\"offset_before_hours\":\"-24\",\"before_at_hour\":\"18\"}'),
+(16, 'email', 'schedule_cancelled', 1, 'Notification to customer about schedule cancellation', 'Your schedule of appointments is cancelled', 'Dear {client_name}.\r\n\r\nThis is to inform you that your schedule no<strong> #{schedule_no}</strong> of patient <strong>{patient_name}</strong> starting from <strong>{schedule_start_date}</strong> ending <strong>{schedule_end_date}</strong> at <strong>{appointment_pickup_time}</strong> has been cancelled from <strong>{current_date_time}</strong> to all future rides.\r\n\r\nThank you for choosing our company.\r\n\r\n{company_name}\r\n{company_phone}\r\n{company_website}', 1, 0, 0, '', 0, 0, '{\"status\":\"any\",\"services\":{\"any\":\"any\"},\"offset_hours\":\"2\",\"perform\":\"before\",\"option\":\"2\",\"offset_bidirectional_hours\":\"0\",\"at_hour\":\"9\",\"offset_before_hours\":\"-24\",\"before_at_hour\":\"18\"}'),
+(17, 'email', 'schedule_cancelled', 1, 'Notification to admin about schedule cancellation', 'Schedule cancelled', 'Hello.\r\n\r\nThe following schedule no #{schedule_no} has been cancelled.\r\n\r\nService: {service_name}\r\n\r\nStart Date: {schedule_start_date}\r\nEnd Date: {schedule_end_date}\r\nTime: {appointment_pickup_time}\r\n\r\nCancelled from: {current_date_time}\r\nCancelled to: All future rides\r\n\r\nClient name: {client_name}\r\nClient phone: {client_phone}\r\nClient email: {client_email}', 0, 1, 0, '', 0, 0, '{\"status\":\"approved\",\"services\":{\"any\":\"any\"},\"offset_hours\":\"2\",\"perform\":\"before\",\"option\":\"2\",\"offset_bidirectional_hours\":\"0\",\"at_hour\":\"9\",\"offset_before_hours\":\"-24\",\"before_at_hour\":\"18\"}');
 
 -- --------------------------------------------------------
 
@@ -243,6 +235,7 @@ CREATE TABLE IF NOT EXISTS `wp_connectpx_booking_schedules` (
   `start_date` date DEFAULT NULL,
   `end_date` date DEFAULT NULL,
   `status` enum('pending','cancelled') COLLATE utf8mb4_unicode_520_ci NOT NULL DEFAULT 'pending',
+  `details` text COLLATE utf8mb4_unicode_520_ci,
   `created_at` datetime NOT NULL,
   `updated_at` datetime NOT NULL,
   PRIMARY KEY (`id`),
