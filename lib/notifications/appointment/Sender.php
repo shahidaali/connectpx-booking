@@ -50,7 +50,6 @@ abstract class Sender extends Base\Sender
      */
     protected static function notifyClient( array $notifications, Appointment $appointment, Codes $codes, &$queue = false )
     {
-        $codes->prepareForAppointment( $appointment, 'client' );
         $attachments = new Attachments( $codes );
 
         foreach ( $notifications as $notification ) {
@@ -80,7 +79,6 @@ abstract class Sender extends Base\Sender
         // Reply to customer.
         $reply_to = null;
 
-        $codes->prepareForAppointment( $appointment, 'staff' );
         $attachments = new Attachments( $codes );
         foreach ( $notifications as $notification ) {
             $send = $notification->matchesAppointmentForAdmin( $appointment, $appointment->getService() );

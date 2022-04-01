@@ -2,6 +2,7 @@
 namespace ConnectpxBooking\Lib\Entities;
 
 use ConnectpxBooking\Lib;
+use ConnectpxBooking\Lib\Utils\DateTime;
 use ConnectpxBooking\Backend;
 
 /**
@@ -24,18 +25,24 @@ class Schedule extends Lib\Base\Entity
     /** @var string */
     protected $status = self::STATUS_PENDING;
     /** @var string */
+    protected $details;
+    /** @var string */
     protected $created_at;
     /** @var string */
     protected $updated_at;
+    /** @var string */
+    protected $appointment;
 
     protected static $table = 'connectpx_booking_schedules';
 
     protected static $schema = array(
         'id'                       => array( 'format' => '%d' ),
         'customer_id'               => array( 'format' => '%d', 'reference' => array( 'entity' => 'Customer' ) ),
+        'service_id'               => array( 'format' => '%d', 'reference' => array( 'entity' => 'Service' ) ),
         'start_date'               => array( 'format' => '%s' ),
         'end_date'                 => array( 'format' => '%s' ),
         'status'          => array( 'format' => '%s' ),
+        'details'          => array( 'format' => '%s' ),
         'created_at'               => array( 'format' => '%s' ),
         'updated_at'               => array( 'format' => '%s' ),
     );
@@ -124,30 +131,9 @@ class Schedule extends Lib\Base\Entity
      *
      * @return int
      */
-    public function getService()
-    {
-        return Service::find( $this->getServiceId() );
-    }
-
-    /**
-     * Gets service_id
-     *
-     * @return int
-     */
     public function getServiceId()
     {
         return $this->service_id;
-    }
-
-    /**
-     * Sets service
-     *
-     * @param Service $service
-     * @return $this
-     */
-    public function setService( Service $service )
-    {
-        return $this->setServiceId( $service->getId() );
     }
 
     /**
@@ -161,6 +147,16 @@ class Schedule extends Lib\Base\Entity
         $this->service_id = $service_id;
 
         return $this;
+    }
+
+    /**
+     * Gets customer_id
+     *
+     * @return float
+     */
+    public function getService()
+    {
+        return Lib\Entities\Service::find( $this->service_id );
     }
 
     /**
@@ -233,6 +229,29 @@ class Schedule extends Lib\Base\Entity
     }
 
     /**
+     * Gets details
+     *
+     * @return string
+     */
+    public function getDetails()
+    {
+        return $this->details;
+    }
+
+    /**
+     * Sets details
+     *
+     * @param string $details
+     * @return $this
+     */
+    public function setDetails( $details )
+    {
+        $this->details = $details;
+
+        return $this;
+    }
+
+    /**
      * Gets created_at
      *
      * @return string
@@ -296,6 +315,90 @@ class Schedule extends Lib\Base\Entity
     }
 
     /**
+     * Get HTML for pickup information
+     *
+     * @return string
+     */
+    public function getScheduleInfo()
+    {
+        $appointment = $this->loadFirstAppointment();
+
+        $subService = $appointment->getSubService();
+
+        // Determine display time zone
+        $display_tz = Lib\Utils\Common::getCurrentUserTimeZone();
+        $wp_tz = Lib\Config::getWPTimeZone();
+
+        $pickupDatetime = $appointment->getPickupDateTime();
+        $returnDatetime = $appointment->getReturnPickupDatetime();
+
+        if ( $display_tz !== $wp_tz ) {
+            $pickupDatetime = DateTime::convertTimeZone( $pickupDatetime, $wp_tz, $display_tz );
+            $returnDatetime   = $returnDatetime ? DateTime::convertTimeZone( $returnDatetime, $wp_tz, $display_tz ) : null;
+        }
+
+        $items = [
+            [
+                'label' => __('Start Date', 'connectpx_booking'),
+                'value' => DateTime::formatDate( $this->getStartDate() ),
+            ],
+            [
+                'label' => __('End Date', 'connectpx_booking'),
+                'value' => DateTime::formatDate( $this->getEndDate() ),
+            ],
+            [
+                'label' => __('Pickup Time', 'connectpx_booking'),
+                'value' => DateTime::formatTime( $pickupDatetime ),
+            ],
+        ];
+
+        if( $subService->isRoundTrip() ) {
+            $items[] = [
+                'label' => __('Return Pickup Time', 'connectpx_booking'),
+                'value' => $returnDatetime ? DateTime::formatTime( $returnDatetime ) : __('Not sure', 'connectpx_booking'),
+            ];
+        }
+
+        return Lib\Utils\Common::formatedItemsList( $items );
+    }
+
+    /**
+     * @param string $reason
+     */
+    public function cancel( $reason = '', $notification = true )
+    {
+
+        $this->setStatus( self::STATUS_CANCELLED );
+
+        // Cancell all future pending appointments
+        $start_date = new \DateTime( $this->getStartDate() );
+        $rows = Lib\Entities\Appointment::query( 'a' )
+            ->select( 'a.*' )
+            ->where( 'a.schedule_id', $this->getId() )
+            ->whereIn( 'a.status', [
+                Lib\Entities\Appointment::STATUS_PENDING,
+                Lib\Entities\Appointment::STATUS_APPROVED,
+            ])
+            ->whereGt( 'a.pickup_datetime', $start_date->format( 'Y-m-d H:i:s' ) )
+            ->sortBy( 'a.pickup_datetime' )
+            ->order( 'ASC' )
+            ->fetchArray();
+
+        foreach ( $rows as $row ) {
+            $appointment = new Lib\Entities\Appointment();
+            $appointment->setFields( $row, true );
+            $appointment->cancel( $reason, false );
+            $appointment->refund();
+        }
+
+        // if( $notification ) {
+        //     Lib\Notifications\Schedule\Sender::send( $this, array( 'cancellation_reason' => $reason ) );
+        // }
+
+        return $this->save();
+    }
+
+    /**
      * Gets customer_id
      *
      * @return float
@@ -327,5 +430,25 @@ class Schedule extends Lib\Base\Entity
         }
 
         return $appointments;
+    }
+
+
+    /**
+     * Gets customer_id
+     *
+     * @return float
+     */
+    public function loadFirstAppointment()
+    {
+        if( ! $this->appointment ) {
+            $this->appointment = Lib\Entities\Appointment::query( 'a' )
+                ->select( 'a.*' )
+                ->where('a.schedule_id', $this->getId())
+                ->sortBy('a.id')
+                ->order('ASC')
+                ->findOne();
+        }
+
+        return $this->appointment;
     }
 }

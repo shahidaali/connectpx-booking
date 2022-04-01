@@ -396,6 +396,24 @@ class Invoice extends Lib\Base\Entity
      *
      * @return float
      */
+    public function getPendingAppointments()
+    {
+        return Lib\Entities\Appointment::query( 'a' )
+            ->select( 'a.*' )
+            ->where('a.customer_id', $this->getCustomerId())
+            ->whereGte('DATE(a.pickup_datetime)', $this->getStartDate())
+            ->whereLte('DATE(a.pickup_datetime)', $this->getEndDate())
+            ->whereIn('a.status', [Lib\Entities\Appointment::STATUS_PENDING, Lib\Entities\Appointment::STATUS_APPROVED])
+            ->sortBy('a.pickup_datetime')
+            ->order('ASC')
+            ->fetchArray();
+    }
+
+    /**
+     * Gets customer_id
+     *
+     * @return float
+     */
     public function getAppointments()
     {
         return Lib\Entities\InvoiceAppointment::query( 'ia' )

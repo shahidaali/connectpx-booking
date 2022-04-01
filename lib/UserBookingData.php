@@ -21,6 +21,8 @@ class UserBookingData
     // Step service
     /** @var int */
     protected $service_id;
+    /** @var int */
+    protected $wc_order_id;
     /** @var string */
     protected $sub_service_key;
     /** @var string Y-m-d */
@@ -444,6 +446,23 @@ class UserBookingData
             $customer->save();
         }
 
+        // Save schedule
+        if( $this->getRepeated() ) {
+            $repeatData = $this->getRepeatData();
+            $schedule = new Entities\Schedule();
+            $schedule
+                ->setServiceId( $this->getServiceId() )
+                ->setCustomerId( $customer->getId() )
+                ->setStartDate( $this->getDateFrom() )
+                ->setEndDate( $repeatData['until'] )
+                ->setStatus( Entities\Schedule::STATUS_PENDING )
+                ->setDetails( json_encode( $repeatData ) )
+                ->save();
+
+            $this->setScheduleId( $schedule->getId() );
+        }
+
+        // Save appointments
         return $this->cart->save( $wc_order, $this->getTimeZone(), $this->getTimeZoneOffset() );
     }
 
@@ -1020,6 +1039,72 @@ class UserBookingData
             'street_number'      => $this->getStreetNumber(),
             'additional_address' => $this->getAdditionalAddress(),
         );
+    }
+
+    /**
+     * Gets schedule_id
+     *
+     * @return array
+     */
+    public function getScheduleId()
+    {
+        return $this->schedule_id;
+    }
+
+    /**
+     * Sets schedule_id
+     *
+     * @param array $schedule_id
+     * @return $this
+     */
+    public function setScheduleId( $schedule_id )
+    {
+        $this->schedule_id = $schedule_id;
+
+        return $this;
+    }
+
+    /**
+     * Gets schedule_id
+     *
+     * @return array
+     */
+    public function getSchedule()
+    {
+        return Entities\Schedule::find( $this->schedule_id );
+    }
+
+    /**
+     * Gets wc_order_id
+     *
+     * @return array
+     */
+    public function getWcOrder()
+    {
+        return new \WC_Order( $this->wc_order_id );
+    }
+
+    /**
+     * Gets wc_order_id
+     *
+     * @return array
+     */
+    public function getWcOrderId()
+    {
+        return $this->wc_order_id;
+    }
+
+    /**
+     * Sets wc_order_id
+     *
+     * @param array $wc_order_id
+     * @return $this
+     */
+    public function setWcOrderId( $wc_order_id )
+    {
+        $this->wc_order_id = $wc_order_id;
+
+        return $this;
     }
 
     /**
@@ -1645,7 +1730,6 @@ class UserBookingData
     public function getPickupDetail()
     {
         return [
-            'patient_name' => $this->getPickupPatientName(),
             'room_no' => $this->getPickupRoomNo(),
             'contact_person' => $this->getPickupContactPerson(),
             'contact_no' => $this->getPickupContactNo(),

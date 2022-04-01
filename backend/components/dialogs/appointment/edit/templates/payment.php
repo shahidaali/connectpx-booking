@@ -15,6 +15,28 @@ $lineItems = $subService->paymentLineItems(
 	$payment_adjustments
 );
 ?>
+
+<?php if( in_array( $appointment->getPaymentStatus(), [
+      Appointment::PAYMENT_COMPLETED,
+      Appointment::PAYMENT_REFUNDED
+   ])): 
+?>
+   <div class="ml-auto">
+      <strong class="text-muted"><?php echo __('Status:', 'connectpx_booking') ?> <?php echo __(Appointment::paymentStatusToString($appointment->getPaymentStatus()), 'connectpx_booking'); ?></strong>
+   </div>
+<?php elseif(Common::isCurrentUserAdmin()): ?>
+<div class="ml-auto">
+   <div class="dropdown d-inline-block">
+      <button type="button" class="btn btn-default px-2 py-1 dropdown-toggle appointment-update-payment-status-toggle" data-toggle="dropdown" data-original-title="" title=""><span class="<?php echo Appointment::paymentStatusToIcon( $appointment->getPaymentStatus() ) ?>"></span></button> 
+      <div class="dropdown-menu">
+         <?php foreach ( $payment_statuses as $key => $status ) { ?>
+            <a href="#" class="dropdown-item pl-3 appointment-update-payment-status" data-status="<?php echo $status['id']; ?>"><span class="fa-fw mr-2 <?php echo $status['icon']; ?>"></span><?php echo $status['title']; ?> </a>
+         <?php } ?>
+         </div>
+   </div>
+</div>
+<?php endif; ?>
+
 <div class="form-group">
 	<h6 class="mb-3 mt-3"><?php echo __('Service', 'connectpx_booking'); ?></h6>
 	<div  class="connectpx_booking-service-info"><?php echo $service_info; ?></div>
@@ -46,19 +68,6 @@ $lineItems = $subService->paymentLineItems(
 				<div class="list-item"><strong><?php echo __('Payment Status:', 'connectpx_booking'); ?></strong> <span><?php echo Appointment::paymentStatusToString($appointment->getPaymentStatus()); ?></span></div>
 			</div>
          </div>
-
-         <?php if(Common::isCurrentUserAdmin()): ?>
-         <div class="ml-auto">
-            <div class="dropdown d-inline-block">
-               <button type="button" class="btn btn-default px-2 py-1 dropdown-toggle appointment-update-payment-status-toggle" data-toggle="dropdown" data-original-title="" title=""><span class="<?php echo Appointment::paymentStatusToIcon( $appointment->getPaymentStatus() ) ?>"></span></button> 
-               <div class="dropdown-menu">
-               	<?php foreach ( $payment_statuses as $key => $status ) { ?>
-               		<a href="#" class="dropdown-item pl-3 appointment-update-payment-status" data-status="<?php echo $status['id']; ?>"><span class="fa-fw mr-2 <?php echo $status['icon']; ?>"></span><?php echo $status['title']; ?> </a>
-               	<?php } ?>
-               	</div>
-            </div>
-         </div>
-         <?php endif; ?>
 
       </li>
    </ul>
@@ -125,8 +134,9 @@ $lineItems = $subService->paymentLineItems(
             <th><?php echo __('Due', 'connectpx_booking') ?></th>
             <th class="text-right"><?php echo in_array($appointment->getStatus(), [Appointment::STATUS_CANCELLED, Appointment::STATUS_REJECTED]) ? Price::format( 0 ) :  Price::format( $lineItems['totals'] - $appointment->getPaidAmount() ); ?></th>
          </tr>
-
-         <?php if(Common::isCurrentUserAdmin()): ?>
+         <?php if( ! in_array( $appointment->getPaymentStatus(), [
+            Appointment::PAYMENT_REFUNDED
+         ]) && Common::isCurrentUserAdmin() ): ?>
          <tr class="payment-adjustment-buttons-row">
             <th style="border-left-color: rgb(255, 255, 255); border-bottom-color: rgb(255, 255, 255);"></th>
             <th class="text-right"><button class="btn btn-default payment-adjustment-button"><?php echo __('Manual adjustment', 'connectpx_booking') ?></button> </th>

@@ -61,7 +61,7 @@ class Ajax extends Lib\Base\Ajax
         }
 
         if ( $search_query ) {
-            $query->whereLike( 'a.pickup_detail', '%' . $search_query .'%' );
+            $query->whereLike( 'a.patient_name', '%' . $search_query .'%' );
         }
 
         foreach ( $order as $sort_by ) {
@@ -90,7 +90,7 @@ class Ajax extends Lib\Base\Ajax
                 'raw_start_date' => $row['pickup_datetime'],
                 'pickup_datetime' => ( ( in_array( 'timezone', $appointment_columns ) && $timezone = Lib\Utils\Common::getCustomerTimezone( $row['time_zone'], $row['time_zone_offset'] ) ) ? sprintf( '%s<br/>(%s)', Lib\Utils\DateTime::formatDateTime( $row['pickup_datetime'] ), $timezone ) : Lib\Utils\DateTime::formatDateTime( $row['pickup_datetime'] ) ),
                 'service_title' => $service_title,
-                'patient' => $pickupInfo['patient_name'] ?? 'N/A',
+                'patient' => $appointment->getPatientName(),
                 'destination' => $destinationInfo['address']['address'] ?? 'N/A',
                 'status' => Lib\Entities\Appointment::statusToString( $row['status'] ),
                 'total_amount' => $total_amount,

@@ -2,6 +2,7 @@
 namespace ConnectpxBooking\Lib;
 
 use ConnectpxBooking\Lib;
+use ConnectpxBooking\Lib\Entities\Schedule;
 use ConnectpxBooking\Lib\Entities\Appointment;
 
 /**
@@ -184,6 +185,7 @@ class Cart
             $appointment
                 ->setServiceId( $service->getId() )
                 ->setWcOrderId( $wc_order->get_id() )
+                ->setScheduleId( $this->userData->getScheduleId() )
                 ->setSubServiceKey( $subServiceKey )
                 ->setSubServiceData( json_encode( $subService->getData() ) )
                 ->setPickupDateTime( $date . " " . $pickupTime )
@@ -192,6 +194,7 @@ class Cart
                 ->setDistance( $this->userData->getDistanceInMiles() )
                 ->setEstimatedTime( $this->userData->getRouteTime() )
                 ->setIsAfterHours( $isOffTimeService )
+                ->setPatientName( $this->userData->getPickupPatientName() )
                 ->setPickupDetail( json_encode( $pickupDetail ) )
                 ->setDestinationDetail( json_encode( $destinationDetail ) )
                 ->setTimeZone( $time_zone )

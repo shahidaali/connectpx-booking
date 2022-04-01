@@ -303,11 +303,6 @@ class MyAccountPages extends Lib\Base\Ajax
 
             // Prepare URL for AJAX requests.
             $ajax_url = admin_url( 'admin-ajax.php' );
-
-            // Support WPML.
-            if ( $sitepress instanceof \SitePress ) {
-                $ajax_url = add_query_arg( array( 'lang' => $sitepress->get_current_language() ), $ajax_url );
-            }
             
             wp_enqueue_script('connectpx_booking_customer_bookings');
             wp_enqueue_style('connectpx_booking_customer_bookings');
@@ -362,11 +357,6 @@ class MyAccountPages extends Lib\Base\Ajax
 
             // Prepare URL for AJAX requests.
             $ajax_url = admin_url( 'admin-ajax.php' );
-
-            // Support WPML.
-            if ( $sitepress instanceof \SitePress ) {
-                $ajax_url = add_query_arg( array( 'lang' => $sitepress->get_current_language() ), $ajax_url );
-            }
             
             wp_enqueue_script('connectpx_booking_customer_invoices');
             wp_enqueue_style('connectpx_booking_customer_invoices');
@@ -387,11 +377,6 @@ class MyAccountPages extends Lib\Base\Ajax
         if (is_user_logged_in() && is_account_page() && isset($wp->query_vars['customer-account'])) {
             // Prepare URL for AJAX requests.
             $ajax_url = admin_url( 'admin-ajax.php' );
-
-            // Support WPML.
-            if ( $sitepress instanceof \SitePress ) {
-                $ajax_url = add_query_arg( array( 'lang' => $sitepress->get_current_language() ), $ajax_url );
-            }
             
             wp_enqueue_script('connectpx_booking_customer_account');
             wp_enqueue_style('connectpx_booking_customer_account');

@@ -594,7 +594,7 @@ abstract class Common {
         $items = [
             [
                 'label' => __('Patient Name', 'connectpx_booking'),
-                'value' => $info['patient_name'],
+                'value' => $info['patient_name'] ?? 'N/A',
             ],
             [
                 'label' => __('Room No', 'connectpx_booking'),

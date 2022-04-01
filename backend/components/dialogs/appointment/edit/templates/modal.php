@@ -7,7 +7,7 @@ use ConnectpxBooking\Lib\Utils\Common;
    <div class="modal-dialog modal-lg">
       <div class="modal-content">
          <div class="modal-header">
-            <h5 class="modal-title"><?php echo __(sprintf('Appointment #%d', $appointment->getId()), 'connectpx_booking'); ?></h5>
+            <h5 class="modal-title"><?php echo __(sprintf('Appointment #%d (%s)', $appointment->getId(), Appointment::statusToString($appointment->getStatus())), 'connectpx_booking'); ?></h5>
             <button type="button" class="close" data-dismiss="connectpx_booking-modal" aria-label="Close"><span aria-hidden="true">×</span></button>
          </div>
          <div class="modal-body">
@@ -35,8 +35,17 @@ use ConnectpxBooking\Lib\Utils\Common;
 			               <ul class="list-unstyled pl-0 connectpx_booking-hide-empty mr-3">
 			                  <li class="row mb-1">
 			                     <div class="col mt-1"><a title="<?php echo esc_attr('Edit booking details', 'connectpx_booking'); ?>" href=""><span id="connectpx_booking_customer-name"></span></a></div>
-
-			                     <?php if(Common::isCurrentUserAdmin()): ?>
+			                     <?php 
+			                     if( in_array( $appointment->getStatus(), [
+				                     	Appointment::STATUS_CANCELLED, 
+				                     	Appointment::STATUS_REJECTED, 
+				                     	Appointment::STATUS_NOSHOW, 
+				                     	Appointment::STATUS_DONE
+			                     ])): ?>
+			                     	<div class="ml-auto">
+				                        <strong class="text-muted"><?php echo __('Status:', 'connectpx_booking') ?> <?php echo __(Appointment::statusToString($appointment->getStatus()), 'connectpx_booking'); ?></strong>
+				                     </div>
+			                     <?php elseif(Common::isCurrentUserAdmin()): ?>
 				                     <div class="ml-auto">
 				                        <div class="dropdown d-inline-block">
 				                           <button type="button" class="btn btn-default px-2 py-1 dropdown-toggle appointment-update-status-toggle" data-toggle="dropdown" data-original-title="" title=""><span class="<?php echo Appointment::statusToIcon( $appointment->getStatus() ) ?>"></span></button> 

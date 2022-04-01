@@ -221,12 +221,14 @@ class WooCommerce extends MyAccountPages
                 }
                 $data['street_number'] = '';
                 $userData->fillData( $data );
+                $userData->setWcOrderId( $order_id );
                 $userData->cart->setItemsData( $data['items'] );
                 $appointment_ids = $userData->save( $wc_order );
 
                 // Mark item as processed.
                 $data['processed'] = true;
                 $data['appointment_ids'] = $appointment_ids;
+                $data['schedule_id'] = $userData->getScheduleId();
 
                 wc_update_order_item_meta( $item_id, 'connectpx_booking', $data );
                 Lib\Notifications\Cart\Sender::send( $wc_order );
@@ -295,6 +297,7 @@ class WooCommerce extends MyAccountPages
                 $userData->fillData( $wc_item['connectpx_booking'] );
                 $userData->cart->setItemsData( $wc_item['connectpx_booking']['items'] );
                 $cart_info = $userData->cart->getInfo();
+
                 /** @var \WC_Product $product */
                 $product   = $wc_item['data'];
                 $product->set_price( $cart_info->getPayNow() );
@@ -386,7 +389,7 @@ class WooCommerce extends MyAccountPages
 
             $other_data[] = array(
                 'name' => sprintf("<b>%s (%d):</b>", Lib\Utils\Common::getOption('wc_cart_item_title', 'Bookings'), $count),
-                'value' => implode( PHP_EOL, $info ),
+                'value' => implode( PHP_EOL . PHP_EOL, $info ),
             );
         }
 

@@ -24,7 +24,7 @@ class Notifications extends Lib\Base\Component {
      */
     public static function render()
     {
-        // $wc_order = new \WC_Order( 610 );
+        // $wc_order = new \WC_Order( 678 );
         // Lib\Notifications\Cart\Sender::send( $wc_order );
         // return;
         

@@ -59,7 +59,7 @@ class Codes extends Base\Codes
      * @param Appointment $appointment
      * @param string $recipient  "client" or "staff"
      */
-    public function prepareForAppointment( Appointment $appointment, $recipient )
+    public function __construct( Appointment $appointment, $recipient = null )
     {
         $lang = WPML::getLang();
         $time_prior_cancel = Config::getMinimumTimePriorCancel();
@@ -106,7 +106,7 @@ class Codes extends Base\Codes
             : null;
         $this->status = Appointment::statusToString( $appointment->getStatus() );;
         $this->sub_service_name = $subService->getTitle();
-        $this->appointment_patient = $pickup_details['patient_name'] ?? 'N/A';
+        $this->appointment_patient = $appointment->getPatientName();
         $this->appointment_clinic = $destination_details['hospital'] ?? 'N/A';
         $this->appointment_address = $destination_details['address']['address'] ?? 'N/A';
         $this->appointment_city_state = sprintf("%s, %s", $destination_details['address']['city'], $destination_details['address']['state']);

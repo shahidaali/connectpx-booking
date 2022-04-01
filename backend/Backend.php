@@ -28,6 +28,7 @@ class Backend {
 		Ajax::init();
 
 		Components\Dialogs\Appointment\Edit\Ajax::init();
+		Components\Dialogs\Schedule\Edit\Ajax::init();
 		Components\Dialogs\Invoice\Edit\Ajax::init();
 		Components\Dialogs\Invoice\View\Ajax::init();
 		Components\Dialogs\Notifications\Ajax::init();
@@ -119,6 +120,20 @@ class Backend {
 		wp_register_script( 
 			'connectpx_booking_appointments', 
 			$admin_resources . 'modules/resources/js/appointments.js', 
+			array( 
+				'jquery', 
+				'connectpx_booking_global',
+				'connectpx_booking_datatables', 
+				'connectpx_booking_moment', 
+				'connectpx_booking_daterangepicker',
+				'connectpx_booking_select2' 
+			), 
+			Plugin::version(), 
+			false 
+		);
+		wp_register_script( 
+			'connectpx_booking_schedules', 
+			$admin_resources . 'modules/resources/js/schedules.js', 
 			array( 
 				'jquery', 
 				'connectpx_booking_global',
@@ -319,6 +334,7 @@ class Backend {
         $services = __( 'Services', 'connectpx_booking' );
         $customers = __( 'Customers', 'connectpx_booking' );
         $appointments = __( 'Appointments', 'connectpx_booking' );
+        $schedules = __( 'Schedules', 'connectpx_booking' );
         $calendar = __( 'Calendar', 'connectpx_booking' );
         $invoices = __( 'Invoices', 'connectpx_booking' );
         $notifications = __( 'Notifications', 'connectpx_booking' );
@@ -344,6 +360,11 @@ class Backend {
 		add_submenu_page( $slug, $appointments, $appointments, 'manage_options', Modules\Appointments::pageSlug(),
 			function() {
 				Modules\Appointments::render();
+			}
+		);
+		add_submenu_page( $slug, $schedules, $schedules, 'manage_options', Modules\Schedules::pageSlug(),
+			function() {
+				Modules\Schedules::render();
 			}
 		);
 		add_submenu_page( $slug, $calendar, $calendar, 'manage_options', Modules\Calendar::pageSlug(),

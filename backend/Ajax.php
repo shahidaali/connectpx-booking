@@ -44,6 +44,31 @@ class Ajax extends Lib\Base\Ajax
     /**
      * Get list of appointments.
      */
+    public static function getSchedules()
+    {
+        $columns = self::parameter( 'columns' );
+        $order   = self::parameter( 'order', array() );
+        $filter  = self::parameter( 'filter' );
+        $limits  = array(
+            'length' => self::parameter( 'length' ),
+            'start'  => self::parameter( 'start' ),
+        );
+
+        $data = self::getSchedulesTableData( $filter, $limits, $columns, $order );
+
+        unset( $filter['date'] );
+
+        wp_send_json( array(
+            'draw'            => ( int ) self::parameter( 'draw' ),
+            'recordsTotal'    => $data['total'],
+            'recordsFiltered' => $data['filtered'],
+            'data'            => $data['data'],
+        ) );
+    }
+
+    /**
+     * Get list of appointments.
+     */
     public static function getInvoices()
     {
         $columns = self::parameter( 'columns' );
@@ -130,7 +155,7 @@ class Ajax extends Lib\Base\Ajax
         }
 
         if ( $filter['search_query'] && $filter['search_query'] != '' ) {
-            $query->whereLike( 'a.pickup_detail', '%' . $filter['search_query'] .'%' );
+            $query->whereLike( 'a.patient_name', '%' . $filter['search_query'] .'%' );
         }
 
         foreach ( $order as $sort_by ) {
@@ -176,7 +201,7 @@ class Ajax extends Lib\Base\Ajax
 
             $appointment_detail = sprintf(
                 '%s <br> <b>P/u:</b> %s <br> <b>Going:</b> %s',
-                $pickupInfo['patient_name'] ?? 'N/A',
+                $appointment->getPatientName(),
                 $pickupInfo['address']['address'] ?? 'N/A',
                 $destinationInfo['address']['address'] ?? 'N/A',
             );
@@ -230,10 +255,162 @@ class Ajax extends Lib\Base\Ajax
      * @param array $order
      * @return array
      */
+    public static function getSchedulesTableData( $filter = array(), $limits = array(), $columns = array(), $order = array() )
+    {
+        $query = Lib\Entities\Schedule::query( 'sc' )
+            ->select( 'sc.*,
+                COUNT(a.id) as total_appointments,
+                SUM( 
+                    CASE 
+                        WHEN a.status = "'. Lib\Entities\Appointment::STATUS_PENDING .'" 
+                    THEN 1 
+                        ELSE 0 
+                    END 
+                ) as pending_appointments,
+                SUM( 
+                    CASE 
+                        WHEN a.status = "'. Lib\Entities\Appointment::STATUS_APPROVED .'" 
+                    THEN 1 
+                        ELSE 0 
+                    END 
+                ) as approved_appointments,
+                SUM( 
+                    CASE 
+                        WHEN a.status = "'. Lib\Entities\Appointment::STATUS_CANCELLED .'" 
+                    THEN 1 
+                        ELSE 0 
+                    END 
+                ) as cancelled_appointments,
+                sc.created_at AS created_date,
+                CONCAT(c.first_name, " ", c.last_name)  AS customer_full_name,
+                c.first_name AS first_name,
+                c.phone      AS customer_phone,
+                c.email      AS customer_email,
+                c.country    AS customer_country,
+                c.state      AS customer_state,
+                c.postcode   AS customer_postcode,
+                c.city       AS customer_city,
+                c.street     AS customer_street,
+                c.street_number AS customer_street_number,
+                c.additional_address AS customer_additional_address,
+                c.wp_user_id AS wp_user_id,
+                s.title      AS service_title' 
+            )
+            ->innerJoin( 'Appointment', 'a', 'a.schedule_id = sc.id' )
+            ->leftJoin( 'Service', 's', 's.id = sc.service_id' )
+            ->leftJoin( 'Customer', 'c', 'c.id = sc.customer_id' )
+            ->groupBy( 'sc.id' );
+
+        $total = $query->count();
+
+        if ( $filter['id'] != '' ) {
+            $query->where( 'sc.id', $filter['id'] );
+        }
+
+        if ( $filter['date'] == 'any' ) {
+            $query->whereNot( 'sc.start_date', null );
+        } elseif ( $filter['date'] == 'null' ) {
+            $query->where( 'sc.start_date', null );
+        } else {
+            list ( $start, $end ) = explode( ' - ', $filter['date'], 2 );
+            $end = date( 'Y-m-d', strtotime( $end ) + DAY_IN_SECONDS );
+            $query->whereBetween( 'sc.start_date', $start, $end );
+        }
+
+        if ( $filter['created_date'] != 'any' ) {
+            list ( $start, $end ) = explode( ' - ', $filter['created_date'], 2 );
+            $end = date( 'Y-m-d', strtotime( $end ) + DAY_IN_SECONDS );
+            $query->whereBetween( 'sc.created_at', $start, $end );
+        }
+
+        if ( $filter['customer'] != '' ) {
+            $query->where( 'sc.customer_id', $filter['customer'] );
+        }
+
+        if ( $filter['service'] != '' ) {
+            $query->where( 'sc.service_id', $filter['service'] ?: null );
+        }
+
+        if ( $filter['status'] != '' ) {
+            $query->where( 'sc.status', $filter['status'] );
+        }
+
+        if ( $filter['search_query'] && $filter['search_query'] != '' ) {
+            $query->whereLike( 'a.patient_name', '%' . $filter['search_query'] .'%' );
+        }
+
+        foreach ( $order as $sort_by ) {
+            $query->sortBy( str_replace( '.', '_', $columns[ $sort_by['column'] ]['data'] ) )
+                ->order( $sort_by['dir'] == 'desc' ? Lib\Query::ORDER_DESCENDING : Lib\Query::ORDER_ASCENDING );
+        }
+
+        $filtered = $query->count();
+
+        if ( ! empty( $limits ) ) {
+            $query->limit( $limits['length'] )->offset( $limits['start'] );
+        }
+
+        $data = array();
+        foreach ( $query->fetchArray() as $row ) {
+            $schedule = new Lib\Entities\Schedule($row);
+            $appointment = $schedule->loadFirstAppointment();
+            $pickupInfo = $appointment->getPickupDetail() ? json_decode( $appointment->getPickupDetail(), true ) : [];
+            $destinationInfo = $appointment->getDestinationDetail() ? json_decode( $appointment->getDestinationDetail(), true ) : [];
+
+            $schedule_detail = sprintf(
+                '%s <br> <b>P/u:</b> %s <br> <b>Going:</b> %s',
+                $appointment->getPatientName(),
+                $pickupInfo['address']['address'] ?? 'N/A',
+                $destinationInfo['address']['address'] ?? 'N/A',
+            );
+
+            $customer_detail = sprintf(
+                ' %s <br><span %s>%s</span>',
+                $row['customer_full_name'],
+                //$row['customer_email'],
+                $row['wp_user_id'] ? 'class="text-success"' : 'class="text-danger"',
+                $row['wp_user_id'] ? 'Contract' : 'Private',
+            );
+
+            $total_appointments = sprintf(
+                ' <span class="text-info">Total: %d</span> <br><span class="text-muted">Pending: %d</span> <br> <span class="text-success">Approved: %d</span><br> <span class="text-danger">Cancelled: %d</span>',
+                $row['total_appointments'],
+                $row['pending_appointments'],
+                $row['approved_appointments'],
+                $row['cancelled_appointments'],
+            );
+
+            $data[] = array(
+                'id'                => $row['id'],
+                'start_date'        => Lib\Utils\DateTime::formatDate( $row['start_date'], 'm/d/Y' ),
+                'end_date'        => Lib\Utils\DateTime::formatDate( $row['end_date'], 'm/d/Y' ),
+                'time'        => Lib\Utils\DateTime::formatTime( $appointment->getPickupDatetime() ),
+                'service'           => array(
+                    'title'    => $row['service_title'],
+                ),
+                'schedule_detail'           => $schedule_detail,
+                'customer_detail'           => $customer_detail,
+                'total_appointments'           => $total_appointments,
+                'status'            => Lib\Entities\Schedule::statusToString( $schedule->getStatus() ),
+                'created_date'      => Lib\Utils\DateTime::formatDateTime( $row['created_date'] ),
+            );
+        }
+
+        return compact( 'data', 'total', 'filtered' );
+    }
+
+    /**
+     * @param array $filter
+     * @param array $limits
+     * @param array $columns
+     * @param array $order
+     * @return array
+     */
     public static function getInvoicesTableData( $filter = array(), $limits = array(), $columns = array(), $order = array() )
     {
         $query = Lib\Entities\Invoice::query( 'i' )
             ->select( 'i.id,
+                COUNT(a.id) as pending_appointments,
                 i.status,
                 i.created_at AS created_date,
                 i.start_date,
@@ -246,7 +423,10 @@ class Ajax extends Lib\Base\Ajax
                 c.email as customer_email,
                 c.wp_user_id AS wp_user_id
             ')
-            ->leftJoin( 'Customer', 'c', 'c.id = i.customer_id' );
+            ->leftJoin( 'Appointment', 'a', '(DATE(a.pickup_datetime) >= i.start_date AND DATE(a.pickup_datetime) <= i.end_date) AND (a.status = "'.Lib\Entities\Appointment::STATUS_PENDING.'" OR a.status = "'.Lib\Entities\Appointment::STATUS_APPROVED.'") AND (a.customer_id = i.customer_id)' )
+            ->leftJoin( 'Customer', 'c', 'c.id = i.customer_id' )
+            ->groupBy( 'i.id' )
+            ->sortBy( 'i.start_date' );
 
         $total = $query->count();
 
@@ -311,6 +491,7 @@ class Ajax extends Lib\Base\Ajax
                 'due_amount'           => Lib\Utils\Price::format( $row['total_amount'] - $row['paid_amount'] ),
                 'payment'           => $payment_title,
                 'payment_raw_title' => $payment_raw_title,
+                'appointments_count' => $row['pending_appointments'],
                 'created_date'      => Lib\Utils\DateTime::formatDate( $row['created_date'], 'm/d/Y' ),
             );
         }
@@ -596,7 +777,7 @@ class Ajax extends Lib\Base\Ajax
             $codes['client_name'] = $row['client_name'];
             $codes['client_email'] = $row['client_email'];
             $codes['client_phone'] = $row['client_phone'];
-            $codes['patient_name'] = $pickupInfo['patient_name'] ?? 'N/A';
+            $codes['patient_name'] = $appointment->getPatientName();
             $codes['pickup_address'] = $pickupInfo['address']['address'] ?? 'N/A';
             $codes['destination_address'] = $destinationInfo['address']['address'] ?? 'N/A';
 

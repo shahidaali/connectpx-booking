@@ -1,6 +1,9 @@
 /**
  * ConnectpxBooking plugin WordPress admin area customization
  */
+#connectpx_booking_tbs {
+    font-size: 13px;
+}
   .os-tabs {
     margin-top: 15px;
   }

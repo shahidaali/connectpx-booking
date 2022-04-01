@@ -5,9 +5,12 @@ use ConnectpxBooking\Lib\Config;
 use ConnectpxBooking\Lib\Entities;
 use ConnectpxBooking\Lib\Entities\Customer;
 use ConnectpxBooking\Lib\Notifications\Assets\Base;
+use ConnectpxBooking\Lib\UserBookingData;
 use ConnectpxBooking\Lib\Utils;
 use ConnectpxBooking\Lib\Base\Component;
 use ConnectpxBooking\Lib\Notifications\Assets\Customer\Codes as CustomerCodes;
+use ConnectpxBooking\Lib\Notifications\Assets\Appointment\Codes as AppointmentCodes;
+use ConnectpxBooking\Lib\Notifications\Assets\Schedule\Codes as ScheduleCodes;
 
 /**
  * Class Codes
@@ -25,6 +28,8 @@ class Codes extends Base\Codes
     public $service_description;
     public $service_name;
 
+    /** @var Schedule */
+    protected $schedule;
     /** @var Appointment */
     protected $appointment;
     /** @var Appointment */
@@ -37,9 +42,10 @@ class Codes extends Base\Codes
      *
      * @param Order $order
      */
-    public function __construct( array $appointments, Customer $customer )
+    public function __construct( $schedule, array $appointments, Customer $customer )
     {
         $first_appointment = $appointments[0];
+        $this->schedule = $schedule;
         $this->appointment = $first_appointment;
         $this->appointments = $appointments;
         $this->customer = $customer;
@@ -80,7 +86,12 @@ class Codes extends Base\Codes
     protected function getReplaceCodes( $format )
     {
         $replace_codes = parent::getReplaceCodes( $format );
-        $replace_codes += (new CustomerCodes($this->customer))->getReplaceCodes( $format );
+        // $replace_codes += (new CustomerCodes($this->customer))->getReplaceCodes( $format );
+        $replace_codes += (new AppointmentCodes($this->appointment))->getReplaceCodes( $format );
+
+        if( $this->schedule ) {
+            $replace_codes += (new ScheduleCodes($this->schedule))->getReplaceCodes( $format );
+        }
 
         // Add replace codes.
         $replace_codes += array(

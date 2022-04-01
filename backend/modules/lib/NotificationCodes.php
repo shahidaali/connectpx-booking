@@ -49,6 +49,11 @@ class NotificationCodes
             'cart' => array(
                 'appointments_table' => array( 'description' => __( 'Detail of booked appointments', 'connectpx_booking' )),
             ),
+            'schedule' => array(
+                'schedule_start_date' => array( 'description' => __( 'Schedule start date.' )),
+                'schedule_end_date' => array( 'description' => __( 'Schedule end date.' )),
+                'schedule_status' => array( 'description' => __( 'Schedule end date.' )),
+            ),
             'company' => array(
                 'company_address' => array( 'description' => __( 'Address of company', 'connectpx_booking' ), 'if' => true ),
                 'company_name' => array( 'description' => __( 'Name of company', 'connectpx_booking' ), 'if' => true ),
@@ -184,6 +189,8 @@ class NotificationCodes
                 break;
             case Notification::TYPE_NEW_BOOKING:
                 $codes = array_merge(
+                    $this->codes['appointment'],
+                    $this->codes['schedule'],
                     $this->codes['company'],
                     $this->codes['cart'],
                     $this->codes['customer_timezone'],

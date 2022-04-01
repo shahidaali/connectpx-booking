@@ -58,6 +58,8 @@ class Appointment extends Lib\Base\Entity
     /** @var string */
     protected $time_zone_offset;
     /** @var string */
+    protected $patient_name;
+    /** @var string */
     protected $pickup_detail;
     /** @var string */
     protected $pickup_address;
@@ -106,6 +108,7 @@ class Appointment extends Lib\Base\Entity
         'is_after_hours'  => array( 'format' => '%s' ),
         'time_zone'  => array( 'format' => '%s' ),
         'time_zone_offset'        => array( 'format' => '%s' ),
+        'patient_name'        => array( 'format' => '%s' ),
         'pickup_detail'        => array( 'format' => '%s' ),
         'destination_detail'        => array( 'format' => '%s' ),
         'status'      => array( 'format' => '%s' ),
@@ -216,25 +219,29 @@ class Appointment extends Lib\Base\Entity
     /**
      * @param string $reason
      */
-    public function cancel( $reason = '' )
+    public function cancel( $reason = '', $notification = true )
     {
         $this->setStatus( self::STATUS_CANCELLED );
         $this->setCancellationReason( $reason );
         $this->save();
 
-        Lib\Notifications\Appointment\Sender::send( $this, array( 'cancellation_reason' => $reason ) );
+        if( $notification ) {
+            Lib\Notifications\Appointment\Sender::send( $this, array( 'cancellation_reason' => $reason ) );
+        }
     }
 
     /**
      * @param string $reason
      */
-    public function noshow( $reason = '' )
+    public function noshow( $reason = '', $notification = true )
     {
         $this->setStatus( self::STATUS_NOSHOW );
         $this->setCancellationReason( $reason );
         $this->save();
 
-        Lib\Notifications\Appointment\Sender::send( $this, array( 'cancellation_reason' => $reason ) );
+        if( $notification ) {
+            Lib\Notifications\Appointment\Sender::send( $this, array( 'cancellation_reason' => $reason ) );
+        }
     }
 
     /**
@@ -257,7 +264,7 @@ class Appointment extends Lib\Base\Entity
     /**
      * @param string $reason
      */
-    public function refund( $reason = '' )
+    public function refund()
     {
         if( ! $this->isRefundAble() ) {
             return false;
@@ -751,6 +758,29 @@ class Appointment extends Lib\Base\Entity
     }
 
     /**
+     * Gets patient_name
+     *
+     * @return string
+     */
+    public function getPatientName()
+    {
+        return $this->patient_name;
+    }
+
+    /**
+     * Sets patient_name
+     *
+     * @param string $patient_name
+     * @return $this
+     */
+    public function setPatientName( $patient_name )
+    {
+        $this->patient_name = $patient_name;
+
+        return $this;
+    }
+
+    /**
      * Gets pickup_detail
      *
      * @return string
@@ -1099,7 +1129,7 @@ class Appointment extends Lib\Base\Entity
      *
      * @return string
      */
-    public function getScheduleInfo()
+    public function getScheduleDetail()
     {
         $subService = $this->getSubService();
 
@@ -1129,7 +1159,17 @@ class Appointment extends Lib\Base\Entity
             ];
         }
 
-        return Lib\Utils\Common::formatedItemsList( $items );
+        return $items;
+    }
+
+    /**
+     * Get HTML for pickup information
+     *
+     * @return string
+     */
+    public function getScheduleInfo()
+    {
+        return Lib\Utils\Common::formatedItemsList( $this->getScheduleDetail() );
     }
 
     /**
@@ -1140,6 +1180,7 @@ class Appointment extends Lib\Base\Entity
     public function getPickupInfo()
     {
         $info = json_decode( $this->getPickupDetail(), true );
+        $info['patient_name'] = $this->getPatientName();
         return $info ? Lib\Utils\Common::formatedPickupInfo( $info ) : null;
     }
 
@@ -1441,7 +1482,7 @@ class Appointment extends Lib\Base\Entity
 
         $data['id'] = $this->getId();
         $data['date'] = Lib\Utils\DateTime::formatDate($this->getPickupDateTime(), 'm/d/Y');
-        $data['patient'] = $pickup_details['patient_name'] ?? 'N/A';
+        $data['patient'] = $this->getPatientName();
         $data['pickup_time'] = Lib\Utils\DateTime::formatTime($this->getPickupDateTime());
         $data['clinic'] = $destination_details['hospital'] ?? 'N/A';
         $data['address'] = $destination_details['address']['address'] ?? 'N/A';

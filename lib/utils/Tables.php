@@ -11,6 +11,7 @@ use ConnectpxBooking\Lib;
 abstract class Tables
 {
     const APPOINTMENTS = 'appointments';
+    const SCHEDULES = 'schedules';
     const INVOICES = 'invoices';
     const INVOICE_PDF = 'invoice_pdf';
     const BOOKING_EMAIL = 'booking_email';
@@ -42,6 +43,20 @@ abstract class Tables
                     'created_date' => esc_html__( 'Created', 'connectpx_booking' ),
                 );
                 break;
+            case self::SCHEDULES:
+                $columns = array(
+                    'id' => esc_html__( 'No.', 'connectpx_booking' ),
+                    'start_date' => esc_html__( 'Start Date', 'connectpx_booking' ),
+                    'end_date' => esc_html__( 'End Date', 'connectpx_booking' ),
+                    'time' => esc_html__( 'Time', 'connectpx_booking' ),
+                    'schedule_detail' => esc_html__( 'Appointment Detail', 'connectpx_booking' ),
+                    'customer_detail' => esc_html__( 'Customer', 'connectpx_booking' ),
+                    'total_appointments' => esc_html__( 'Total Appointments', 'connectpx_booking' ),
+                    // 'service_title' => esc_html__( 'Service', 'connectpx_booking' ),
+                    'status' => esc_html__( 'Status', 'connectpx_booking' ),
+                    'created_date' => esc_html__( 'Created', 'connectpx_booking' ),
+                );
+                break;
             case self::INVOICES:
                 $columns = array(
                     'id' => esc_html__( 'No.', 'connectpx_booking' ),
@@ -51,6 +66,7 @@ abstract class Tables
                     'status' => esc_html__( 'Status', 'connectpx_booking' ),
                     'total_amount' => esc_html__( 'Total Amount', 'connectpx_booking' ),
                     'due_amount' => esc_html__( 'Due Amount', 'connectpx_booking' ),
+                    'appointments_count' => esc_html__( 'Pending App.', 'connectpx_booking' ),
                     'created_date' => esc_html__( 'Created', 'connectpx_booking' ),
                 );
                 break;
@@ -241,6 +257,7 @@ abstract class Tables
                 $columns = array( 'id' => false, );
                 break;
             case self::APPOINTMENTS:
+            case self::SCHEDULES:
                 $columns = array( 'internal_note' => false, );
                 break;
             case self::INVOICES:
