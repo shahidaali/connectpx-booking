@@ -101,14 +101,12 @@ class Ajax extends Lib\Base\Ajax
             // Single schedule.
             $schedule = new Schedule();
             if ( $schedule->load( $schedule_id ) ) {
-                if( $schedule->getStatus() != $schedule_status ) {
-                    if( $schedule_status == Schedule::STATUS_CANCELLED ) {
-                        $schedule->cancel();
-                    } else {
-                        $schedule->setStatus( $schedule_status );
-                        $schedule->save();
-                    }
+                $result = $schedule->updateStatus( $schedule_status, true );
+
+                if( $result ) {
                     $response['success'] = true;
+                } else if( $result === false ) {
+                    $response['errors'] = array( 'db' => __( 'Could not save appointment in database.', 'connectpx_booking' ) );
                 }
             }
             

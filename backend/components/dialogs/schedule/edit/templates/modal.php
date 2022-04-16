@@ -17,7 +17,13 @@ use ConnectpxBooking\Lib\Utils\Common;
                <ul class="list-unstyled pl-0 connectpx_booking-hide-empty mr-3">
                   <li class="row mb-1">
                      <div class="col mt-1"><a title="<?php echo esc_attr('Edit booking details', 'connectpx_booking'); ?>" href=""><span id="connectpx_booking_customer-name"></span></a></div>
-                     <?php if($schedule->getStatus() == Schedule::STATUS_CANCELLED): ?>
+                     <?php 
+			                     if( in_array( $schedule->getStatus(), [
+				                     	Schedule::STATUS_CANCELLED, 
+				                     	Schedule::STATUS_REJECTED, 
+				                     	Schedule::STATUS_NOSHOW, 
+				                     	Schedule::STATUS_DONE
+			                     ])): ?>
                      	<div class="ml-auto">
 	                        <span class="text-danger"><?php echo __(Schedule::statusToString($schedule->getStatus()), 'connectpx_booking'); ?></span>
 	                     </div>

@@ -18,6 +18,7 @@ class Codes extends Base\Codes
     public $schedule_start_date;
     public $schedule_end_date;
     public $schedule_status;
+    public $schedule_repeat_info;
     public $service_name;
     public $service_description;
     public $current_date_time;
@@ -46,6 +47,7 @@ class Codes extends Base\Codes
         $this->schedule_start_date = $schedule->getStartDate();
         $this->schedule_end_date = $schedule->getEndDate();
         $this->schedule_status = $schedule->getStatus();
+        $this->schedule_repeat_info = $schedule->getScheduleRepeatInfo();
         $this->service_name = $this->service->getTitle();
         $this->service_description = $this->service->getDescription();
         $this->current_date_time = new \DateTime();
@@ -66,6 +68,7 @@ class Codes extends Base\Codes
             'schedule_start_date' => Utils\DateTime::formatDate( $this->schedule_start_date ),
             'schedule_end_date' => Utils\DateTime::formatDate( $this->schedule_end_date ),
             'schedule_status' => Schedule::statusToString( $this->schedule_status ),
+            'schedule_repeat_info' => $this->schedule_repeat_info,
             'service_name' => $this->service_name,
             'service_description' => $this->service_description,
             'current_date_time' => Utils\DateTime::formatDate( $this->current_date_time->format('Y-m-d H:i:s') ),

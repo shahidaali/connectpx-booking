@@ -111,44 +111,12 @@ class Ajax extends Lib\Base\Ajax
             // Single appointment.
             $appointment = new Appointment();
             if ( $appointment->load( $appointment_id ) ) {
-                if( $appointment->getStatus() != $appointment_status ) {
+                $result = $appointment->updateStatus( $appointment_status, true );
 
-                    if( $appointment_status == Appointment::STATUS_NOSHOW || $appointment->getIsNoShow() ) {
-                        $subService = $appointment->getSubService();
-
-                        $payment_details = !empty($appointment->getPaymentDetails()) ? json_decode($appointment->getPaymentDetails(), true) : [];
-                        $adjustments = isset($payment_details['adjustments']) ? $payment_details['adjustments'] : [];
-
-                        $isNowShow = $appointment_status == Appointment::STATUS_NOSHOW;
-
-                        $itemPrice = $subService->paymentLineItems( 
-                            $appointment->getDistance(),
-                            $appointment->getWaitingTime(),
-                            $appointment->getIsAfterHours(),
-                            $isNowShow,
-                            $adjustments
-                        );
-
-                        $appointment
-                            ->setTotalAmount( $itemPrice['totals'] );
-                    }
-
-                    $appointment
-                        ->setStatus( $appointment_status );
-
-                    $modified = $appointment->getModified();
-                    if ( $appointment->save() !== false ) {
-                        
-                        // Refund payment for cancelled appointments
-                        if( in_array( $appointment->getStatus(), [ Appointment::STATUS_CANCELLED, Appointment::STATUS_REJECTED ] ) ) {
-                            $appointment->refund();
-                        }
-
-                        Lib\Notifications\Appointment\Sender::send( $appointment );
-                        $response['success'] = true;
-                    } else {
-                        $response['errors'] = array( 'db' => __( 'Could not save appointment in database.', 'connectpx_booking' ) );
-                    }
+                if( $result ) {
+                    $response['success'] = true;
+                } else if( $result === false ) {
+                    $response['errors'] = array( 'db' => __( 'Could not save appointment in database.', 'connectpx_booking' ) );
                 }
             }
             
@@ -195,10 +163,11 @@ class Ajax extends Lib\Base\Ajax
     {
         $response = array( 'success' => false );
         $appointment_id       = (int) self::parameter( 'id', 0 );
-        $miles          = (int) self::parameter( 'miles' );
-        $waiting_time          = (int) self::parameter( 'waiting_time' );
+        $miles          = (float) self::parameter( 'miles' );
+        $waiting_time          = (float) self::parameter( 'waiting_time' );
         $adjustment_reason          = self::parameter( 'adjustment_reason' );
         $adjustment_amount          = (float) self::parameter( 'adjustment_amount' );
+        $adjustment_notes          = self::parameter( 'adjustment_notes' );
 
         // If no errors then try to save the appointment.
         if ( ! isset ( $response['errors'] ) ) {
@@ -209,6 +178,7 @@ class Ajax extends Lib\Base\Ajax
 
                 $payment_details = !empty($appointment->getPaymentDetails()) ? json_decode($appointment->getPaymentDetails(), true) : [];
                 $adjustments = isset($payment_details['adjustments']) ? $payment_details['adjustments'] : [];
+                $payment_details['adjustment_notes'] = $adjustment_notes;
 
                 // $adjustments = $appointment->getPaymentAdjustments();
                 if( !empty($adjustment_reason) && $adjustment_amount <> 0 ) {
@@ -233,10 +203,10 @@ class Ajax extends Lib\Base\Ajax
 
                 if( !empty($adjustments) ) {
                     $payment_details['adjustments'] = $adjustments;
-
-                    $appointment
-                        ->setPaymentDetails( json_encode( $payment_details ) );
                 }
+
+                $appointment
+                    ->setPaymentDetails( json_encode( $payment_details ) );
 
                 if ( $appointment->save() !== false ) {
 

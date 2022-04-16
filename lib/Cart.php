@@ -180,7 +180,7 @@ class Cart
              */
             $appointment = new Appointment();
 
-            $payment_status = Appointment::PAYMENT_TYPE_SQUARE ? Appointment::PAYMENT_COMPLETED : Appointment::PAYMENT_PENDING;
+            $payment_status = $wc_order->get_payment_method() == Appointment::PAYMENT_TYPE_SQUARE ? Appointment::PAYMENT_COMPLETED : Appointment::PAYMENT_PENDING;
 
             $appointment
                 ->setServiceId( $service->getId() )

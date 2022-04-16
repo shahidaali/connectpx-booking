@@ -50,6 +50,7 @@ class Settings
                 $this->instant = 1;
                 break;
             case Notification::TYPE_APPOINTMENT_STATUS_CHANGED:
+            case Notification::TYPE_SCHEDULE_STATUS_CHANGED:
             case Notification::TYPE_NEW_BOOKING:
                 $this->status   = $this->settings['status'];
                 $this->instant  = 1;

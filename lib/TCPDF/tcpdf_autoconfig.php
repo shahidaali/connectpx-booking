@@ -133,7 +133,7 @@ if (!defined('PDF_PAGE_FORMAT')) {
 }
 
 if (!defined('PDF_PAGE_ORIENTATION')) {
-	define ('PDF_PAGE_ORIENTATION', 'P');
+	define ('PDF_PAGE_ORIENTATION', 'L');
 }
 
 if (!defined('PDF_CREATOR')) {

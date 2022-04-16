@@ -116,6 +116,17 @@ jQuery(function($) {
                         }
                     });
                     break;
+                case 'repeat_info':
+                    columns.push({
+                        data: 'repeat_info',
+                        render: function ( data, type, row, meta ) {
+                            if (row.repeat_info) {
+                                return data;
+                            }
+                            return '';
+                        }
+                    });
+                    break;
                 case 'total_appointments':
                     columns.push({
                         data: 'total_appointments',

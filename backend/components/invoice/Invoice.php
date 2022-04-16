@@ -62,7 +62,7 @@ class Invoice extends Lib\Base\Component
             'trip_type' => 3,
             'status' => 5,
             'flat_rate' => 5,
-            'mileage' => 4,
+            'total_miles' => 4,
             'mileage_fee' => 5,
             'total_mileage_fee' => 5,
             'after_hours_fee' => 5,

@@ -1,7 +1,9 @@
 /**
  * ConnectpxBooking plugin WordPress admin area customization
  */
-#connectpx_booking_tbs {
+#connectpx_booking_tbs,
+#connectpx_booking_tbs .btn,
+#connectpx_booking_tbs .form-control {
     font-size: 13px;
 }
   .os-tabs {
@@ -135,3 +137,9 @@ body #connectpx_booking_tbs .ec .ec-event {
     background: url(../images/loader.gif) no-repeat center center;
     z-index: 2;
 }
+
+ul#connectpx_booking-js-status-filter {display: flex;list-style: none;}
+
+ul#connectpx_booking-js-status-filter li {margin-right: 20px;}
+
+ul#connectpx_booking-js-status-filter li .color-code {width: 20px;height: 12px;display: inline-block;vertical-align: middle;margin-right: 2px;}

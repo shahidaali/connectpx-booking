@@ -183,7 +183,7 @@ class SubService
      */
     public function getMinMiles()
     {
-        return (int) $this->min_miles;
+        return (float) $this->min_miles;
     }
 
     /**
@@ -204,17 +204,24 @@ class SubService
      *
      * @return string
      */
+    public function getTotalMiles( $miles )
+    {
+        if( $this->isRoundTrip() ) {
+            $miles *= 2;
+        }
+        return $miles;
+    }
+
+    /**
+     * Gets min_miles
+     *
+     * @return string
+     */
     public function getMilesToCharge( $miles )
     {
-        $totalMiles = $miles;
+        $totalMiles = $this->getTotalMiles( $miles );
         $minMiles = $this->getMinMiles();
-
-        if( $this->isRoundTrip() ) {
-            $totalMiles *= 2;
-        }
-
         $milesToCharge = $totalMiles - $minMiles;
-
         return $milesToCharge > 0 ? $milesToCharge : 0;
     }
 
@@ -259,7 +266,7 @@ class SubService
      */
     public function getMinWaitingTime()
     {
-        return (int) $this->min_waiting_time;
+        return (float) $this->min_waiting_time;
     }
 
     /**

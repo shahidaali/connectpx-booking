@@ -94,16 +94,14 @@ jQuery(function ($) {
             switch (notification_type) {
                 case 'appointment_reminder':
                 case 'appointment_status_changed':
+                case 'schedule_status_changed':
+                case 'new_booking':
                     hideStatuses = false;
                     hideServices = false;
                     break;
                 case 'customer_new_wp_user':
                 case 'new_invoice':
                 case 'schedule_cancelled':
-                    break;
-                case 'new_booking':
-                    hideStatuses = false;
-                    hideServices = false;
                     break;
             }
 

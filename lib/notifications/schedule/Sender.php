@@ -29,7 +29,7 @@ abstract class Sender extends Base\Sender
             $codes->cancellation_reason = $codes_data['cancellation_reason'];
         }
    
-        $notifications = static::getNotifications( Notification::TYPE_SCHEDULE_CANCELLED );
+        $notifications = static::getNotifications( Notification::TYPE_SCHEDULE_STATUS_CHANGED );
 
         // Notify client.
         self::notifyClient( $notifications['client'], $schedule, $codes, $queue );
@@ -52,7 +52,9 @@ abstract class Sender extends Base\Sender
         $attachments = [];
 
         foreach ( $notifications as $notification ) {
-            static::sendToClient( $schedule->getCustomer(), $notification, $codes, $attachments, $queue );
+            if ( $notification->matchesScheduleForClient( $schedule ) ) {
+                static::sendToClient( $schedule->getCustomer(), $notification, $codes, $attachments, $queue );
+            }
         }
     }
 
@@ -74,8 +76,11 @@ abstract class Sender extends Base\Sender
 
         $attachments = [];
         foreach ( $notifications as $notification ) {
-            static::sendToAdmins( $notification, $codes, $attachments, $reply_to, $queue );
-            static::sendToCustom( $notification, $codes, $attachments, $reply_to, $queue );
+            $send = $notification->matchesScheduleForAdmin( $schedule, $schedule->getService() );
+            if ( $send ) {
+                static::sendToAdmins( $notification, $codes, $attachments, $reply_to, $queue );
+                static::sendToCustom( $notification, $codes, $attachments, $reply_to, $queue );
+            }
         }
 
         WPML::restoreLang();

@@ -55,6 +55,7 @@ class NotificationCodes
                 'schedule_start_date' => array( 'description' => __( 'Schedule start date.' )),
                 'schedule_end_date' => array( 'description' => __( 'Schedule end date.' )),
                 'schedule_status' => array( 'description' => __( 'Schedule end date.' )),
+                'schedule_repeat_info' => array( 'description' => __( 'Schedule repeat info.' )),
                 'current_date_time' => array( 'description' => __( 'Current date and time.' )),
                 'cancellation_reason' => array( 'description' => __( 'Cancellation reason.' )),
             ),
@@ -191,7 +192,7 @@ class NotificationCodes
                     $this->codes['service'],
                 );
                 break;
-            case Notification::TYPE_SCHEDULE_CANCELLED:
+            case Notification::TYPE_SCHEDULE_STATUS_CHANGED:
                 $codes = array_merge(
                     $this->codes['appointment'],
                     $this->codes['schedule'],

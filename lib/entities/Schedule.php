@@ -11,8 +11,12 @@ use ConnectpxBooking\Backend;
  */
 class Schedule extends Lib\Base\Entity
 {
-    const STATUS_CANCELLED  = 'cancelled';
     const STATUS_PENDING    = 'pending';
+    const STATUS_APPROVED   = 'approved';
+    const STATUS_CANCELLED  = 'cancelled';
+    const STATUS_REJECTED   = 'rejected';
+    const STATUS_DONE       = 'done';
+    const STATUS_NOSHOW       = 'noshow';
 
     /** @var int */
     protected $customer_id;
@@ -56,8 +60,12 @@ class Schedule extends Lib\Base\Entity
     {
         if ( ! self::hasInCache( __FUNCTION__ ) ) {
             $statuses = array(
-                self::STATUS_CANCELLED,
                 self::STATUS_PENDING,
+                self::STATUS_APPROVED,
+                self::STATUS_CANCELLED,
+                self::STATUS_REJECTED,
+                self::STATUS_DONE,
+                self::STATUS_NOSHOW,
             );
             self::putInCache( __FUNCTION__, $statuses );
         }
@@ -66,25 +74,46 @@ class Schedule extends Lib\Base\Entity
     }
 
     /**
-     * Get status of payment.
+     * Get appointment statuses.
      *
-     * @param string $status
-     * @return string
+     * @return array
      */
+    public static function getCompletedStatuses()
+    {
+        if ( ! self::hasInCache( __FUNCTION__ ) ) {
+            $completedStatuses = array(
+                self::STATUS_DONE,
+                self::STATUS_NOSHOW,
+            );
+            self::putInCache( __FUNCTION__, $completedStatuses );
+        }
+
+        return self::getFromCache( __FUNCTION__ );
+    }
+
     public static function statusToString( $status )
     {
         switch ( $status ) {
-            case self::STATUS_CANCELLED:  return __( 'Cancelled', 'connectpx_booking' );
             case self::STATUS_PENDING:    return __( 'Pending',   'connectpx_booking' );
-            default:                      return '';
+            case self::STATUS_APPROVED:   return __( 'Approved',  'connectpx_booking' );
+            case self::STATUS_CANCELLED:  return __( 'Cancelled', 'connectpx_booking' );
+            case self::STATUS_REJECTED:   return __( 'Rejected',  'connectpx_booking' );
+            case self::STATUS_DONE:       return __( 'Completed', 'connectpx_booking' );
+            case self::STATUS_NOSHOW:     return __( 'No Show', 'connectpx_booking' );
+            case 'mixed':                 return __( 'Mixed', 'connectpx_booking' );
+            default: return '';
         }
     }
 
     public static function statusToIcon( $status )
     {
         switch ( $status ) {
-            case self::STATUS_CANCELLED:   return 'fas fa-times';
             case self::STATUS_PENDING:    return 'far fa-clock';
+            case self::STATUS_APPROVED:   return 'fas fa-check';
+            case self::STATUS_CANCELLED:  return 'fas fa-times';
+            case self::STATUS_REJECTED:   return 'fas fa-ban';
+            case self::STATUS_DONE:       return 'far fa-check-square';
+            case self::STATUS_NOSHOW:       return 'fas fa-user-slash';
             default: return '';
         }
     }
@@ -359,7 +388,86 @@ class Schedule extends Lib\Base\Entity
             ];
         }
 
+        $items[] = [
+            'label' => __('Repeat Info', 'connectpx_booking'),
+            'value' => $this->getScheduleRepeatInfo(),
+        ];
+
         return Lib\Utils\Common::formatedItemsList( $items );
+    }
+
+    /**
+     * Get HTML for pickup information
+     *
+     * @return string
+     */
+    public function getScheduleRepeatInfo()
+    {
+        $info = '';
+
+        $repeat_data = $this->getDetails() ? json_decode($this->getDetails(), true) : [];
+        if( !empty($repeat_data) ) {
+            $until = DateTime::formatDate( $repeat_data['until'] );
+            switch ($repeat_data['repeat']) {
+                case 'weekly':
+                case 'biweekly':
+                    $info .= sprintf(
+                        __("Repeat <b>%s</b> on <b>%s</b> until <b>%s</b>", 'connectpx_booking'),
+                         $repeat_data['repeat'], 
+                         implode(", ", $repeat_data['params']['on']), 
+                         $until
+                     );
+                    break;
+                case 'daily':
+                    $info .= sprintf(
+                        __("Repeat <b>%s</b> on every <b>%s</b> days(s) until <b>%s</b>", 'connectpx_booking'),
+                         $repeat_data['repeat'], 
+                         $repeat_data['params']['every'], 
+                         $until
+                     );
+                    break;
+                case 'monthly':
+                    $info .= sprintf(
+                        __("Repeat <b>%s</b> on <b>%s %s</b> until <b>%s</b>", 'connectpx_booking'),
+                         $repeat_data['repeat'], 
+                         $repeat_data['params']['on'], 
+                         $repeat_data['params']['weekday'] ?? $repeat_data['params']['day'], 
+                         $until
+                     );
+                    break;
+            }
+        }
+        return $info;
+    }
+
+    /**
+     * @param string $reason
+     */
+    public function loadPendingAppointments( $statuses )
+    {
+        // $start_date = new \DateTime();
+
+        $rows = Lib\Entities\Appointment::query( 'a' )
+            ->select( 'a.*' )
+            ->where( 'a.schedule_id', $this->getId() )
+            ->whereIn( 'a.status', [
+                Lib\Entities\Appointment::STATUS_PENDING,
+                Lib\Entities\Appointment::STATUS_APPROVED,
+            ])
+            // ->whereGt( 'a.pickup_datetime', $start_date->format( 'Y-m-d H:i:s' ) )
+            ->sortBy( 'a.pickup_datetime' )
+            ->order( 'ASC' )
+            ->fetchArray();
+
+        $appointments = [];
+
+        foreach ( $rows as $row ) {
+            $appointment = new Lib\Entities\Appointment();
+            $appointment->setFields( $row, true );
+            $appointments[] = $appointment;
+        }
+
+        return $appointments;
     }
 
     /**
@@ -372,17 +480,7 @@ class Schedule extends Lib\Base\Entity
 
         // Cancell all future pending appointments
         $start_date = new \DateTime( $this->getStartDate() );
-        $rows = Lib\Entities\Appointment::query( 'a' )
-            ->select( 'a.*' )
-            ->where( 'a.schedule_id', $this->getId() )
-            ->whereIn( 'a.status', [
-                Lib\Entities\Appointment::STATUS_PENDING,
-                Lib\Entities\Appointment::STATUS_APPROVED,
-            ])
-            ->whereGt( 'a.pickup_datetime', $start_date->format( 'Y-m-d H:i:s' ) )
-            ->sortBy( 'a.pickup_datetime' )
-            ->order( 'ASC' )
-            ->fetchArray();
+        $rows = $this->getPendingAppointments();
 
         foreach ( $rows as $row ) {
             $appointment = new Lib\Entities\Appointment();
@@ -396,6 +494,40 @@ class Schedule extends Lib\Base\Entity
         }
 
         return $this->save();
+    }
+
+    /**
+     * @param string $reason
+     */
+    public function updateStatus( $new_status, $notification = true )
+    {
+        if( $this->getStatus() != $new_status ) {
+
+            $this->setStatus( $new_status );
+
+            // Cancell all future pending appointments
+            if( $new_status == self::STATUS_APPROVED ) {
+                $statuses = [
+                    Lib\Entities\Appointment::STATUS_PENDING,
+                ];
+            } else {
+                $statuses = [
+                    Lib\Entities\Appointment::STATUS_PENDING,
+                    Lib\Entities\Appointment::STATUS_APPROVED,
+                ];
+            }
+
+            $appointments = $this->loadPendingAppointments( $statuses );
+            foreach ( $appointments as $appointment ) {
+                 $appointment->updateStatus( $new_status, false );
+            }
+
+            if( $notification ) {
+                Lib\Notifications\Schedule\Sender::send( $this, $appointments, array( 'cancellation_reason' => $reason ) );
+            }
+
+            return $this->save();
+        }
     }
 
     /**

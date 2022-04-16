@@ -7,6 +7,7 @@ use ConnectpxBooking\Lib\Utils\Common;
 $subService = $appointment->getSubService();
 $payment_details = !empty($appointment->getPaymentDetails()) ? json_decode($appointment->getPaymentDetails(), true) : null;
 $payment_adjustments = $payment_details && isset($payment_details['adjustments']) ? $payment_details['adjustments'] : [];
+$adjustment_notes = $payment_details && isset($payment_details['adjustment_notes']) ? $payment_details['adjustment_notes'] : "";
 $lineItems = $subService->paymentLineItems(
 	$appointment->getDistance(),
 	$appointment->getWaitingTime(),
@@ -77,7 +78,7 @@ $lineItems = $subService->paymentLineItems(
       <tbody class="payment-detail-table">
   	 	<?php foreach ($lineItems['items'] as $key => $lineItem) { ?>
        	  	<tr>
-       	  		<td><?php echo  $lineItem['qty'] > 1 ? sprintf('%d %s &times; %s', $lineItem['qty'], $lineItem['label'], Price::format( $lineItem['unit_price'] )) : $lineItem['label']; ?></td>
+       	  		<td><?php echo  $lineItem['qty'] > 1 ? sprintf('%s %s &times; %s', $lineItem['qty'], $lineItem['label'], Price::format( $lineItem['unit_price'] )) : $lineItem['label']; ?></td>
        	  		<td class="text-right"><?php echo $lineItem['total'] <> 0 ? Price::format( $lineItem['total'] ) : Price::format( 0 ); ?></td>
        	  	</tr>
    	  	<?php } ?>
@@ -108,6 +109,10 @@ $lineItems = $subService->paymentLineItems(
                		<label for="connectpx_booking-adjustment-amount"><?php echo __('Amount', 'connectpx_booking') ?></label> 
                		<input class="form-control" type="number" step="1" id="connectpx_booking-adjustment-amount">
                	</div> -->
+                  <div class="form-group">
+                     <label for="connectpx_booking-adjustment-notes"><?php echo __('Notes', 'connectpx_booking') ?></label> 
+                     <textarea class="form-control" id="connectpx_booking-adjustment-notes"><?php echo $adjustment_notes; ?></textarea>
+                  </div>
                <div class="text-right">
                		<button class="btn btn-default  payment-adjustment-cancel"><?php echo __('Cancel', 'connectpx_booking') ?></button> 
                		<button type="button" class="btn ladda-button btn-success btn-apply-adjustments" data-spinner-size="40" data-style="zoom-in"><span class="ladda-label"><?php echo __('Apply', 'connectpx_booking') ?></span><span class="ladda-spinner"></span></button>
@@ -133,6 +138,10 @@ $lineItems = $subService->paymentLineItems(
          <tr>
             <th><?php echo __('Due', 'connectpx_booking') ?></th>
             <th class="text-right"><?php echo in_array($appointment->getStatus(), [Appointment::STATUS_CANCELLED, Appointment::STATUS_REJECTED]) ? Price::format( 0 ) :  Price::format( $lineItems['totals'] - $appointment->getPaidAmount() ); ?></th>
+         </tr>
+         <tr>
+            <th><?php echo __('Notes', 'connectpx_booking') ?></th>
+            <th class="text-right"><?php echo $adjustment_notes; ?></th>
          </tr>
          <?php if( ! in_array( $appointment->getPaymentStatus(), [
             Appointment::PAYMENT_REFUNDED

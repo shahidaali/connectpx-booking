@@ -120,6 +120,7 @@ var ConnectpxBookingAppointmentDialog = function(Dialog, $, moment, ConnectpxBoo
                 		$adjustment_time = $('#connectpx_booking-adjustment-time', $dialog),
                 		$adjustment_reason = $('#connectpx_booking-adjustment-reason', $dialog),
                 		$adjustment_amount = $('#connectpx_booking-adjustment-amount', $dialog),
+                		$adjustment_notes = $('#connectpx_booking-adjustment-notes', $dialog),
                 		$btn_update_payment_status_toggle = $('.appointment-update-payment-status-toggle', $dialog),
                 		$btn_update_payment_status = $('.appointment-update-payment-status', $dialog);
 
@@ -175,6 +176,7 @@ var ConnectpxBookingAppointmentDialog = function(Dialog, $, moment, ConnectpxBoo
 					            waiting_time: $adjustment_time.val(),
 					            adjustment_reason: $adjustment_reason.val(),
 					            adjustment_amount: $adjustment_amount.val(),
+					            adjustment_notes: $adjustment_notes.val(),
 					        },
 				            dataType: 'json',
 				            success: function (response) {

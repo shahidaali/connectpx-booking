@@ -200,9 +200,10 @@ class Ajax extends Lib\Base\Ajax
             $destinationInfo = $appointment->getDestinationDetail() ? json_decode( $appointment->getDestinationDetail(), true ) : [];
 
             $appointment_detail = sprintf(
-                '%s <br> <b>P/u:</b> %s <br> <b>Going:</b> %s',
-                $appointment->getPatientName(),
+                '<b>P/u from:</b> %s <br> <b>P/u time:</b> %s <br> %s <br> <b>Going to:</b> %s',
                 $pickupInfo['address']['address'] ?? 'N/A',
+                Lib\Utils\DateTime::formatTime( $appointment->getPickupDatetime() ),
+                $appointment->getPatientName(),
                 $destinationInfo['address']['address'] ?? 'N/A',
             );
 
@@ -281,6 +282,20 @@ class Ajax extends Lib\Base\Ajax
                         ELSE 0 
                     END 
                 ) as cancelled_appointments,
+                SUM( 
+                    CASE 
+                        WHEN a.status = "'. Lib\Entities\Appointment::STATUS_NOSHOW .'" 
+                    THEN 1 
+                        ELSE 0 
+                    END 
+                ) as noshow_appointments,
+                SUM( 
+                    CASE 
+                        WHEN a.status = "'. Lib\Entities\Appointment::STATUS_DONE .'" 
+                    THEN 1 
+                        ELSE 0 
+                    END 
+                ) as completed_appointments,
                 sc.created_at AS created_date,
                 CONCAT(c.first_name, " ", c.last_name)  AS customer_full_name,
                 c.first_name AS first_name,
@@ -358,9 +373,10 @@ class Ajax extends Lib\Base\Ajax
             $destinationInfo = $appointment->getDestinationDetail() ? json_decode( $appointment->getDestinationDetail(), true ) : [];
 
             $schedule_detail = sprintf(
-                '%s <br> <b>P/u:</b> %s <br> <b>Going:</b> %s',
-                $appointment->getPatientName(),
+                '<b>P/u from:</b> %s <br> <b>P/u time:</b> %s <br> %s <br> <b>Going to:</b> %s',
                 $pickupInfo['address']['address'] ?? 'N/A',
+                Lib\Utils\DateTime::formatTime( $appointment->getPickupDatetime() ),
+                $appointment->getPatientName(),
                 $destinationInfo['address']['address'] ?? 'N/A',
             );
 
@@ -373,13 +389,22 @@ class Ajax extends Lib\Base\Ajax
             );
 
             $total_appointments = sprintf(
-                ' <span class="text-info">Total: %d</span> <br><span class="text-muted">Pending: %d</span> <br> <span class="text-success">Approved: %d</span><br> <span class="text-danger">Cancelled: %d</span>',
+                ' <span class="text-info">Total: %d</span> <br>
+                <span class="text-muted">Pending: %d</span> <br> 
+                <span class="text-success">Approved: %d</span><br> 
+                <span class="text-danger">Cancelled: %d</span><br> 
+                <span class="text-warning">No Show: %d</span><br> 
+                <span class="text-success">Completed: %d</span>',
                 $row['total_appointments'],
                 $row['pending_appointments'],
                 $row['approved_appointments'],
                 $row['cancelled_appointments'],
+                $row['noshow_appointments'],
+                $row['completed_appointments'],
             );
 
+            $repeat_info = $schedule->getScheduleRepeatInfo();
+            
             $data[] = array(
                 'id'                => $row['id'],
                 'start_date'        => Lib\Utils\DateTime::formatDate( $row['start_date'], 'm/d/Y' ),
@@ -388,6 +413,7 @@ class Ajax extends Lib\Base\Ajax
                 'service'           => array(
                     'title'    => $row['service_title'],
                 ),
+                'repeat_info'           => $repeat_info,
                 'schedule_detail'           => $schedule_detail,
                 'customer_detail'           => $customer_detail,
                 'total_appointments'           => $total_appointments,
@@ -750,12 +776,7 @@ class Ajax extends Lib\Base\Ajax
         );
         $colors = array();
         if ( $coloring_mode == 'status' ) {
-            $colors = array(
-                Lib\Entities\Appointment::STATUS_PENDING => "#1e73be",
-                Lib\Entities\Appointment::STATUS_APPROVED => "#81d742",
-                Lib\Entities\Appointment::STATUS_CANCELLED => "#eeee22",
-                Lib\Entities\Appointment::STATUS_REJECTED => "#dd3333",
-            );
+            $colors = Lib\Entities\Appointment::getStatusColors();
             $colors['mixed'] = "#8224e3";
         }
         foreach ( $appointments as $key => $row ) {

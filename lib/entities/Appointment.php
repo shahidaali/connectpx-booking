@@ -95,9 +95,9 @@ class Appointment extends Lib\Base\Entity
         'service_id'               => array( 'format' => '%d', 'reference' => array( 'entity' => 'Service' ) ),
         'pickup_datetime'               => array( 'format' => '%s' ),
         'return_pickup_datetime'                 => array( 'format' => '%s' ),
-        'distance'          => array( 'format' => '%d' ),
-        'estimated_time'          => array( 'format' => '%d' ),
-        'waiting_time'          => array( 'format' => '%d' ),
+        'distance'          => array( 'format' => '%f' ),
+        'estimated_time'          => array( 'format' => '%f' ),
+        'waiting_time'          => array( 'format' => '%f' ),
         'notes'            => array( 'format' => '%s' ),
         'admin_notes'            => array( 'format' => '%s' ),
         'customer_id'          => array( 'format' => '%d', 'reference' => array( 'entity' => 'Customer' ) ),
@@ -114,13 +114,13 @@ class Appointment extends Lib\Base\Entity
         'status'      => array( 'format' => '%s' ),
         'cancellation_reason'      => array( 'format' => '%s' ),
         'status_changed_at'        => array( 'format' => '%s' ),
-        'total_amount'             => array( 'format' => '%s' ),
-        'paid_amount'             => array( 'format' => '%s' ),
+        'total_amount'             => array( 'format' => '%f' ),
+        'paid_amount'             => array( 'format' => '%f' ),
         'payment_status'             => array( 'format' => '%s' ),
         'payment_type'             => array( 'format' => '%s' ),
         'payment_date'             => array( 'format' => '%s' ),
         'payment_details'             => array( 'format' => '%s' ),
-        'refunded_amount'             => array( 'format' => '%s' ),
+        'refunded_amount'             => array( 'format' => '%f' ),
         'created_at'               => array( 'format' => '%s' ),
         'updated_at'               => array( 'format' => '%s' ),
     );
@@ -272,6 +272,12 @@ class Appointment extends Lib\Base\Entity
 
         $order_id = $this->getWcOrderId();
         $refund_amount = $this->getPaidAmount();
+        // $paid_amount = 0;
+
+        // if( $this->getIsNoShow() ) {
+        //     $refund_amount = $this->getPaidAmount() - $this->getTotalAmount();
+        //     $paid_amount = $this->getTotalAmount();
+        // }
 
         $response = WooCommerce::refundAppointments( $order_id, $refund_amount );
 
@@ -283,7 +289,52 @@ class Appointment extends Lib\Base\Entity
                 ->save();
         }
 
-        return $response ?: $response;
+        return $response;
+    }
+
+    /**
+     * @param string $reason
+     */
+    public function updateStatus( $new_status, $notification = true )
+    {
+        if( $this->getStatus() != $new_status ) {
+
+            if( $new_status == self::STATUS_NOSHOW || $this->getIsNoShow() ) {
+                $subService = $this->getSubService();
+
+                $payment_details = !empty($this->getPaymentDetails()) ? json_decode($this->getPaymentDetails(), true) : [];
+                $adjustments = isset($payment_details['adjustments']) ? $payment_details['adjustments'] : [];
+
+                $isNowShow = $new_status == self::STATUS_NOSHOW;
+
+                $itemPrice = $subService->paymentLineItems( 
+                    $this->getDistance(),
+                    $this->getWaitingTime(),
+                    $this->getIsAfterHours(),
+                    $isNowShow,
+                    $adjustments
+                );
+
+                $this->setTotalAmount( $itemPrice['totals'] );
+            }
+            $this->setStatus( $new_status );
+            
+            if ( $this->save() !== false ) {
+                
+                // Refund payment for cancelled appointments
+                if( in_array( $this->getStatus(), [ self::STATUS_CANCELLED, self::STATUS_REJECTED ] ) ) {
+                    $this->refund();
+                }
+
+                if( $notification ) {
+                    Lib\Notifications\Appointment\Sender::send( $this );
+                }
+                
+                return true;
+            } else {
+                return false;
+            }
+        }
     }
 
     /**
@@ -494,7 +545,7 @@ class Appointment extends Lib\Base\Entity
      */
     public function getWaitingTime()
     {
-        return (int) $this->waiting_time;
+        return (float) $this->waiting_time;
     }
 
     /**
@@ -1314,6 +1365,28 @@ class Appointment extends Lib\Base\Entity
         return self::getFromCache( __FUNCTION__ );
     }
 
+    /**
+     * Get appointment statuses.
+     *
+     * @return array
+     */
+    public static function getStatusColors()
+    {
+        if ( ! self::hasInCache( __FUNCTION__ ) ) {
+            $statusColors = array(
+                self::STATUS_PENDING => "#c3c4c7",
+                self::STATUS_APPROVED => "#81d742",
+                self::STATUS_CANCELLED => "#dd3333",
+                self::STATUS_REJECTED => "#dd3333",
+                self::STATUS_DONE => "#8224e3",
+                self::STATUS_NOSHOW => "#24e3da",
+            );
+            self::putInCache( __FUNCTION__, $statusColors );
+        }
+
+        return self::getFromCache( __FUNCTION__ );
+    }
+
     public static function statusToString( $status )
     {
         switch ( $status ) {
@@ -1475,6 +1548,7 @@ class Appointment extends Lib\Base\Entity
         $customer = $customer ?: $this->getCustomer();
         $subService = $subService ?: $this->getSubService();
         $lineItems = $lineItems ?: $this->getLineItems( $subService );
+        $totalMiles = $subService->getTotalMiles( $this->getDistance() );
         $milesToCharge = $subService->getMilesToCharge( $this->getDistance() );
         $perMilePrice = $subService->getRatePerMile();
         $pickup_details = $this->getPickupDetail() ? json_decode($this->getPickupDetail(), true) : [];
@@ -1494,6 +1568,7 @@ class Appointment extends Lib\Base\Entity
         $data['flat_rate'] = isset($lineItems['items']['flat_rate']) 
             ? Lib\Utils\Price::format( $lineItems['items']['flat_rate']['total'] ) 
             : Lib\Utils\Price::format( 0 );
+        $data['total_miles'] = $totalMiles;
         $data['mileage'] = $milesToCharge;
         $data['mileage_fee'] = Lib\Utils\Price::format( $perMilePrice );
         $data['total_mileage_fee'] = isset($lineItems['items']['milage']) 

@@ -49,12 +49,13 @@ abstract class Tables
                     'start_date' => esc_html__( 'Start Date', 'connectpx_booking' ),
                     'end_date' => esc_html__( 'End Date', 'connectpx_booking' ),
                     'time' => esc_html__( 'Time', 'connectpx_booking' ),
+                    'repeat_info' => esc_html__( 'Repeat Info', 'connectpx_booking' ),
                     'schedule_detail' => esc_html__( 'Appointment Detail', 'connectpx_booking' ),
                     'customer_detail' => esc_html__( 'Customer', 'connectpx_booking' ),
                     'total_appointments' => esc_html__( 'Total Appointments', 'connectpx_booking' ),
                     // 'service_title' => esc_html__( 'Service', 'connectpx_booking' ),
                     'status' => esc_html__( 'Status', 'connectpx_booking' ),
-                    'created_date' => esc_html__( 'Created', 'connectpx_booking' ),
+                    //'created_date' => esc_html__( 'Created', 'connectpx_booking' ),
                 );
                 break;
             case self::INVOICES:
@@ -83,7 +84,7 @@ abstract class Tables
                     'trip_type' => esc_html__( 'RT/O', 'connectpx_booking' ),
                     'status' => esc_html__( 'Status', 'connectpx_booking' ),
                     'flat_rate' => esc_html__( 'Flat Rate', 'connectpx_booking' ),
-                    'mileage' => esc_html__( 'Mileage', 'connectpx_booking' ),
+                    'total_miles' => esc_html__( 'Mileage', 'connectpx_booking' ),
                     'mileage_fee' => esc_html__( 'Mileage Fee', 'connectpx_booking' ),
                     'total_mileage_fee' => esc_html__( 'Total Milage Fee', 'connectpx_booking' ),
                     'after_hours_fee' => esc_html__( 'After Hours Fee', 'connectpx_booking' ),

@@ -1,4 +1,5 @@
 <?php if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
+use ConnectpxBooking\Lib;
 use ConnectpxBooking\Lib\Utils\Common;
 use ConnectpxBooking\Backend\Components;
 
@@ -16,6 +17,16 @@ use ConnectpxBooking\Backend\Components;
     <div class="card">
         <div class="card-body">
             <div class="form-row justify-content-xl-end justify-content-center">
+                <div class="col-sm-auto mb-2">
+                    <ul id="connectpx_booking-js-status-filter">
+                        <?php foreach ( Lib\Entities\Appointment::getStatusColors() as $status => $color ) : ?>
+                            <li>
+                                <span class="color-code" style="background: <?php echo $color; ?>"></span>
+                                <span><?php echo Lib\Entities\Appointment::statusToString( $status ); ?></span>
+                            </li>
+                        <?php endforeach ?>
+                    </ul>
+                </div>
                 <div class="col-sm-auto mb-2">
                     <ul id="connectpx_booking-js-services-filter"
                         data-icon-class="far fa-dot-circle"
