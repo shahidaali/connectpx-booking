@@ -272,18 +272,22 @@ class Appointment extends Lib\Base\Entity
 
         $order_id = $this->getWcOrderId();
         $refund_amount = $this->getPaidAmount();
-        // $paid_amount = 0;
+        $paid_amount = 0;
 
-        // if( $this->getIsNoShow() ) {
-        //     $refund_amount = $this->getPaidAmount() - $this->getTotalAmount();
-        //     $paid_amount = $this->getTotalAmount();
-        // }
+        if( $this->getIsNoShow() ) {
+            $refund_amount = $this->getPaidAmount() - $this->getTotalAmount();
+            $paid_amount = $this->getTotalAmount();
+        }
+
+        if( $refund_amount <= 0 ) {
+            return false;
+        }
 
         $response = WooCommerce::refundAppointments( $order_id, $refund_amount );
 
         if( $response && $response['success'] ) {
             $this
-                ->setPaidAmount( 0 )
+                ->setPaidAmount( $paid_amount )
                 ->setRefundedAmount( $refund_amount )
                 ->setPaymentStatus( self::PAYMENT_REFUNDED )
                 ->save();
@@ -322,7 +326,7 @@ class Appointment extends Lib\Base\Entity
             if ( $this->save() !== false ) {
                 
                 // Refund payment for cancelled appointments
-                if( in_array( $this->getStatus(), [ self::STATUS_CANCELLED, self::STATUS_REJECTED ] ) ) {
+                if( in_array( $this->getStatus(), [ self::STATUS_CANCELLED, self::STATUS_REJECTED , self::STATUS_NOSHOW ] ) ) {
                     $this->refund();
                 }
 

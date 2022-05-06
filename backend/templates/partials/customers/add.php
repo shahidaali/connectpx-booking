@@ -206,7 +206,7 @@ else {
 							<tr>
 								<th scope="row"><?php echo $field['label']; ?></th>
 								<td>
-									<input name="services[<?php echo $service->getId(); ?>][sub_services][<?php echo $key; ?>][<?php echo $field['name']; ?>]" type="number"  value="<?php echo Form::old([$key, $field['name']], $fields_data, 0); ?>" size="50">
+									<input name="services[<?php echo $service->getId(); ?>][sub_services][<?php echo $key; ?>][<?php echo $field['name']; ?>]" type="number"  value="<?php echo Form::old([$key, $field['name']], $fields_data, 0); ?>" size="50" step="any">
 								</td>
 							</tr>
 							<?php endforeach; ?>

@@ -401,69 +401,79 @@ class SubService
     public function paymentLineItems( $miles, $waiting_time, $after_hours = false, $no_show = false, $adjustments = [] )
     {        
         $totals = 0;
+        $sub_totals = 0;
         $items = [];
+        $sub_items = [];
 
-        if( ! $no_show ) {
-            $totals += $this->getFlatRate();
+        $sub_totals += $this->getFlatRate();
 
-            $items['flat_rate'] = [
-                'label' => __('Flat Rate', 'connectpx_booking'),
-                'qty' => 1,
-                'unit_price' => $this->getFlatRate(),
-                'total' => $this->getFlatRate(),
+        $sub_items['flat_rate'] = [
+            'label' => __('Flat Rate', 'connectpx_booking'),
+            'qty' => 1,
+            'unit_price' => $this->getFlatRate(),
+            'total' => $this->getFlatRate(),
+        ];
+
+        $milesToCharge = $this->getMilesToCharge( $miles );
+        $perMilePrice = $this->getRatePerMile();
+        
+        if( $milesToCharge ) {
+            $milesTotal = ( $milesToCharge * $perMilePrice );
+            $sub_totals += $milesTotal;
+
+            $sub_items['milage'] = [
+                'label' => __('Miles', 'connectpx_booking'),
+                'qty' => $milesToCharge,
+                'unit_price' => $perMilePrice,
+                'total' => $milesTotal,
             ];
+        }
 
-            $milesToCharge = $this->getMilesToCharge( $miles );
-            $perMilePrice = $this->getRatePerMile();
+        $waitingTimeToCharge = $this->getWaitingTimeToCharge( $waiting_time );
+        $perMinPrice = $this->getRatePerWaitingTime();
+        
+        if( $waitingTimeToCharge ) {
+            $waitingTimeTotal = ( $waitingTimeToCharge * $perMinPrice );
+            $sub_totals += $waitingTimeTotal;
+
+            $sub_items['waiting_time'] = [
+                'label' => __('Waiting Time (Mins.)', 'connectpx_booking'),
+                'qty' => $waitingTimeToCharge,
+                'unit_price' => $perMinPrice,
+                'total' => $waitingTimeTotal,
+            ];
+        }
+
+        if( $after_hours ) {
+            $sub_totals += $this->getAfterHoursFee();
+
+            $sub_items['after_hours'] = [
+                'label' => __('After Hours Fee', 'connectpx_booking'),
+                'qty' => 1,
+                'unit_price' => $this->getAfterHoursFee(),
+                'total' => $this->getAfterHoursFee(),
+            ];
+        }
+
+        if( $no_show ) {
             
-            if( $milesToCharge ) {
-                $milesTotal = ( $milesToCharge * $perMilePrice );
-                $totals += $milesTotal;
-
-                $items['milage'] = [
-                    'label' => __('Miles', 'connectpx_booking'),
-                    'qty' => $milesToCharge,
-                    'unit_price' => $perMilePrice,
-                    'total' => $milesTotal,
-                ];
+            // Charge full amount as no show fee
+            $no_show_fee = $this->getNoShowFee();
+            if( $no_show_fee < 0 ) {
+                $no_show_fee = $sub_totals;
             }
 
-            $waitingTimeToCharge = $this->getWaitingTimeToCharge( $waiting_time );
-            $perMinPrice = $this->getRatePerWaitingTime();
-            
-            if( $waitingTimeToCharge ) {
-                $waitingTimeTotal = ( $waitingTimeToCharge * $perMinPrice );
-                $totals += $waitingTimeTotal;
+            $totals += $no_show_fee;
 
-                $items['waiting_time'] = [
-                    'label' => __('Waiting Time (Mins.)', 'connectpx_booking'),
-                    'qty' => $waitingTimeToCharge,
-                    'unit_price' => $perMinPrice,
-                    'total' => $waitingTimeTotal,
-                ];
-            }
-
-            if( $after_hours ) {
-                $totals += $this->getAfterHoursFee();
-
-                $items['after_hours'] = [
-                    'label' => __('After Hours Fee', 'connectpx_booking'),
-                    'qty' => 1,
-                    'unit_price' => $this->getAfterHoursFee(),
-                    'total' => $this->getAfterHoursFee(),
-                ];
-            }
+            $items['no_show'] = [
+                'label' => __('No Show Fee', 'connectpx_booking'),
+                'qty' => 1,
+                'unit_price' => $no_show_fee,
+                'total' => $no_show_fee,
+            ];
         } else {
-            if( $no_show ) {
-                $totals += $this->getNoShowFee();
-
-                $items['no_show'] = [
-                    'label' => __('No Show Fee', 'connectpx_booking'),
-                    'qty' => 1,
-                    'unit_price' => $this->getNoShowFee(),
-                    'total' => $this->getNoShowFee(),
-                ];
-            }
+            $totals += $sub_totals;
+            $items = $sub_items;
         }
         
         $total_adjustments = 0;

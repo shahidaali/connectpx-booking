@@ -41,7 +41,10 @@ use ConnectpxBooking\Lib\Utils\Form;
 				<tr>
 					<th scope="row"><?php echo $field['label']; ?></th>
 					<td>
-						<input name="sub_services[<?php echo $key; ?>][<?php echo $field['name']; ?>]" type="number"  value="<?php echo Form::old([$key, $field['name']], $fields_data, 0); ?>" size="50">
+						<input name="sub_services[<?php echo $key; ?>][<?php echo $field['name']; ?>]" type="number"  value="<?php echo Form::old([$key, $field['name']], $fields_data, 0); ?>" size="50" step="any">
+						<?php if( $field['name'] == 'no_show_fee' ): ?>
+							<div class="connectpx-booking-field-info"><?php echo __('Enter -1 to charge full amount as no show fee.', 'connectpx_booking') ?></div>
+						<?php endif; ?>
 					</td>
 				</tr>
 				<?php endforeach; ?>
